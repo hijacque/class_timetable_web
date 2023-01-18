@@ -1,0 +1,53 @@
+/* custom styling for home page */
+
+.gradient-form {
+    height: 100%;
+    min-height: fit-content;
+    display: grid;
+    padding: 0 12%;
+    background-color: transparent;
+    justify-content: center;
+    align-items: center;
+}
+
+.gradient-form > div {
+    min-width: 350px;
+    display: flex;
+    flex-flow: row nowrap;
+    box-shadow: 1px 15px 60px #322C;
+    border-radius: 35px;
+}
+
+#info-section {
+    background-color: #dbd4ebff;
+    background-image: linear-gradient(to bottom right, #dbd4ebff, #8673b4);
+    color: #222;
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: center;
+    text-align: center;
+    width: 45%;
+    border-top-left-radius: inherit;
+    border-bottom-left-radius: inherit;
+}
+
+#form-section {
+    width: 55%;
+    border-top-right-radius: inherit;
+    border-bottom-right-radius: inherit;
+}
+
+.input-group-text > i { color: #422e42; }
+
+/* Responsive UI using breakpoints */
+
+@media (max-width: 740.98px) {
+    #info-section { display: none; }
+    #form-section { border-radius: inherit; }
+    .gradient-form { padding: 0 2%;}
+}
+
+@media (max-width: 950.98px) {
+    .gradient-form { padding: 0 3.5%;}
+}
+

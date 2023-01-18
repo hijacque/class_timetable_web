@@ -1,0 +1,100 @@
+/* Overrides default bootstrap fonts */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.h1,
+.h2,
+.h3,
+.h4,
+.h5,
+.h6,
+.display-1,
+.display-2,
+.display-3,
+.display-4,
+.display-5,
+.display-6 {
+    font-family: 'Ubuntu', sans-serif !important;
+    font-weight: bold;
+}
+
+label { 
+    font-size: medium !important;
+}
+
+p {
+    font-family: 'Open Sans', sans-serif !important;
+    font-size: medium !important;
+}
+
+html,
+body,
+.tooltip,
+.popover {
+    font-family: 'Ubuntu', sans-serif !important;
+}
+
+code,
+kbd,
+pre,
+samp,
+.text-monospace {
+    font-family: 'Noto Mono', monospace;
+}
+
+button,
+input,
+optgroup,
+select,
+textarea {
+    font-family: 'Open Sans', sans-serif !important;
+    font-weight: bold !important;
+}
+
+.img-body {
+    position: relative;
+    background-color: #0f0d11;
+    height: 100vh;
+}
+
+.img-body::before {
+    background: url("images/plm-facade.jpeg") no-repeat center center fixed;
+    background-size: cover;
+    content: '';
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    opacity: 60%;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+    -webkit-filter: blur(5px);
+    -moz-filter: blur(5px);
+    -o-filter: blur(5px);
+    -ms-filter: blur(5px);
+    filter: blur(5px);
+}
+
+.btn-block[type=submit] {
+    background-color: #1063b1ff;
+    background-image: linear-gradient(to right, #70a4d5ff, #1063b1ff);
+}
+
+.toggle-pass {
+    background-color: #8673b4;
+}
+
+th.data-title>i {
+    display: none;
+}
+
+th.data-title>a:hover + i {
+    display: inline;
+    animation: 2s;
+}
