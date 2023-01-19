@@ -9,12 +9,20 @@ router.get("/", (req, res) => {
     res.send("PLM Class Timetable Root page");
 });
 
-router.get("/login", (req, res) => {
+router.route("/login")
+.get((req, res) => {
     res.render("login", { serverAlert: alert });
+})
+.post((req, res) => {
+    res.status(200).json(req.body);
 });
 
-router.get("/signup", (req, res) => {
+router.route("/signup")
+.get((req, res) => {
     res.render("signup", { serverAlert: alert });
+})
+.post((req, res) => {
+    res.status(200).json(req.body);
 });
 
 module.exports = router;
