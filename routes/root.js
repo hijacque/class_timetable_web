@@ -12,7 +12,7 @@ router.get("/login", (req, res) => {
 });
 
 router.get("/signup", (req, res) => {
-    res.send("Class Timetable sign up page")
+    res.send("Class Timetable sign up page");
 });
 
 module.exports = router;
