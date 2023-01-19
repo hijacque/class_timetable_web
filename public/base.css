@@ -62,7 +62,8 @@ textarea {
 }
 
 .img-body::before {
-    background: url("images/plm-facade.jpeg") no-repeat center center fixed;
+    background: url("/images/plm-facade.jpeg") no-repeat fixed;
+    background-position: center;
     background-size: cover;
     content: '';
     z-index: -1;
@@ -82,8 +83,7 @@ textarea {
 }
 
 .btn-block[type=submit] {
-    background-color: #1063b1ff;
-    background-image: linear-gradient(to right, #70a4d5ff, #1063b1ff);
+    background: #1063b1ff linear-gradient(to right, #70a4d5ff, #1063b1ff);
 }
 
 .toggle-pass {
