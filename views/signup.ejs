@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Sign up!</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1, height=device-height'>
+    <%- include('base') %>
+        <link rel="stylesheet" href="/signup.css">
+</head>
+
+<body class="img-body">
+    <div class="modal fade" id="alert-modal" tabindex="-1" aria-labelledby="alert-title" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="alert-title"><%= (serverAlert) ? serverAlert.title : "" %></h5>
+                </div>
+                <div class="modal-body" id="alert-body"><%= (serverAlert) ? serverAlert.body : "" %></div>
+                <div class="modal-footer text-center">
+                    <button type="button" class="btn btn-secondary" data-mdb-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card pb-5 px-md-5 rounded-0">
+        <form action="/signup" method="post" class="card-body">
+            <div class="text-center mb-4">
+                <img src="images/css-logo.png" alt="logo" style="max-height: 80px; width:auto; min-height: 50px;"
+                    class="mb-2">
+                <h5 class="text-muted">Class Scheduling System</h5>
+            </div>
+            <h1 class="card-title mb-4 text-primary">Let's make you a member!</h1>
+            <p>Please fill out the following information.</p>
+            <div class="mb-4">
+                <div class="form-outline">
+                    <input type="text" name="schoolName" class="form-control" required />
+                    <label class="form-label" for="lname">Complete School Name</label>
+                </div>
+            </div>
+            <!-- Email input -->
+            <div class="form-outline mb-4">
+                <input type="email" name="email" class="form-control" required />
+                <label class="form-label" for="email">Email address</label>
+            </div>
+
+            <!-- Password input -->
+            <div class="input-group mb-4">
+                <div class="form-outline rounded">
+                    <input type="password" class="form-control" name="password" required />
+                    <label class="form-label" for="password">Password</label>
+                </div>
+                <span class="input-group-text border-0 toggle-pass"><i class="fas fa-eye fa-lg text-white"></i></span>
+            </div>
+            <div class="input-group">
+                <div class="form-outline mb-2">
+                    <input type="password" class="form-control rounded" id="confirm-pass">
+                    <label class="form-label" for="confirm-pass">Confirm Password</label>
+                </div>
+                <span class="input-group-text border-0 toggle-pass">
+                    <i class="fas fa-eye fa-lg text-white"></i>
+
+                </span>
+            </div>
+            <!-- Submit button -->
+            <button class="btn btn-rounded btn-primary btn-block btn-lg mt-3 mb-4" type="submit" id="submit">
+                Continue
+            </button>
+            <p class="mb-0">Already have an account? <a href="/login">Login now.</a></p>
+        </form>
+    </div>
+
+    <!-- MDB -->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.0.0/mdb.min.js"></script>
+    <script>
+        $.getScript("/password-validation.js", () => {
+            const alertModal = new mdb.Modal($("#alert-modal"));
+            initValidatePassword(alertModal);
+        });
+    </script>
+</body>
+
+</html>

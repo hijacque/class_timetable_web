@@ -8,6 +8,19 @@
 </head>
 
 <body class="img-body">
+    <div class="modal fade" id="alert-modal" tabindex="-1" aria-labelledby="alert-title" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="alert-title"><%= (serverAlert) ? serverAlert.title : "" %></h5>
+                </div>
+                <div class="modal-body" id="alert-body"><%= (serverAlert) ? serverAlert.body : "" %></div>
+                <div class="modal-footer text-center">
+                    <button type="button" class="btn btn-secondary" data-mdb-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="center-container">
         <div class="card shadow-5-strong rounded-9">
             <div class="card-body d-flex p-0">
@@ -66,6 +79,12 @@
 
     <!-- MDB -->
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.0.0/mdb.min.js"></script>
+    <script>
+        $.getScript("/password-validation.js", () => {
+            const alertModal = new mdb.Modal($("#alert-modal"));
+            initValidatePassword(alertModal);
+        });
+    </script>
 </body>
 
 </html>
