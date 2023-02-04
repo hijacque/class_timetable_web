@@ -63,7 +63,7 @@
                         <div class="text-center py-1 mb-4">
                             <button class="btn btn-primary btn-block rounded-pill btn-lg mb-2" type="submit">Log
                                 in</button>
-                            <a class="text-muted" href="http://localhost:3000/account/help"><small>Forgot
+                            <a class="text-muted" href="http://localhost:3000/help"><small>Forgot
                                     password?</small></a>
                             <!-- must lead to reset.html to get their username -->
                         </div>
@@ -80,10 +80,32 @@
     <!-- MDB -->
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.0.0/mdb.min.js"></script>
     <script>
+        const alertModal = new mdb.Modal($("#alert-modal"));
         $.getScript("/password-validation.js", () => {
-            const alertModal = new mdb.Modal($("#alert-modal"));
             initValidatePassword(alertModal);
         });
+        
+        // don't mind the lint warnings, it can't recognize ejs syntax
+        <% if (serverAlert) { %>
+            let message = <%- JSON.stringify(serverAlert) %>;
+            if (message) {
+                switch (message.mode) {
+                    case 0:
+                        $("#alert-title").addClass("text-danger");
+                        break;
+                    case 1:
+                        $("#alert-title").addClass("text-success");
+                        break;
+                    case 2:
+                        $("#alert-title").addClass("text-warning");
+                        break;
+                    case 3:
+                        $("#alert-title").addClass("text-info");
+                        break;
+                }
+                alertModal.show();
+            }
+        <% } %>
     </script>
 </body>
 

@@ -49,17 +49,16 @@
                     <input type="password" class="form-control" name="password" required />
                     <label class="form-label" for="password">Password</label>
                 </div>
-                <span class="input-group-text border-0 toggle-pass"><i class="fas fa-eye fa-lg text-white"></i></span>
+                <a type="button" class="input-group-text border-0 toggle-pass"><i class="fas fa-eye fa-lg text-white"></i></a>
             </div>
             <div class="input-group">
                 <div class="form-outline mb-2">
                     <input type="password" class="form-control rounded" id="confirm-pass">
                     <label class="form-label" for="confirm-pass">Confirm Password</label>
                 </div>
-                <span class="input-group-text border-0 toggle-pass">
+                <a type="button" class="input-group-text border-0 toggle-pass">
                     <i class="fas fa-eye fa-lg text-white"></i>
-
-                </span>
+                </a>
             </div>
             <!-- Submit button -->
             <button class="btn btn-rounded btn-primary btn-block btn-lg mt-3 mb-4" type="submit" id="submit">
@@ -72,10 +71,31 @@
     <!-- MDB -->
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.0.0/mdb.min.js"></script>
     <script>
+        const alertModal = new mdb.Modal($("#alert-modal"));
         $.getScript("/password-validation.js", () => {
-            const alertModal = new mdb.Modal($("#alert-modal"));
             initValidatePassword(alertModal);
         });
+
+        <% if (serverAlert) { %>
+            let message = <%- JSON.stringify(serverAlert) %>;
+            if (message) {
+                switch (message.mode) {
+                    case 0:
+                        $("#alert-title").addClass("text-danger");
+                        break;
+                    case 1:
+                        $("#alert-title").addClass("text-success");
+                        break;
+                    case 2:
+                        $("#alert-title").addClass("text-warning");
+                        break;
+                    case 3:
+                        $("#alert-title").addClass("text-info");
+                        break;
+                }
+                alertModal.show();
+            }
+        <% } %>
     </script>
 </body>
 
