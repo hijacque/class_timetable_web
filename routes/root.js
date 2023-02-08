@@ -1,9 +1,7 @@
 // required packages
 const router = require("express").Router();
-const crypt = require("node:crypto");
-const path = require("node:path");
 const { createAdmin, loginAccount } = require("../lib/account");
-const { sendOTP } = require("./../lib/verification");
+const { sendOTP, verifySession, createSession } = require("./../lib/verification");
 require("./../lib/verification");
 require("./../lib/account");
 
@@ -16,9 +14,15 @@ router.route("/login")
         if (req.cookies.serverMessage) res.clearCookie("serverMessage");
         res.render("login", { serverAlert: req.cookies.serverMessage });
     })
-    .post(loginAccount, (req, res) => {
-        if (req.success) {
-            res.redirect("/" + req.success.accountType);
+    .post(loginAccount, createSession, (req, res) => {
+        if (req.account) {
+            res.redirect("/" + req.account.type);
+        } else {
+            res.cookie("serverMessage", {
+                mode: 0,
+                title: "Invalid Credentials", 
+                body: "You entered the wrong e-mail/password."
+            }).redirect("/login");
         }
     });
 
@@ -37,21 +41,25 @@ router.route("/signup")
         }
     });
 
-router.get("/admin", (req, res) => {
-    if (req.signedCookies.account) {
-        // TODO: create admin dashboard UI
-        res.status(200).send("Welcome! Your admin dashboard will be built here.");
+router.get("/admin/:task?", verifySession, (req, res) => {
+    const user = req.account;
+    if (user && user.type == "admin") {
+        res.status(200).json(req.account);
+    } else if (user) {
+        res.redirect("/chair");
     } else {
-        res.status(401).send("Hey.. You're not allowed here >:[");
+        res.redirect("/login");
     }
 });
 
-router.get("/chair", (req, res) => {
-    if (req.signedCookies.account) {
-        // TODO: create chair dashboard UI
-        res.status(200).send("Welcome! Your admin dashboard will be built here.");
+router.get("/chair/:task?", verifySession, (req, res) => {
+    const user = req.account;
+    if (user && user.type == "admin") {
+        res.status(200).json(req.account);
+    } else if (user) {
+        res.redirect("/chair");
     } else {
-        res.status(401).send("Hey.. You're not allowed here >:[");
+        res.redirect("/login");
     }
 });
 
