@@ -5,7 +5,7 @@
     <title>Sign up!</title>
     <meta name='viewport' content='width=device-width, initial-scale=1, height=device-height'>
     <%- include('base') %>
-        <link rel="stylesheet" href="/signup.css">
+        <link rel="stylesheet" href="/styles/signup.css">
 </head>
 
 <body class="img-body">
@@ -25,7 +25,7 @@
     <div class="card pb-5 px-md-5 rounded-0">
         <form action="/signup" method="post" class="card-body">
             <div class="text-center mb-4">
-                <img src="images/css-logo.png" alt="logo" style="max-height: 80px; width:auto; min-height: 50px;"
+                <img src="/images/css-logo.png" alt="logo" style="max-height: 80px; width:auto; min-height: 50px;"
                     class="mb-2">
                 <h5 class="text-muted">Class Scheduling System</h5>
             </div>
@@ -72,7 +72,7 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.0.0/mdb.min.js"></script>
     <script>
         const alertModal = new mdb.Modal($("#alert-modal"));
-        $.getScript("/password-validation.js", () => {
+        $.getScript("lib/password-validation.js", () => {
             initValidatePassword(alertModal);
         });
 

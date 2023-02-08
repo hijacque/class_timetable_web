@@ -4,7 +4,7 @@
 <head>
     <title>Class Timetable System</title>
     <%- include("base") %>
-    <link rel="stylesheet" href="/login.css">
+    <link rel="stylesheet" href="/styles/login.css">
 </head>
 
 <body class="img-body">
@@ -81,7 +81,7 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.0.0/mdb.min.js"></script>
     <script>
         const alertModal = new mdb.Modal($("#alert-modal"));
-        $.getScript("/password-validation.js", () => {
+        $.getScript("/lib/password-validation.js", () => {
             initValidatePassword(alertModal);
         });
         
