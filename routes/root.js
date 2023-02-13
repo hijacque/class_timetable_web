@@ -11,8 +11,12 @@ router.get("/", (req, res) => {
 
 router.route("/login")
     .get((req, res) => {
-        if (req.cookies.serverMessage) res.clearCookie("serverMessage");
-        res.render("login", { serverAlert: req.cookies.serverMessage });
+        if (req.signedCookies.ctsSession) {
+            res.redirect("/admin");
+        } else {
+            if (req.cookies.serverMessage) res.clearCookie("serverMessage");
+            res.render("login", { serverAlert: req.cookies.serverMessage });
+        }
     })
     .post(loginAccount, createSession, (req, res) => {
         if (req.account) {
@@ -20,7 +24,7 @@ router.route("/login")
         } else {
             res.cookie("serverMessage", {
                 mode: 0,
-                title: "Invalid Credentials", 
+                title: "Invalid Credentials",
                 body: "You entered the wrong e-mail/password."
             }).redirect("/login");
         }
@@ -41,10 +45,28 @@ router.route("/signup")
         }
     });
 
-router.get("/admin/:task?", verifySession, (req, res) => {
-    const user = req.account;
+router.get("/logout", (req, res) => {
+    if (req.signedCookies.ctsSession) {
+        res.clearCookie("ctsSession");
+        res.redirect("/login");
+    }
+});
+
+let taskData = {
+    schoolName: "Pamantasan ng Lungsod ng Maynila",
+    email: "hjadasal2020@plm.edu.ph"
+};
+
+router.get("/admin/:task?", (req, res) => {
+    const user = { type: "admin"};
+    const task = req.params.task || "profile";
     if (user && user.type == "admin") {
-        res.status(200).json(req.account);
+        taskData.section = 
+        // TODO: develop departments view (editable table with all department heads)
+        res.render("admin-root/base", {
+            section: task,
+            taskData: taskData
+        });
     } else if (user) {
         res.redirect("/chair");
     } else {
@@ -54,10 +76,12 @@ router.get("/admin/:task?", verifySession, (req, res) => {
 
 router.get("/chair/:task?", verifySession, (req, res) => {
     const user = req.account;
-    if (user && user.type == "admin") {
-        res.status(200).json(req.account);
+    if (user && user.type == "chair") {
+        res.render("chair-root/base", {
+            section: req.params.task || "profile"
+        });
     } else if (user) {
-        res.redirect("/chair");
+        res.redirect("/admin");
     } else {
         res.redirect("/login");
     }

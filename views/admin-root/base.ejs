@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <%- include('../base') %>
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="/styles/admin-root.css">
+</head>
+
+<body class="dashboard">
+    <div class="nav-bar bg-light">
+        <a role="button" class="task" href="/admin" id="profile">
+            <i class="far fa-user-circle"></i><br>Profile</a>
+        <a role="button" class="task" href="/admin/departments" id="departments">
+            <i class="fas fa-sitemap"></i><br><small>Departments</small></a>
+        <a role="button" class="task" href="/admin/faculty" id="faculty">
+            <i class="fas fa-chalkboard-teacher"></i><br>Faculty</a>
+        <a role="button" class="task" href="/admin/subjects" id="subjects">
+            <i class="fas fa-chalkboard"></i><br>Subjects</a>
+        <a role="button" class="task" href="/admin/rooms" id="rooms">
+            <i class="fas fa-door-closed"></i><br>Rooms</a>
+        <a role="button" class="btn btn-light rounded-0 px-1 w-100" href="/logout">
+            <i class="fas fa-sign-out-alt fa-2x mt-1"></i><br>Log out</a>
+    </div>
+    <% if (section == "profile") { %>
+        <%- include('profile', taskData) %>
+    <% } else if (section == "departments") { %>
+        <%- include('departments') %>
+    <% } else if (section == "faculty") { %>
+        <%- include('faculty') %> 
+    <% } else if (section == "subjects") { %>
+        <%- include('subjects') %>
+    <% } else if (section == "rooms") { %>
+        <%- include('rooms') %>
+    <% } %>
+
+    <!-- MDB -->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.0.0/mdb.min.js"></script>
+    <script>
+        $("a.task").addClass("btn btn-light rounded-0 px-1 w-100");
+        $("a.task>i").addClass("fa-2x mt-1");
+        let openSection = "<%- section %>";
+        $(`a.task[id=${openSection}]`).toggleClass("btn-secondary btn-light").attr("href", null);
+    </script>
+</body>
+
+</html>
