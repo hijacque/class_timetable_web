@@ -1,0 +1,67 @@
+html,
+body {
+    height: 100%;
+}
+
+th {vertical-align: middle;}
+
+.dashboard {
+    display: grid;
+    grid-template-columns: 85px auto;
+    grid-template-rows: auto;
+    height: 100%;
+    overflow: scroll;
+}
+
+.nav-bar {
+    text-align: center;
+    height: 100%;
+    grid-template-rows: repeat(5, max-content);
+}
+
+.nav-bar>a.task {
+    height: 65px;
+}
+
+.side-panel { 
+    grid-row: 1/-1;
+    padding: 32px 24px;
+    overflow-y: scroll;
+    position: relative;
+}
+
+.category {
+    padding: 25px 0 0 4%;
+    text-align: start;
+    background-color: thistle;
+    display: inline-block;
+    min-width: max-content;
+    overflow-x: scroll;
+    width: 100%;
+}
+
+.category>button.active {
+    background-color: #efe5ef;
+}
+
+.folder-container {
+    background-color: #efe5ef;
+    padding: 0 4%;
+}
+
+tbody>tr.sched-row { cursor: pointer; }
+tbody>tr.sched-row:hover { color: #0275d8; }
+.top-bar>h4 { display: inline;}
+.schedules>div>h5 {display: none;}
+
+@media (max-width: 750px) {
+    .schedules > div.blocks {
+        grid-template-columns: 1fr;
+    }
+    .schedules>div>h5 {display: inline-block;}
+    .schedules>div>h4 {display: none;}
+}
+
+@media (max-width: 553px) {
+    .schedules { grid-template-rows: 95px 69px auto; }
+}
