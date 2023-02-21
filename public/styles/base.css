@@ -31,6 +31,15 @@ p {
     font-size: medium !important;
 }
 
+hr { border-color: #8673b4; }
+
+th>* { font-weight: bold; }
+
+tfoot {
+    text-align: center; 
+    vertical-align: middle;
+}
+
 html,
 body,
 .tooltip,
