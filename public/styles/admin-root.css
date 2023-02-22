@@ -27,21 +27,27 @@ th {
     display: block;
 }
 
-.panel-view {
-    display: grid;
-    grid-template-columns: 300px auto;
-    grid-template-rows: auto;
+.task-view {
+    position: relative;
     overflow-x: hidden;
+    box-shadow: 3px 3px 8px #6c6c6daa;
 }
-
-.panel-view>div {
+.task-view>div {
     overflow-x: scroll;
+    height: 100%;
 }
 
 .side-panel {
+    display: none;
+    width: 300px;
+    background-color: white;
+    box-shadow: -3px 3px 6px #6c6c6daa;
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
     padding: 24px 0;
     overflow-y: scroll;
-    vertical-align: middle;
 }
 
 .side-panel>div {
@@ -96,6 +102,24 @@ td.edit-action {
 td.edit-action>div {
     display: flex;
     justify-content: space-between;
+}
+
+.table-responsive>div.overflow-shadow-start {
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    background-image: linear-gradient(to right, #555A, #0000);
+}
+
+.table-responsive>div.overflow-shadow-end {
+    height: 100%;
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 20px;
+    background-image: linear-gradient(to left, #555A, #0000);
 }
 
 .category {

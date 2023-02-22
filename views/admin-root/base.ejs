@@ -8,24 +8,37 @@
 </head>
 
 <body class="dashboard">
+    <div class="modal fade" id="alert-modal" tabindex="-1" aria-labelledby="alert-title" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="alert-title"><%= (serverAlert) ? serverAlert.title : "" %></h5>
+                </div>
+                <div class="modal-body" id="alert-body"><%= (serverAlert) ? serverAlert.body : "" %></div>
+                <div class="modal-footer text-center">
+                    <button type="button" class="btn btn-secondary" data-mdb-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="nav-bar bg-light">
-        <a role="button" class="task" href="/admin" id="profile">
-            <i class="far fa-user-circle"></i><br>Profile</a>
         <a role="button" class="task" href="/admin/departments" id="departments">
             <i class="fas fa-sitemap"></i><br><small>Departments</small></a>
         <a role="button" class="task" href="/admin/faculty" id="faculty">
             <i class="fas fa-chalkboard-teacher"></i><br>Faculty</a>
         <a role="button" class="task" href="/admin/subjects" id="subjects">
             <i class="fas fa-chalkboard"></i><br>Subjects</a>
-        <a role="button" class="task" href="/admin/rooms" id="rooms">
+        <a role="button" class="task mb-5" href="/admin/rooms" id="rooms">
             <i class="fas fa-door-closed"></i><br>Rooms</a>
-        <a role="button" class="btn btn-light rounded-0 px-1 w-100" href="/logout">
-            <i class="fas fa-sign-out-alt fa-2x mt-1"></i><br>Log out</a>
+        <a role="button" class="task" href="/admin" id="profile">
+            <i class="far fa-user-circle fa-2x"></i><br>Profile</a>
+        <a role="button" href="/logout">
+            <i class="fas fa-sign-out-alt fa-2x"></i><br>Log out</a>
     </div>
     <% if (section == "profile") { %>
         <%- include('profile', taskData) %>
     <% } else if (section == "departments") { %>
-        <%- include('departments') %>
+        <%- include('departments', { data: taskData }) %>
     <% } else if (section == "faculty") { %>
         <%- include('faculty') %> 
     <% } else if (section == "subjects") { %>
@@ -37,10 +50,30 @@
     <!-- MDB -->
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.0.0/mdb.min.js"></script>
     <script>
-        $("a.task").addClass("btn btn-light rounded-0 px-1 w-100");
-        $("a.task>i").addClass("fa-2x mt-1");
+        $("div.nav-bar>a>i").addClass("fa-2x mt-1");
         let openSection = "<%- section %>";
-        $(`a.task[id=${openSection}]`).toggleClass("btn-secondary btn-light").attr("href", null);
+        $("div.nav-bar>a").addClass("btn btn-light rounded-0 px-1 w-100");
+
+        //task side panel stuffss
+        $(`a.task[id=${openSection}]`).toggleClass("btn-secondary btn-light border-start border-4 border-primary").attr("href", null).hover((event) => {
+            let sidePanel = $(`div#${event.currentTarget.id}-view>div.side-panel`).show();
+            $(sidePanel).next("div").css("margin-left", "300px");
+        }, (event) => {
+            let sidePanel = $(`div#${event.currentTarget.id}-view>div.side-panel`).hide();
+            $(sidePanel).next("div").css("margin-left", "0");
+        });
+        const panel = $(`div#${openSection}-view>div.side-panel`).hover((event) => {
+            let sidePanel = $(event.currentTarget).show();
+            $(sidePanel).next("div").css("margin-left", "300px");
+        }, (event) => {
+            let sidePanel = $(event.currentTarget).hide();
+            $(sidePanel).next("div").css("margin-left", "0");
+        });
+        // console.log($(panel).find("ul.panel-menu > *.menu-item").is(".active"));
+        if (!$(panel).find("ul.panel-menu > *.menu-item").is(".active")) {
+            $(panel).show();
+            $(panel).next("div").css("margin-left", "300px");
+        }
     </script>
 </body>
 
