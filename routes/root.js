@@ -1,6 +1,6 @@
 // required packages
 const router = require("express").Router();
-const { createAdmin, loginAccount } = require("../lib/account");
+const { createAdmin, loginAccount, getAdminData } = require("../lib/account");
 const { sendOTP, verifySession, createSession } = require("./../lib/verification");
 require("./../lib/verification");
 require("./../lib/account");
@@ -48,8 +48,8 @@ router.route("/signup")
 router.get("/logout", (req, res) => {
     if (req.signedCookies.ctsSession) {
         res.clearCookie("ctsSession");
-        res.redirect("/login");
     }
+    res.redirect("/login");
 });
 
 let taskData = {
@@ -57,17 +57,14 @@ let taskData = {
     email: "hjadasal2020@plm.edu.ph"
 };
 
-router.get("/admin/:task?", (req, res) => {
-    const user = { type: "admin"};
-    const task = req.params.task || "profile";
-    if (user && user.type == "admin") {
-        taskData.section = 
-        // TODO: develop departments view (editable table with all department heads)
+router.get("/admin/:task?", verifySession, getAdminData, (req, res) => {
+    if (req.taskData) {
         res.render("admin-root/base", {
-            section: task,
-            taskData: taskData
+            section: req.params.task || "profile",
+            taskData: req.taskData,
+            serverAlert: {}
         });
-    } else if (user) {
+    } else if (req.account) {
         res.redirect("/chair");
     } else {
         res.redirect("/login");
