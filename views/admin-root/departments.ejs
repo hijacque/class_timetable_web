@@ -1,3 +1,128 @@
-<div class="shadow-4-strong bg-light px-5 pt-4">
-    Departments View
+<div class="bg-light task-view" id="departments-view">
+    <div class="side-panel">
+        <div class="d-flex">
+            <h4>Colleges<a type="button"><i class="fas fa-plus ms-2 fa-sm text-primary"></i></a></h4>
+            <div>
+                <a type="button"><i class="fas fa-sort-alpha-up-alt"></i></a>
+                <a type="button"><i class="fas fa-search ms-2"></i></a>
+            </div>
+        </div>
+        <hr>
+        <div class="overflow-scroll">
+            <!-- TODO: get list of colleges and open view of first department -->
+            <ul class="list-group panel-menu">
+                <% for (const college of data.colleges) { %>
+                    <button type="button" class="list-group-item list-group-item-action menu-item"
+                        title="<%= college.name %>" id="<%= college.id %>">
+                        <p class="text-truncate m-0">
+                            <%= college.name %>
+                        </p>
+                    </button>
+                <% } %>
+            </ul>
+        </div>
+    </div>
+    <div class="shadow-3 bg-white px-5 pt-4">
+        <h2 style="color: #8673b4;"><%= data.colleges[0].name %></h2>
+        <br>
+        <button class="btn btn-primary btn-rounded" data-cts-toggle="table" data-cts-target="#departments-table">
+            <i class="fas fa-edit fa-lg me-2"></i>edit table</button>
+        <button class="btn btn-success btn-rounded" data-cts-dismiss="table" data-cts-target="#departments-table"
+            aria-hidden="true">save changes</button>
+        <table class="table table-bordered table-sm fw-bold" id="departments-table" style="width: 1200px;">
+            <thead class="text-center">
+                <tr>
+                    <th class="data-title" rowspan="2">
+                        <a role="button">Department</a>
+                    </th>
+                    <td colspan="4">Chairperson</td>
+                    <th class="data-title" rowspan="2">
+                        <a role="button">Account Status</a><i class="fas fa-arrow-up text-secondary ms-2"></i>
+                    </th>
+                    <td rowspan="2" class="edit-title">Action</td>
+                </tr>
+                <tr>
+                    <th class="data-title">
+                        <a role="button">First Name</a><i class="fas fa-arrow-up text-secondary ms-2"></i>
+                    </th>
+                    <th class="data-title">
+                        <a role="button">Middle Name</a><i class="fas fa-arrow-up text-secondary ms-2"></i>
+                    </th>
+                    <th class="data-title">
+                        <a role="button">Surname</a><i class="fas fa-arrow-up text-secondary ms-2"></i>
+                    </th>
+                    <th class="data-title">
+                        <a role="button">E-mail</a><i class="fas fa-arrow-up text-secondary ms-2"></i>
+                    </th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot>
+                <tr class="add-data">
+                    <td><input id="department" type="text" class="form-control w-100 add-td-input unique"
+                            placeholder="Computer Science"></td>
+                    <td><input id="firstName" type="text" class="form-control w-100 add-td-input" placeholder="Juan">
+                    </td>
+                    <td><input id="middleName" type="text" class="form-control w-100 add-td-input"
+                            placeholder="Antonio">
+                    </td>
+                    <td><input id="lastName" type="text" class="form-control w-100 add-td-input"
+                            placeholder="Dela Cruz">
+                    </td>
+                    <td><input id="email" type="email" class="form-control w-100 add-td-input unique"
+                            placeholder="jadelacruz@school.edu.ph">
+                    </td>
+                    <td class="add-td-input">
+                        pending
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
 </div>
+<script src="/lib/responsive-table.js"></script>
+<script>
+    const getDepartments = (collegeID) => {
+        return new Promise((resolve, reject) => {
+            $.get("http://localhost:3000/api/departments/" + collegeID,
+                (data, status) => {
+                    if (status == "success") {
+                        resolve(data.departments);
+                    } else {
+                        reject(data);
+                    }
+                }, "json"
+            );
+        })
+    };
+
+    const addChairperson = (collegeID, chairData) => {
+        chairData.collegeID = collegeID;
+        $.post(
+            "http://localhost:3000/api/departments/" + collegeID, chairData,
+            (data, status) => {
+                console.log(data);
+            },
+            "text json"
+        ).fail((data, status) => {
+            console.log(status + ": " + JSON.stringify(data));
+        });
+    }
+
+    const colleges = $(".panel-menu>button.menu-item");
+    let openCollege = colleges.get(0);
+    $(openCollege).addClass("active")
+    // $(".side-panel").hide();
+    // getDepartments(colleges.get(0).id);
+    const departmentsTable = new ResponsiveTable("#departments-table");
+    departmentsTable.initData(getDepartments(openCollege.id), true);
+
+    $(departmentsTable.addBtn).click(async (event) => {
+        try {
+            let addedData = await $(event.currentTarget).data("newRows");
+            addChairperson(openCollege.id, addedData);
+        } catch (error) {
+            console.log(error);
+        }
+    });
+</script>
