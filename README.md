@@ -24,7 +24,9 @@ A web-based class schedule and faculty loading system for the Computer Science D
 6. Open your terminal and enter `mysql -u root -p`, this will prompt you to enter the password
 7. Now that mysql terminal is open, we need to create a new database and user of that database for the project, enter the following in the terminal
     * Project database
-    `CREATE DATABASE class_sched_sys;`
+    ```
+    CREATE DATABASE class_sched_sys;
+    ```
     * New user
     ```
     CREATE USER 'class_sched_sys_user'@'localhost' IDENTIFIED BY 'YOUR_PASSWORD';
@@ -33,8 +35,8 @@ A web-based class schedule and faculty loading system for the Computer Science D
 8. If no errors occur, exit sql terminal by typing `\q` or `exit`
 
 **Node.js**
-1. Choose the right installer for you OS in https://nodejs.org/en/download/
-2. Run the node installer and accept all default option and license agreement
+1. Choose the right installer for your OS in https://nodejs.org/en/download/
+2. Run the node installer and accept all default options and license agreement
 3. Wait for installation to finish then restart you computer
 4. Open your terminal and check if node was installed by typing `node -v`
 
@@ -43,8 +45,8 @@ A web-based class schedule and faculty loading system for the Computer Science D
 1. Go to https://myaccount.google.com/apppasswords
 2. Log in to your google account as needed
 3. Click the select app menu and choose custom
-4. Enter *class_sched_sys* then click "GENERATE"
-5. Copy the password and save it for when setting up the project
+4. Enter "class_sched_sys" then click _GENERATE_
+5. Copy the password and **_save it_** for when setting up the project
 
 **Github**
 1. Go to https://github.com/ and sign up
@@ -55,12 +57,16 @@ A web-based class schedule and faculty loading system for the Computer Science D
 ## How to get started with the project
 1. Copy the web URL of the project repository https://github.com/hijacque/class_timetable_web
 2. Open your terminal then move to the folder you want the project to be in
-3. Clone the project by entering the following command
-    `git clone https://github.com/hijacque/class_timetable_web`
+3. Clone the project by entering the following command:
+    ```
+    git clone https://github.com/hijacque/class_timetable_web`
+    ```
 4. Open the project folder that you just cloned from the terminal
 5. Start mySQL server by typing `mysql.server start`
 6. Check for `class_sched_sys.sql` file, then enter the command:
-    `mysqldump -u root -p class_sched_sys < class_sched_sys.sql`
+    ```
+    mysqldump -u root -p class_sched_sys < class_sched_sys.sql
+    ```
     Enter your pasword to initialize database schema
 7. Install package dependencies by entering `npm init`
 8. Open your text editor and in the root project folder create a file and name it `.env`
@@ -84,4 +90,4 @@ A web-based class schedule and faculty loading system for the Computer Science D
     ```
 10. Your computer is now a local server for the project
 11. Open your terminal and enter `node index.js`
-12. Open your browser (Chrome, Edge, IE, etc.) then access http://localhost:3000/ or signup an account in http://localhost:3000/login
+12. Open your browser (Chrome, Edge, IE, etc.) then access http://localhost:3000/ or signup an account in http://localhost:3000/signup
