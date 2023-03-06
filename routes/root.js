@@ -11,23 +11,22 @@ router.get("/", (req, res) => {
 
 router.route("/login")
     .get((req, res) => {
-        if (req.signedCookies.ctsSession) {
-            res.redirect("/admin");
-        } else {
-            if (req.cookies.serverMessage) res.clearCookie("serverMessage");
-            res.render("login", { serverAlert: req.cookies.serverMessage });
+        let loggedIn = req.signedCookies.ctsSession
+        if (loggedIn) {
+            return res.redirect("/" + loggedIn.type);
         }
-    })
-    .post(loginAccount, createSession, (req, res) => {
+        if (req.cookies.serverMessage) res.clearCookie("serverMessage");
+        res.render("login", { serverAlert: req.cookies.serverMessage });
+
+    }).post(loginAccount, createSession, (req, res) => {
         if (req.account) {
-            res.redirect("/" + req.account.type);
-        } else {
-            res.cookie("serverMessage", {
-                mode: 0,
-                title: "Invalid Credentials",
-                body: "You entered the wrong e-mail/password."
-            }).redirect("/login");
+            return res.redirect("/" + req.account.type);
         }
+        res.cookie("serverMessage", {
+            mode: 0,
+            title: "Invalid Credentials",
+            body: "You entered the wrong e-mail/password."
+        }).redirect("/login");
     });
 
 router.route("/signup")
@@ -36,12 +35,14 @@ router.route("/signup")
         res.render("signup", { serverAlert: req.cookies.serverMessage });
     })
     .post(createAdmin, sendOTP, (req, res) => {
-        if (req.success) {
+        if (req.account) {
             res.cookie("serverMessage", {
                 title: "OTP sent to " + req.body.email,
                 body: "Verify your account via the link we sent.",
                 mode: 3
             }, { httpOnly: true }).redirect("/login");
+        } else {
+            res.redirect("/signup");
         }
     });
 
@@ -52,11 +53,6 @@ router.get("/logout", (req, res) => {
     res.redirect("/login");
 });
 
-let taskData = {
-    schoolName: "Pamantasan ng Lungsod ng Maynila",
-    email: "hjadasal2020@plm.edu.ph"
-};
-
 router.get("/admin/:task?", verifySession, getAdminData, (req, res) => {
     if (req.taskData) {
         res.render("admin-root/base", {
@@ -64,21 +60,15 @@ router.get("/admin/:task?", verifySession, getAdminData, (req, res) => {
             taskData: req.taskData,
             serverAlert: {}
         });
-    } else if (req.account) {
-        res.redirect("/chair");
     } else {
-        res.redirect("/login");
+        res.redirect("/logout");
     }
 });
 
 router.get("/chair/:task?", verifySession, (req, res) => {
     const user = req.account;
     if (user && user.type == "chair") {
-        res.render("chair-root/base", {
-            section: req.params.task || "profile"
-        });
-    } else if (user) {
-        res.redirect("/admin");
+        res.send("This is where chairperson's dashboard will be hehe");
     } else {
         res.redirect("/login");
     }

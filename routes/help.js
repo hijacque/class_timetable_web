@@ -1,7 +1,7 @@
 const router = require("express").Router();
 const jwt = require("jsonwebtoken");
 const { verifyOTP, getOTP, sendOTP } = require("./../lib/verification");
-const { openAccount } = require("../lib/account");
+const { openAccount, openAdminAccount } = require("../lib/account");
 require("./../lib/verification");
 
 router.get("/", (req, res) => {
@@ -9,16 +9,16 @@ router.get("/", (req, res) => {
     res.render("test", { serverAlert: req.cookies.serverMessage });
 });
 
-router.get("/account", (req, res) => {
-    const helpID = req.query.helpID;
+router.get("/account/:helpID?", async (req, res) => {
+    // create helpID for specific account management
+    const helpID = req.params.helpID;
     if (!helpID) {
         res.status(401).send("Require helpID to help you.");
     }
     try {
-        const helpInfo = jwt.verify(helpID, process.env.HELP_KEY);
-        if (helpInfo.type == 0) {
-            // if (!req.cookies.help) 
-            res.cookie("help", { email: helpInfo.email }, { httpOnly: true }).redirect("/help/open-account");
+        const help = jwt.verify(helpID, process.env.HELP_KEY);
+        if (help.code == 0) {
+            res.cookie("help", { email: help.email, type: help.type }, { httpOnly: true }).redirect("/help/open-account/" + help.type);
         } else if (helpInfo.type == 1) {
             res.cookie("help", { email: helpInfo.email }, { httpOnly: true }).redirect("/help/change-password");
         }
@@ -27,24 +27,45 @@ router.get("/account", (req, res) => {
     }
 });
 
-router.route("/open-account")
+router.route("/open-account/admin")
     .get(getOTP, (req, res) => {
-        if (!req.cookies.help) {
-            res.redirect("/help");
-        } else {
-            if (req.cookies.serverMessage) res.clearCookie("serverMessage");
+        if (req.cookies.serverMessage) {
+            res.clearCookie("serverMessage");
             res.render("verify-otp", { serverAlert: req.cookies.serverMessage, subHelp: "open-account" });
+        } else {
+            res.redirect("/help");
         }
-    }).post(verifyOTP, openAccount, async (req, res, next) => {
-        const otpResult = req.message.mode;
-        if (otpResult == 1) {
+    }).post(verifyOTP, openAdminAccount, (req, res) => {
+        const otpResult = req.message;
+        if (otpResult && otpResult.mode == 1) {
             req.message.body = "You can now login to your new account.";
             res.cookie("serverMessage", req.message, { httpOnly: true });
-            res.status(200).json({ goto: "/login" });
-        } else if (otpResult == 2 || otpResult == 0) {
+            res.status(200).json({ redirect: "login" });
+        } else if (otpResult && (otpResult.mode == 2 || otpResult.mode == 0)) {
             res.status(200).json(req.message);
         } else {
-            res.status(400).json({ message: "Invalid help request." });
+            res.status(400).json({ redirect: "help" });
+        }
+    });
+
+router.route("/open-account/chair")
+    .get((req, res) => {
+        if (req.cookies.serverMessage) {
+            res.clearCookie("serverMessage");
+            res.render("verify-otp", { serverAlert: req.cookies.serverMessage, subHelp: "open-account" });
+        } else {
+            res.redirect("/help")
+        }
+    }).post(verifyOTP, openAdminAccount, (req, res) => {
+        const otpResult = req.message;
+        if (otpResult && otpResult.mode == 1) {
+            req.message.body = "You can now login to your new account.";
+            res.cookie("serverMessage", req.message, { httpOnly: true });
+            res.status(200).json({ redirect: "/login" });
+        } else if (otpResult && (otpResult.mode == 2 || otpResult.mode == 0)) {
+            res.status(200).json(req.message);
+        } else {
+            res.status(400).json({ redirect: "/help" });
         }
     });
 
@@ -60,5 +81,9 @@ router.post("/resend-OTP", sendOTP, (req, res) => {
         }, { httpOnly: true }).redirect("/login");
     }
 });
+
+router.route("/change-password").get((req, res) => {
+    // TODO: make middleware for updating password in database
+}).post((req, res) => { });
 
 module.exports = router;
