@@ -3,7 +3,7 @@
 
 <head>
     <%- include('base') %>
-        <title>OTP Verification</title>
+    <title>OTP Verification</title>
 </head>
 
 <body>
@@ -22,30 +22,28 @@
         </div>
     </div>
     <h1>Enter OTP we sent to your e-mail</h1>
-    <input type="text" id="pin">
+    <input type="text" id="pin" maxlength="6" class="text-uppercase">
     <button type="button" class="btn btn-primary" id="submit">Confirm</button>
     <!-- MDB -->
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.0.0/mdb.min.js"></script>
     <script>
-        let eAlert = $("#alert-modal");
+        const eAlert = "#alert-modal";
         const alertModal = new mdb.Modal(eAlert);
-        let url = "/help/" + "<%- subHelp %>";
-        console.log();
         $("#submit").click((event) => {
-            $.post(url, { pin: $("#pin").val() }, (data) => {
-                $("#alert-title").text(data.title);
-                $("#alert-body").html(data.body);
-                if (data.goto) {
-                    window.location.href = "http://localhost:3000" + data.goto;
+            $.post("/help/<%- subhelp %>", { pin: $("#pin").val() }, (data) => {
+                if (data.redirect) {
+                    window.location.href = "http://localhost:3000/" + data.redirect;
                 }
 
+                $("#alert-title").text(data.title);
+                $("#alert-body").html(data.body);
                 if (data.mode == 0) {
                     $("#alert-title").addClass("text-danger");
                     $("#alert-title").removeClass("text-warning");
-                    let footer = $(eAlert).find("div.modal-footer");
-                    let first = $(footer).children().get(0);
-                    first.textContent = "No";
-                    $(first).toggleClass("btn-secondary btn-danger");
+                    let footer = $(`${eAlert}>div>div>div.modal-footer`);
+                    let cancelBtn = $(footer).first();
+                    cancelBtn.textContent = "No";
+                    $(cancelBtn).toggleClass("btn-secondary btn-danger");
                     $(footer).append(
                         '<form action="/help/resend-otp" method="POST">' +
                             '<button type="submit" class="btn btn-secondary" name="resend" value="1">Yes</button>' +

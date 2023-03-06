@@ -22,7 +22,7 @@ h6,
     font-weight: bold;
 }
 
-label { 
+label {
     font-size: medium !important;
 }
 
@@ -31,12 +31,13 @@ p {
     font-size: medium !important;
 }
 
-hr { border-color: #8673b4; }
-
-th>* { font-weight: bold; }
+hr {
+    border-color: #8673b4;
+    margin: 12px 0;
+}
 
 tfoot {
-    text-align: center; 
+    text-align: center;
     vertical-align: middle;
 }
 
@@ -103,7 +104,40 @@ th.data-title>i {
     display: none;
 }
 
-th.data-title>a:hover + i {
+th.data-title>a:hover+i {
     display: inline;
     animation: 2s;
 }
+
+.expandable {
+    width: 100%;
+    border-bottom: 1px solid #d0d0d2;
+}
+
+.expandable>.expandable-title {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 2px 20px;
+    width: 100%;
+    text-align: start;
+    border-radius: 0;
+    /* box-shadow: 0 2px 3px #b6b3b977; */
+}
+
+.expandable>.expandable-title>text {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    font-size: small;
+    max-width: 90%;
+}
+
+.expandable-body { 
+    padding: 12px 18px;
+    border-radius: 0;
+    box-shadow: 0 1px 5px inset #b6b3b977;
+    background-color: #f3f3f333;
+}
+
+.expandable>.expandable-title>i { margin-right: 10px; }

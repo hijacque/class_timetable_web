@@ -52,7 +52,7 @@ th {
 
 .side-panel>div {
     justify-content: space-between;
-    padding: 0 24px;
+    /* padding: 0 24px; */
 }
 
 .folder {
@@ -102,24 +102,6 @@ td.edit-action {
 td.edit-action>div {
     display: flex;
     justify-content: space-between;
-}
-
-.table-responsive>div.overflow-shadow-start {
-    height: 100%;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 20px;
-    background-image: linear-gradient(to right, #555A, #0000);
-}
-
-.table-responsive>div.overflow-shadow-end {
-    height: 100%;
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 20px;
-    background-image: linear-gradient(to left, #555A, #0000);
 }
 
 .category {
