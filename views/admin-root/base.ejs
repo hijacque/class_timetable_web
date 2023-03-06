@@ -40,9 +40,9 @@
     <% } else if (section == "departments") { %>
         <%- include('departments', { data: taskData }) %>
     <% } else if (section == "faculty") { %>
-        <%- include('faculty') %> 
+        <%- include('faculty', { data: taskData }) %> 
     <% } else if (section == "subjects") { %>
-        <%- include('subjects') %>
+        <%- include('subjects', { data: taskData }) %>
     <% } else if (section == "rooms") { %>
         <%- include('rooms') %>
     <% } %>
@@ -55,25 +55,17 @@
         $("div.nav-bar>a").addClass("btn btn-light rounded-0 px-1 w-100");
 
         //task side panel stuffss
-        $(`a.task[id=${openSection}]`).toggleClass("btn-secondary btn-light border-start border-4 border-primary").attr("href", null).hover((event) => {
-            let sidePanel = $(`div#${event.currentTarget.id}-view>div.side-panel`).show();
-            $(sidePanel).next("div").css("margin-left", "300px");
-        }, (event) => {
-            let sidePanel = $(`div#${event.currentTarget.id}-view>div.side-panel`).hide();
-            $(sidePanel).next("div").css("margin-left", "0");
-        });
-        const panel = $(`div#${openSection}-view>div.side-panel`).hover((event) => {
-            let sidePanel = $(event.currentTarget).show();
-            $(sidePanel).next("div").css("margin-left", "300px");
-        }, (event) => {
-            let sidePanel = $(event.currentTarget).hide();
-            $(sidePanel).next("div").css("margin-left", "0");
-        });
-        // console.log($(panel).find("ul.panel-menu > *.menu-item").is(".active"));
-        if (!$(panel).find("ul.panel-menu > *.menu-item").is(".active")) {
-            $(panel).show();
-            $(panel).next("div").css("margin-left", "300px");
-        }
+        $(`a.task[id=${openSection}]`)
+        .toggleClass("btn-secondary btn-light border-end border-4 border-primary")
+        .attr("href", null)
+        .hover(
+            (event) => $(`div#${event.currentTarget.id}-view>div.side-panel`).show(),
+            (event) => $(`div#${event.currentTarget.id}-view>div.side-panel`).hide()
+        );
+        $(`div#${openSection}-view>div.side-panel`).hover(
+            (event) => $(event.currentTarget).show(),
+            (event) => $(event.currentTarget).hide()
+        );
     </script>
 </body>
 
