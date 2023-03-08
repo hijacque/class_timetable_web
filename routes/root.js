@@ -74,4 +74,13 @@ router.get("/chair/:task?", verifySession, (req, res) => {
     }
 });
 
+router.get("/faculty/:task?", verifySession, (req, res) => {
+    const user = req.account;
+    if (user && user.type == "faculty") {
+        res.send("This is where faculty's dashboard will be hehe");
+    } else {
+        res.redirect("/login");
+    }
+});
+
 module.exports = router;
