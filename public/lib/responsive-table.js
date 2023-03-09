@@ -40,7 +40,7 @@ class ResponsiveTable {
             $(footer).append(
                 `<td class="add-row text-primary"><a role="button"><i class="fas fa-plus-circle fa-2x"></i></a></td>`
             );
-            this.#initMenuInputs($(footer));
+            this.initMenuInputs($(footer));
             this.editBtn = $(`button[data-cts-toggle='table'][data-cts-target='${this.#table}']`);
             this.saveBtn = $(`button[data-cts-dismiss='table'][data-cts-target='${this.#table}']`);
             $(this.saveBtn).hide();
@@ -110,14 +110,10 @@ class ResponsiveTable {
         $(this.deleteButtons).click((event) => $(event.currentTarget).closest("tr").trigger("row:delete"));
         $(this.confirmButtons).click((event) => $(event.currentTarget).closest("tr").trigger("row:confirm-change"));
         $(this.cancelButtons).click((event) => $(event.currentTarget).closest("tr").trigger("row:cancel-change"));
-
-        this.editBtn.click((event) => this.#openEditView(event.currentTarget));
-        this.saveBtn.click((event) => this.#closeEditView(event.currentTarget));
         callback();
     }
 
     async addData(data, asyncData = false) { }
-
 
     // so convoluted but it just creates a new row which can be from the gui or console
     addNewRow = (data) => new Promise((resolve, reject) => {
@@ -268,7 +264,7 @@ class ResponsiveTable {
             }
             $(columns[i]).empty().append(newInput);
         }
-        this.#initMenuInputs($(row));
+        this.initMenuInputs($(row));
     }
 
     #deleteRow(row) {
@@ -305,7 +301,10 @@ class ResponsiveTable {
                 }
             }
             if (validEdit) {
-                this.data[rowIndex] = updateData;
+                for (const data in updateData) {
+                    this.data[rowIndex][data] = updateData[data];
+                }
+                
                 for (let i = 0; i < rowInputs.length; i++) {
                     let newValue = updateData[rowInputs[i].id];
                     if ($(rowInputs[i]).attr("type") == "time") {
@@ -377,7 +376,7 @@ class ResponsiveTable {
         }
     }
 
-    #initMenuInputs(row) {
+    initMenuInputs(row) {
         // initialize dropdown menu inputs to show value when clicked
         let dropMenus = $(row).find("button.dropdown-toggle").get();
 
