@@ -1,21 +1,22 @@
 <div class="bg-light task-view" id="faculty-view">
     <div class="side-panel">
-        <div class="d-flex mx-4">
+        <div class="d-flex mx-4 justify-content-between mb-2">
             <h4>Departments</h4>
             <div>
                 <a type="button"><i class="fas fa-sort-alpha-up-alt"></i></a>
                 <a type="button"><i class="fas fa-search ms-2"></i></a>
             </div>
         </div>
-        <hr>
-        <div class="overflow-scroll">
+        <!-- <hr class="mb-0"> -->
+        <div class="panel-body">
             <% for (const college of data.colleges) { %>
-                <div class="expandable">
-                    <a type="button" class="expandable-title" id="<%= college.id %>" title="<%= college.name %>">
-                        <%= college.name %>
-                    </a>
-                    <% if (college.departments.length> 0) { %>
-                        <div class="expandable-body">
+                <a type="button" class="collapse-btn" title="<%= college.name %>" data-mdb-toggle="collapse"
+                    data-mdb-target="#<%= college.id %>-departments" aria-expanded="false">
+                    <text><%= college.name %></text>
+                </a>
+                <% if (college.departments.length > 0) { %>
+                    <div class="collapse" id="<%= college.id %>-departments">
+                        <div>
                             <ul class="list-group panel-menu">
                                 <% for (const department of college.departments) { %>
                                     <button type="button" class="list-group-item list-group-item-action menu-item"
@@ -24,102 +25,102 @@
                                             <%= department.name %>
                                         </p>
                                     </button>
-                                    <% } %>
+                                <% } %>
                             </ul>
                         </div>
-                        <% } else { %>
-                            <div class="panel-menu expandable-body px-3">No departments found</div>
-                            <% } %>
-                </div>
+                    </div>
+                <% } else { %>
+                    <div class="collapse" id="<%= college.id %>-departments">
+                        <p>No Departments</p>
+                    </div>
                 <% } %>
+            <% } %>
         </div>
     </div>
     <div class="shadow-3 bg-white px-5 pt-4">
-        <% if (data.colleges[0].departments.length> 0) { %>
-            <h2 style="color: #8673b4;" id="table-title"></h2>
-            <br>
-            <button class="btn btn-primary btn-rounded" data-cts-toggle="table" data-cts-target="#faculty-table">
-                <i class="fas fa-edit fa-lg me-2"></i>edit table</button>
-            <button class="btn btn-success btn-rounded" data-cts-dismiss="table" data-cts-target="#faculty-table"
-                aria-hidden="true">save changes</button>
-            <table class="table table-bordered table-sm fw-bold my-4 editable" id="faculty-table">
-                <thead class="text-center">
-                    <tr>
-                        <th class="data-title" style="width: 155px;">
-                            <a role="button">ID</a></i>
-                        </th>
-                        <th class="data-title" style="width: 140px;">
-                            <a role="button">Employment<br>Status</a></i>
-                        </th>
-                        <th class="data-title" style="width: 80px;">
-                            <a role="button">Teaching Load</a></i>
-                        </th>
-                        <th class="data-title">
-                            <a role="button">First Name</a></i>
-                        </th>
-                        <th class="data-title">
-                            <a role="button">Middle Name</a></i>
-                        </th>
-                        <th class="data-title">
-                            <a role="button">Surname</a></i>
-                        </th>
-                        <th class="data-title" style="width: 200px;">
-                            <a role="button">E-mail</a></i>
-                        </th>
-                        <th class="data-title" style="width: 150px;">
-                            <a role="button">Current Schedule</a></i>
-                        </th>
-                        <td class="edit-title">Action</td>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-                <tfoot>
-                    <tr class="add-data">
-                        <td><input id="faculty_id" type="text" class="form-control w-100 add-td-input unique" title="ID"></td>
-                        <td>
-                            <div class="dropdown">
-                                <button class="btn btn-secondary dropdown-toggle add-td-input" type="button"
-                                    id="status" data-mdb-toggle="dropdown" aria-expanded="false"
-                                    title="Status">Status</button>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" role="button">full-time</a></li>
-                                    <li><a class="dropdown-item" role="button">part-time</a></li>
-                                </ul>
-                            </div>
-                        </td>
-                        <td><input id="teach_load" type="number" title="Teaching Load" class="form-control w-100 add-td-input">
-                        </td>
-                        <td><input id="first_name" type="text" title="First Name" class="form-control w-100 add-td-input"
-                                placeholder="Juan">
-                        </td>
-                        <td><input id="middle_name" type="text" title="Middle Name" class="form-control w-100 add-td-input"
-                                placeholder="Antonio">
-                        </td>
-                        <td><input id="last_name" type="text" title="Last Name" class="form-control w-100 add-td-input"
-                                placeholder="Dela Cruz">
-                        </td>
-                        <td><input id="email" type="email" title="E-mail" class="form-control w-100 add-td-input unique"
-                                placeholder="jadelacruz@school.edu.ph">
-                        </td>
-                        <td class="constant" id="schedule">N/A</td>
-                    </tr>
-                </tfoot>
-            </table>
-            <% } %>
+        <h2 style="color: #8673b4;" id="table-title"></h2>
+        <br>
+        <button class="btn btn-primary btn-rounded" data-cts-toggle="table" data-cts-target="#faculty-table">
+            <i class="fas fa-edit fa-lg me-2"></i>edit table</button>
+        <button class="btn btn-success btn-rounded" data-cts-dismiss="table" data-cts-target="#faculty-table"
+            aria-hidden="true">save changes</button>
+        <table class="table table-bordered table-sm fw-bold my-4 editable" id="faculty-table">
+            <thead class="text-center">
+                <tr>
+                    <th class="data-title" style="width: 155px;">
+                        <a role="button">ID</a></i>
+                    </th>
+                    <th class="data-title" style="width: 140px;">
+                        <a role="button">Employment<br>Status</a></i>
+                    </th>
+                    <th class="data-title" style="width: 80px;">
+                        <a role="button">Teaching Load</a></i>
+                    </th>
+                    <th class="data-title">
+                        <a role="button">First Name</a></i>
+                    </th>
+                    <th class="data-title">
+                        <a role="button">Middle Name</a></i>
+                    </th>
+                    <th class="data-title">
+                        <a role="button">Surname</a></i>
+                    </th>
+                    <th class="data-title" style="width: 200px;">
+                        <a role="button">E-mail</a></i>
+                    </th>
+                    <th class="data-title" style="width: 150px;">
+                        <a role="button">Current Schedule</a></i>
+                    </th>
+                    <td class="edit-title">Action</td>
+                </tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot>
+                <tr class="add-data">
+                    <td><input id="faculty_id" type="text" class="form-control w-100 add-td-input unique" title="ID">
+                    </td>
+                    <td>
+                        <div class="dropdown">
+                            <button class="btn btn-secondary dropdown-toggle add-td-input" type="button" id="status"
+                                data-mdb-toggle="dropdown" aria-expanded="false" title="Status">Status</button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" role="button">full-time</a></li>
+                                <li><a class="dropdown-item" role="button">part-time</a></li>
+                            </ul>
+                        </div>
+                    </td>
+                    <td><input id="teach_load" type="number" title="Teaching Load"
+                            class="form-control w-100 add-td-input">
+                    </td>
+                    <td><input id="first_name" type="text" title="First Name" class="form-control w-100 add-td-input"
+                            placeholder="Juan">
+                    </td>
+                    <td><input id="middle_name" type="text" title="Middle Name" class="form-control w-100 add-td-input"
+                            placeholder="Antonio">
+                    </td>
+                    <td><input id="last_name" type="text" title="Last Name" class="form-control w-100 add-td-input"
+                            placeholder="Dela Cruz">
+                    </td>
+                    <td><input id="email" type="email" title="E-mail" class="form-control w-100 add-td-input unique"
+                            placeholder="jadelacruz@school.edu.ph">
+                    </td>
+                    <td class="constant" id="schedule">N/A</td>
+                </tr>
+            </tfoot>
+        </table>
     </div>
 </div>
 <script src="/lib/expandable.js"></script>
 <script src="/lib/responsive-table.js"></script>
 <script>
-    const getFaculty = (departmentID) => {
-        return new Promise((resolve, reject) => {
-            $.get("http://localhost:3000/api/faculty/" + departmentID,
-                (data, status) => {
-                    resolve(data.faculty);
-                }, "json"
-            ).fail((data) => reject(data));
-        });
-    }
+    const getFaculty = (departmentID) => new Promise((resolve, reject) => {
+        $.get("http://localhost:3000/api/faculty/" + departmentID,
+            (data, status) => {
+                resolve(data.faculty);
+            }, "json"
+        ).fail((data) => reject(data));
+    });
+
 
     const addFaculty = (departmentID, facultyData) => $.post(
         "http://localhost:3000/api/faculty/" + departmentID, facultyData,
@@ -130,15 +131,19 @@
 
     const departments = $(".panel-menu > .menu-item").get();
     let openDepartment = departments[0];
+    $(openDepartment).closest(".collapse").addClass("show");
     $(openDepartment).addClass("active");
     let deptTitle = $("#table-title").text(`Department of ` + $(openDepartment).attr("title"));
 
     const facultyTable = new ResponsiveTable("#faculty-table");
-    facultyTable.initData(getFaculty(openDepartment.id), true);
-
-    if (facultyTable.data.length < 1) {
-        $("#table-title").after("<small class='text-info d-block' id='chair-note'>* The first faculty entry will be automatically assigned as the chairperson *</small>");
-    }
+    facultyTable.initData(getFaculty(openDepartment.id), true, () => {
+        if (facultyTable.data.length < 1) {
+            $("#table-title").after(
+                "<small class='text-muted d-block' id='chair-note'>* The first faculty entry will be " +
+                "automatically assigned as the chairperson *</small>"
+            );
+        }
+    });
 
     $("button.menu-item").click((event) => {
         let activeItem = event.currentTarget;
@@ -147,7 +152,14 @@
             $(".side-panel").hide();
             $("button.menu-item.active").removeClass("active");
             $(activeItem).addClass("active");
-            facultyTable.initData(getFaculty(activeItem.id), true);
+            facultyTable.initData(getFaculty(activeItem.id), true, () => {
+                if (facultyTable.data.length < 1) {
+                    $("#table-title").after(
+                        "<small class='text-muted d-block' id='chair-note'>* The first faculty entry will be " +
+                        "automatically assigned as the chairperson *</small>"
+                    );
+                }
+            });
             $(deptTitle).text(`Department of ` + activeItem.title);
         }
     });
@@ -155,15 +167,12 @@
     $(facultyTable.addBtn).click(async (event) => {
         try {
             let addedData = await $(event.currentTarget).data("newRow");
-            // console.log(addedData);
             if (addedData) { addFaculty(openDepartment.id, addedData); }
-            $("#chair-note").hide();
         } catch (error) {
             $(`${facultyTable.body}:last-child`).remove();
             facultyTable.data.pop();
-            $("#chair-note").show();
         }
-        if ($("#chair-note").is(":hidden")) {
+        if (facultyTable.data.length > 0) {
             $("#chair-note").remove();
         }
         $(event.currentTarget).removeData("newRow");
