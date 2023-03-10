@@ -1,3 +1,142 @@
-<div class="shadow-4-strong text-start px-4 bg-light">
-    Rooms Page
+<div class="bg-light task-view" id="rooms-view">
+    <div class="side-panel">
+        <div class="panel-header mx-4">
+            <div class="d-flex justify-content-between">
+                <h4>Buildings</h4>
+                <div>
+                    <a type="button"><i class="fas fa-sort-alpha-up-alt"></i></a>
+                    <a type="button"><i class="fas fa-search ms-2"></i></a>
+                </div>
+            </div>
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="New College" aria-describedby="add-building">
+                <a type="button" class="input-group-text" id="add-building">
+                    <i class="fas fa-plus text-primary"></i>
+                </a>
+            </div>
+        </div>
+        <hr>
+        <div class="mx-3 panel-body">
+            <% if (data.buildings.length> 0) { %>
+                <ul class="list-group panel-menu">
+                    <% for (const building of data.buildings) { %>
+                        <button type="button" class="list-group-item list-group-item-action menu-item"
+                            title="<%= building.name %>" id="<%= building.id %>">
+                            <p class="text-truncate m-0">
+                                <%= building.name %>
+                            </p>
+                        </button>
+                        <% } %>
+                </ul>
+                <% } else { %>
+                    <p class="text-muted text-center">No Buildings</p>
+                    <% } %>
+        </div>
+    </div>
+    <div class="shadow-3 bg-white px-5 pt-4">
+        <% if (data.buildings.length> 0) { %>
+            <h2 style="color: #8673b4;" class="table-title"></h2>
+            <br>
+            <button class="btn btn-primary btn-rounded" data-cts-toggle="table" data-cts-target="#rooms-table">
+                <i class="fas fa-edit fa-lg me-2"></i>edit table</button>
+            <button class="btn btn-success btn-rounded" data-cts-dismiss="table" data-cts-target="#rooms-table"
+                aria-hidden="true">save changes</button>
+            <table class="table table-bordered table-sm fw-bold my-4 editable" id="rooms-table">
+                <thead class="text-center">
+                    <tr>
+                        <th class="data-title">Name</th>
+                        <th class="data-title" style="width: 100px;">Level</th>
+                        <th class="data-title" style="width: 100px;">Capacity</th>
+                        <td class="edit-title">Action</td>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+                <tfoot>
+                    <tr class="add-data">
+                        <td>
+                            <input id="name" type="text" class="form-control w-100 add-td-input unique reuse">
+                        </td>
+                        <td>
+                            <input id="level" type="number" class="form-control w-100 add-td-input reuse">
+                        </td>
+                        <td>
+                            <input id="capacity" type="number" class="form-control w-100 add-td-input">
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+            <% } else { %>
+                Show some default "No Data" message
+                <% } %>
+    </div>
 </div>
+<script src="/lib/responsive-table.js"></script>
+<script>
+    const getRooms = (bldgID) => new Promise((resolve, reject) => {
+        $.get("http://localhost:3000/api/rooms/" + bldgID,
+            (data, status) => {
+                resolve(data.rooms);
+            }, "json"
+        ).fail((data) => reject(data));
+    });
+
+    const addRoom = (bldgID, roomData) => $.post(
+        "http://localhost:3000/api/rooms/" + bldgID, roomData,
+        (data, status) => {
+            console.log(data);
+        }, "json"
+    );
+
+    const addBuilding = (name) => $.post(
+        "http://localhost:3000/api/buildings/", { name: name },
+        (data, status) => {
+            console.log(data);
+        }, "json"
+    );
+
+    const buildings = $(".panel-menu>button.menu-item");
+    // initialize responsive Rooms table
+    const roomsTable = new ResponsiveTable("#rooms-table");
+    let bldgTitle = $(".table-title");
+    if (buildings.length > 0) {
+        let openBuilding = buildings.get(0);
+        $(openBuilding).addClass("active");
+        roomsTable.initData(getRooms(openBuilding.id), true);
+        $(bldgTitle).text("Rooms in " + openBuilding.title);
+
+        // retrieves the rooms from the chosen building
+        $("button.menu-item").click((event) => {
+            let activeItem = event.currentTarget;
+            if (!$(activeItem).hasClass("active")) {
+                openBuilding = activeItem;
+                $(".side-panel").hide();
+                $("button.menu-item.active").removeClass("active");
+                $(activeItem).addClass("active");
+                roomsTable.initData(getRooms(activeItem.id), true);
+                $(bldgTitle).text("Rooms in " + activeItem.title);
+            }
+        });
+
+        $(roomsTable.addBtn).click(async (event) => {
+            try {
+                let addedData = await $(event.currentTarget).data("newRow");
+                if (addedData) { addRoom(openBuilding.id, addedData); }
+            } catch (error) {
+                $(`${roomsTable.body}:last-child`).remove();
+                roomsTable.data.pop();
+            }
+
+            $(event.currentTarget).removeData("newRow");
+        });
+    }
+
+    $("#add-building").click((event) => {
+        let bldgInput = $(event.currentTarget).siblings("input").get(0);
+        try {
+            addBuilding(bldgInput.value);
+            location.reload();
+        } catch (error) {
+            console.log(error);
+        }
+    });
+</script>

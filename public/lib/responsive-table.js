@@ -48,6 +48,8 @@ class ResponsiveTable {
             this.addBtn = $(`${footer}>td.add-row>a`).click(() => {
                 $(this.addBtn).data("newRow", this.addNewRow());
             });
+            this.editBtn.click((event) => this.#openEditView(event.currentTarget));
+            this.saveBtn.click((event) => this.#closeEditView(event.currentTarget));
             this.#isEditing = false;
         }
     }

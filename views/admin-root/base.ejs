@@ -44,7 +44,7 @@
     <% } else if (section == "subjects") { %>
         <%- include('subjects', { data: taskData }) %>
     <% } else if (section == "rooms") { %>
-        <%- include('rooms') %>
+        <%- include('rooms', { data: taskData }) %>
     <% } %>
 
     <!-- MDB -->
@@ -62,7 +62,7 @@
             (event) => $(`div#${event.currentTarget.id}-view>div.side-panel`).show(),
             (event) => $(`div#${event.currentTarget.id}-view>div.side-panel`).hide()
         );
-        $(`div#${openSection}-view>div.side-panel`).hover(
+        $(`div#${openSection}-view>div.side-panel`).show().hover(
             (event) => $(event.currentTarget).show(),
             (event) => $(event.currentTarget).hide()
         );

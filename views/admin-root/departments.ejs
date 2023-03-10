@@ -82,7 +82,6 @@
             // to choose the chairperson
             $(`${departmentsTable.body}>tr`).on("row:edit", async (event) => {
                 let deptID = departmentsTable.data[$(event.currentTarget).index()]["id"];
-                console.log(deptID);
                 let faculty = await getFaculty(deptID, ["faculty_id", "last_name", "first_name", "middle_name"]);
 
                 let chairColumn = $(event.currentTarget).children().get(1);
@@ -118,7 +117,7 @@
             });
         });
 
-        $(collegeTitle).text($(openCollege).text());
+        $(collegeTitle).text("Departments in " + $(openCollege).text());
         // retrieves departments from the open college
         $("button.menu-item").click((event) => {
             let activeItem = event.currentTarget;
@@ -128,7 +127,7 @@
                 $("button.menu-item.active").removeClass("active");
                 $(activeItem).addClass("active");
                 departmentsTable.initData(getDepartments(activeItem.id), true);
-                $(collegeTitle).text(activeItem.title);
+                $(collegeTitle).text("Departments in " + activeItem.title);
             }
         });
 
@@ -146,6 +145,11 @@
 
     $("#add-college").click((event) => {
         let collegeInput = $(event.currentTarget).siblings("input").get(0);
-        addCollege(collegeInput.value);
+        try {
+            addCollege(collegeInput.value);
+            location.reload();
+        } catch (error) {
+            console.log(error);
+        }
     });
 </script>

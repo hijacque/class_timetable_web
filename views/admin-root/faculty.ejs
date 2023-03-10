@@ -12,9 +12,11 @@
             <% for (const college of data.colleges) { %>
                 <a type="button" class="collapse-btn" title="<%= college.name %>" data-mdb-toggle="collapse"
                     data-mdb-target="#<%= college.id %>-departments" aria-expanded="false">
-                    <text><%= college.name %></text>
+                    <i class="fas fa-caret-down me-2"></i><text>
+                        <%= college.name %>
+                    </text>
                 </a>
-                <% if (college.departments.length > 0) { %>
+                <% if (college.departments.length> 0) { %>
                     <div class="collapse" id="<%= college.id %>-departments">
                         <div>
                             <ul class="list-group panel-menu">
@@ -25,16 +27,16 @@
                                             <%= department.name %>
                                         </p>
                                     </button>
-                                <% } %>
+                                    <% } %>
                             </ul>
                         </div>
                     </div>
-                <% } else { %>
-                    <div class="collapse" id="<%= college.id %>-departments">
-                        <p>No Departments</p>
-                    </div>
-                <% } %>
-            <% } %>
+                    <% } else { %>
+                        <div class="collapse" id="<%= college.id %>-departments">
+                            <p>No Departments</p>
+                        </div>
+                        <% } %>
+                            <% } %>
         </div>
     </div>
     <div class="shadow-3 bg-white px-5 pt-4">
@@ -110,7 +112,6 @@
         </table>
     </div>
 </div>
-<script src="/lib/expandable.js"></script>
 <script src="/lib/responsive-table.js"></script>
 <script>
     const getFaculty = (departmentID) => new Promise((resolve, reject) => {
@@ -130,51 +131,54 @@
     );
 
     const departments = $(".panel-menu > .menu-item").get();
-    let openDepartment = departments[0];
-    $(openDepartment).closest(".collapse").addClass("show");
-    $(openDepartment).addClass("active");
-    let deptTitle = $("#table-title").text(`Department of ` + $(openDepartment).attr("title"));
+    let deptTitle = $("#table-title");
+    if (departments.length > 0) {
+        let openDepartment = departments[0];
+        $(openDepartment).closest(".collapse").addClass("show");
+        $(openDepartment).addClass("active");
+        $(deptTitle).text(`Faculty in Department of ` + $(openDepartment).attr("title"))
 
-    const facultyTable = new ResponsiveTable("#faculty-table");
-    facultyTable.initData(getFaculty(openDepartment.id), true, () => {
-        if (facultyTable.data.length < 1) {
-            $("#table-title").after(
-                "<small class='text-muted d-block' id='chair-note'>* The first faculty entry will be " +
-                "automatically assigned as the chairperson *</small>"
-            );
-        }
-    });
+        const facultyTable = new ResponsiveTable("#faculty-table");
+        facultyTable.initData(getFaculty(openDepartment.id), true, () => {
+            if (facultyTable.data.length < 1) {
+                $("#table-title").after(
+                    "<small class='text-muted d-block' id='chair-note'>* The first faculty entry will be " +
+                    "automatically assigned as the chairperson *</small>"
+                );
+            }
+        });
 
-    $("button.menu-item").click((event) => {
-        let activeItem = event.currentTarget;
-        if (!$(activeItem).hasClass("active")) {
-            openDepartment = activeItem;
-            $(".side-panel").hide();
-            $("button.menu-item.active").removeClass("active");
-            $(activeItem).addClass("active");
-            facultyTable.initData(getFaculty(activeItem.id), true, () => {
-                if (facultyTable.data.length < 1) {
-                    $("#table-title").after(
-                        "<small class='text-muted d-block' id='chair-note'>* The first faculty entry will be " +
-                        "automatically assigned as the chairperson *</small>"
-                    );
-                }
-            });
-            $(deptTitle).text(`Department of ` + activeItem.title);
-        }
-    });
+        $("button.menu-item").click((event) => {
+            let activeItem = event.currentTarget;
+            if (!$(activeItem).hasClass("active")) {
+                openDepartment = activeItem;
+                $(".side-panel").hide();
+                $("button.menu-item.active").removeClass("active");
+                $(activeItem).addClass("active");
+                facultyTable.initData(getFaculty(activeItem.id), true, () => {
+                    if (facultyTable.data.length < 1) {
+                        $("#table-title").after(
+                            "<small class='text-muted d-block' id='chair-note'>* The first faculty entry will be " +
+                            "automatically assigned as the chairperson *</small>"
+                        );
+                    }
+                });
+                $(deptTitle).text(`Faculty in Department of ` + activeItem.title);
+            }
+        });
 
-    $(facultyTable.addBtn).click(async (event) => {
-        try {
-            let addedData = await $(event.currentTarget).data("newRow");
-            if (addedData) { addFaculty(openDepartment.id, addedData); }
-        } catch (error) {
-            $(`${facultyTable.body}:last-child`).remove();
-            facultyTable.data.pop();
-        }
-        if (facultyTable.data.length > 0) {
-            $("#chair-note").remove();
-        }
-        $(event.currentTarget).removeData("newRow");
-    });
+        $(facultyTable.addBtn).click(async (event) => {
+            try {
+                let addedData = await $(event.currentTarget).data("newRow");
+                if (addedData) { addFaculty(openDepartment.id, addedData); }
+            } catch (error) {
+                $(`${facultyTable.body}:last-child`).remove();
+                facultyTable.data.pop();
+            }
+            if (facultyTable.data.length > 0) {
+                $("#chair-note").remove();
+            }
+            $(event.currentTarget).removeData("newRow");
+        });
+    }
 </script>
