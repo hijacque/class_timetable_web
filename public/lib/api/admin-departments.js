@@ -40,12 +40,10 @@ const addCollege = (name) => $.post(
     "text json"
 );
 
-const updateChair = (deptID, chairperson) => {
-    $.post(
-        "http://localhost:3000/api/colleges/" + deptID, { chair: chairperson },
-        (data, status) => {
-            console.log(data);
-        },
-        "text json"
-    );
-}
+const updateChair = (deptID, chairperson) => $.post(
+    "http://localhost:3000/api/chairperson/" + deptID, { chair: chairperson },
+    (data, status) => {
+        console.log(data);
+    },
+    "text json"
+);
