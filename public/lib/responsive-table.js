@@ -15,7 +15,6 @@ class ResponsiveTable {
     #footer;
     #editOptions;
     #changeOptions;
-    #isEditing;
     #alertModal;
 
     addBtn; // for adding new row
@@ -41,22 +40,35 @@ class ResponsiveTable {
                 `<td class="add-row text-primary"><a role="button"><i class="fas fa-plus-circle fa-2x"></i></a></td>`
             );
             this.initMenuInputs($(footer));
-            this.editBtn = $(`button[data-cts-toggle='table'][data-cts-target='${this.#table}']`);
-            this.saveBtn = $(`button[data-cts-dismiss='table'][data-cts-target='${this.#table}']`);
+            this.editBtn = $(`[data-cts-toggle='table'][data-cts-target='${this.#table}']`).get(0);
+            this.saveBtn = $(`[data-cts-dismiss='table'][data-cts-target='${this.#table}']`).get(0);
             $(this.saveBtn).hide();
 
             this.addBtn = $(`${footer}>td.add-row>a`).click(() => {
                 $(this.addBtn).data("newRow", this.addNewRow());
             });
-            this.editBtn.click((event) => this.#openEditView(event.currentTarget));
-            this.saveBtn.click((event) => this.#closeEditView(event.currentTarget));
-            this.#isEditing = false;
+
+            if (this.editBtn || this.saveBtn) {
+                $(this.editBtn).click((event) => this.#openEditView(event.currentTarget));
+                $(this.saveBtn).click((event) => this.#closeEditView(event.currentTarget));
+            } else {
+                this.#openEditView();
+            }
+            this.#editOptions = `${this.#table}>tbody>tr>td.edit-action> div.edit-options`;
+            this.#changeOptions = `${this.#table}>tbody>tr>td.edit-action> div.confirm-options`;
+            this.editButtons = `${this.#editOptions}>a.edit`;
+            this.deleteButtons = `${this.#editOptions}>a.delete`;
+            this.confirmButtons = `${this.#changeOptions}>a.confirm`;
+            this.cancelButtons = `${this.#changeOptions}>a.cancel`;
+
+            this.data = [];
         }
+
+        $(`${id}>thead>tr>th.data-title`).click((event) => this.#sortTable(event.currentTarget));
     }
 
-    async initData(data = [], asyncData = false, callback = function(){}) {
+    async initData(data = [], asyncData = false, callback = function () { }) {
         $(`${this.#table}>tbody`).empty();
-        this.data = [];
         if (asyncData) { data = await data; }
         if (data.length == 0) {
             const headers = $(this.#table).find("th.data-title").get();
@@ -65,7 +77,7 @@ class ResponsiveTable {
             );
         } else {
             this.data = data;
-            const addInputs = $(this.#footer).find(".constant, .add-td-input").get();
+            const addInputs = $(this.#footer).find(".add-td-input").get();
             for (const row of data) {
                 let newRow = $("<tr></tr>");
                 for (let i = 0; i < addInputs.length; i++) {
@@ -93,14 +105,7 @@ class ResponsiveTable {
         }
         $(this.#table).find("td.edit-title, td.edit-action").addClass("text-primary").hide();
 
-        this.#editOptions = `${this.#table}>tbody>tr>td.edit-action> div.edit-options`;
-        this.#changeOptions = `${this.#table}>tbody>tr>td.edit-action> div.confirm-options`;
         $(this.#changeOptions).hide();
-
-        this.editButtons = `${this.#editOptions}>a.edit`;
-        this.deleteButtons = `${this.#editOptions}>a.delete`;
-        this.confirmButtons = `${this.#changeOptions}>a.confirm`;
-        this.cancelButtons = `${this.#changeOptions}>a.cancel`;
 
         $(`${this.body}>tr`)
             .on("row:edit", (event) => this.#editRow(event.currentTarget))
@@ -115,44 +120,46 @@ class ResponsiveTable {
         callback();
     }
 
-    async addData(data, asyncData = false) { }
-
     // so convoluted but it just creates a new row which can be from the gui or console
     addNewRow = (data) => new Promise((resolve, reject) => {
         let newData = data || {};
-        const addInputs = $(this.#footer).find(".constant, .add-td-input").get();
+        const addInputs = $(this.#footer).find(".add-td-input").get();
 
         if (jQuery.isEmptyObject(newData)) {
             for (let i = 0; i < addInputs.length; i++) {
-                if ($(addInputs[i]).hasClass("constant")) {
-                    continue;
-                }
-
                 let value = addInputs[i].value || $(addInputs[i]).text();
                 let title = $(addInputs[i]).attr("title");
                 const key = addInputs[i].id;
-                if (value == "") {
-                    this.#showTableAlert(`You left ${title} column blank.`);
+                
+                if ($(addInputs[i]).hasClass("optional") && (value == "" || title == value)) {
+                    value = null;
+                } else if (value == "") {
+                    this.#showTableAlert(`You left <b>${title}</b> column blank.`);
                     return reject(`input is required in ${title} column`);
                 } else if (title == value) {
-                    this.#showTableAlert(`Pick from the menu in ${title} column.`);
+                    this.#showTableAlert(`Pick from the menu in <b>${title}</b> column.`);
                     return reject(`choose an item from menu in ${title} column`);
                 } else if ($(addInputs[i]).hasClass("unique")) {
                     for (let j = 0; j < this.data.length; j++) {
-                        if (this.data[j][key].includes(value)) {
+                        if (this.data[j][key] == value) {
                             this.#showTableAlert(`New data must be unique, change ${title} column`);
                             return reject(`new data must be unique`);
                         }
                     }
+                } else if (addInputs[i].type && addInputs[i].type == "number") {
+                    value = value.includes(".") ? parseFloat(value) : parseInt(value)
                 }
+
                 newData[key] = value;
+                console.log(value);
             }
         } else {
             for (let i = 0; i < addInputs.length; i++) {
                 let title = $(addInputs[i]).attr("title");
                 let key = addInputs[i].id;
                 let value = newData[key];
-                if (value == "") {
+
+                if ($(addInputs[i]).hasClass("optional") && value == "") {
                     return reject(`"${title}" property is blank`);
                 } else if ($(addInputs[i]).hasClass("dropdown-toggle")) {
                     const menuItem = $(addInputs[i]).next().find(`a.dropdown-item:not(*[data-cts-reset]):contains("${value}")`);
@@ -171,16 +178,19 @@ class ResponsiveTable {
 
         this.data.push(newData);
         resolve(newData);
-        $(addInputs).val(null).trigger("menu:reset");
+        $(addInputs).not(".reuse").val(null).trigger("menu:reset");
 
         let newRow = $("<tr></tr>");
         for (let i = 0; i < addInputs.length; i++) {
-            if (addInputs[i].type == "time") {
-                $(newRow).append(`<td>${this.#formatTime(newData[addInputs[i].id])}</td>`);
-            } else if ($(addInputs[i]).hasClass("add-td-input")) {
-                $(newRow).append(`<td>${newData[addInputs[i].id]}</td>`);
+            let key = addInputs[i].id;
+            if (!$(addInputs[i]).hasClass("add-td-input")) {
+                $(newRow).append("<td></td>");
+            } else if (addInputs[i].type == "time") {
+                $(newRow).append(`<td>${this.#formatTime(newData[key])}</td>`);
+            } else if ($(addInputs[i]).hasClass("optional") && !newData[key]) {
+                $(newRow).append("<td></td>");
             } else {
-                $(newRow).append("<td>*</td>");
+                $(newRow).append(`<td>${newData[addInputs[i].id]}</td>`);
             }
         }
         $(newRow).append(
@@ -191,12 +201,9 @@ class ResponsiveTable {
             "<i class='fas fa-check-circle fa-lg'></i></a>" +
             "<a class='cancel' role='button'><i class='fas fa-times-circle fa-lg'></i></a></td>"
         );
-        if (!this.#isEditing) {
-            $(newRow).find("td.edit-action").hide();
-        }
+
         const confirmOptions = $(newRow).find("div.confirm-options").hide();
         $(this.body).append(newRow);
-        $(`${this.body}>tr.no-data`).remove();
 
         $(newRow)
             .on("row:edit", (event) => this.#editRow(event.currentTarget))
@@ -210,7 +217,6 @@ class ResponsiveTable {
     });
 
     #openEditView(editBtn) {
-        this.#isEditing = true;
         $(this.#footer).show();
         $(editBtn).prop("disabled", true).hide();
         $(this.saveBtn).prop("disabled", false).show();
@@ -219,7 +225,6 @@ class ResponsiveTable {
     }
 
     #closeEditView(saveBtn) {
-        this.#isEditing = false;
         const action = $(`${this.#table}>thead>tr>.edit-title`).text();
         if (action != "Action") {
             $(`${this.#table}>tbody>tr>td>div.confirm-options:visible`).closest("tr").trigger("row:cancel-change");
@@ -245,27 +250,28 @@ class ResponsiveTable {
         $(this.#editOptions).hide();
         const title = $(`${this.#table}>thead>tr>td.edit-title`);
         $(`${this.#table}>tbody>tr`).not(row).addClass("text-muted").css("background-color", "#F5F5F5");
-        const columns = $(row).find("td").get();
-        $(row).addClass("text-center align-middle");
 
-        $(columns).find("div.confirm-options").show();
+        $(row).addClass("text-center align-middle");
+        $(row).find("div.confirm-options").show();
         $(title).text("Edit");
         $(this.#footer).find("td.add-row>a").prop("disabled", true).hide();
+        const rowIndex = $(row).index();
 
+        const columns = $(row).find("td").get();
         const inputs = $(this.#footer).find(".add-td-input").get();
-        $(inputs).prop("disabled", true);
         for (let i = 0; i < inputs.length; i++) {
             let newInput = inputs[i];
+            let value = this.data[rowIndex][newInput.id];
             if ($(newInput).hasClass("dropdown-toggle")) {
                 const menuList = $(inputs[i]).closest("div.dropdown").clone();
-                $(menuList).find("button.dropdown-toggle").text($(columns[i]).text()).prop("disabled", false).toggleClass("add-td-input td-input");
+                $(menuList).find("button.dropdown-toggle").text(value).toggleClass("add-td-input td-input");
                 newInput = menuList;
             } else {
-                newInput = $(newInput).clone().prop("disabled", false).toggleClass("add-td-input td-input");
-                $(newInput).val($(columns[i]).text());
+                newInput = $(newInput).clone().toggleClass("add-td-input td-input").val(value);
             }
             $(columns[i]).empty().append(newInput);
         }
+        $(inputs).prop("disabled", true);
         this.initMenuInputs($(row));
     }
 
@@ -306,7 +312,7 @@ class ResponsiveTable {
                 for (const data in updateData) {
                     this.data[rowIndex][data] = updateData[data];
                 }
-                
+
                 for (let i = 0; i < rowInputs.length; i++) {
                     let newValue = updateData[rowInputs[i].id];
                     if ($(rowInputs[i]).attr("type") == "time") {
@@ -373,7 +379,7 @@ class ResponsiveTable {
         if (!this.#alertModal) {
             window.alert(message);
         } else {
-            $("#table-alert-title").text(message);
+            $("#table-alert-title").html(message);
             this.#alertModal.show();
         }
     }
@@ -410,6 +416,44 @@ class ResponsiveTable {
             return (seconds != null) ? `${hour}:${minutes}:${seconds} AM` : `${hour}:${minutes} AM`;
         } else {
             return (seconds != null) ? `${hour - 12}:${minutes}:${seconds} PM` : `${hour - 12}:${minutes} PM`;
+        }
+    }
+
+    #sortTable(baseColumn) {
+        const columnTitle = baseColumn.textContent;
+        const order = baseColumn.title.includes("ASC") ? 1 : baseColumn.title.includes("DESC") ? 0 : 2;
+        let colIndex = $(`${this.#footer} > td`).has(`[title='${columnTitle}']`).index();
+
+        if (colIndex < 0) {
+            this.#showTableAlert(`Could not sort <b>${columnTitle}</b> column.`);
+            return;
+        }
+
+        const baseColRows = $(`${this.body} > tr > td:nth-child(${colIndex + 1})`).get();
+
+        let inputType = $(`${this.#footer}`).find(".add-td-input").get(colIndex).type;
+        baseColRows.sort((a, b) => {
+            let prev = a.textContent || "";
+            let next = b.textContent || "";
+            if (inputType === "number") {
+                prev = (prev.includes(".")) ? parseFloat(prev) : parseInt(prev) || 0;
+                next = (next.includes(".")) ? parseFloat(next) : parseInt(next) || 0;
+                if (order > 0) {
+                    return next - prev;
+                } else {
+                    return prev - next;
+                }
+            } else {
+                if (order > 0) {
+                    return next.localeCompare(prev);
+                } else {
+                    return prev.localeCompare(next);
+                }
+            }
+        });
+        for (let i = 0; i < baseColRows.length; i++) {
+            let row = $(baseColRows[i]).closest("tr");
+            $(this.body).prepend(row);
         }
     }
 }

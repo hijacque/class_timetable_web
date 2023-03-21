@@ -100,13 +100,27 @@ textarea {
     background-color: #8673b4;
 }
 
-th.data-title>i {
-    display: none;
+th.data-title {
+    cursor: pointer;
+    font-weight: bold
 }
 
-th.data-title>a:hover+i {
-    display: inline;
-    animation: 2s;
+td.edit-title { 
+    width: 95px;
+    text-align: center;
+    font-weight: bold;
+}
+
+td.edit-action {
+    width: 85px;
+    padding-left: 16px;
+    padding-right: 16px;
+    vertical-align: middle;
+}
+
+td.edit-action>div {
+    display: flex;
+    justify-content: space-between;
 }
 
 .dashboard {
@@ -151,6 +165,7 @@ th.data-title>a:hover+i {
     left: 0;
     height: 100%;
     padding: 24px 0;
+    z-index: 1;
 }
 
 .side-panel>.panel-body {
@@ -180,6 +195,7 @@ a.collapse-btn {
     width: 100%;
     display: grid;
     grid-template-columns: 70px 1fr;
+    border-top: 1px solid black;
     /* grid-template-areas:
         'none day day day day day day day'
         'time sched sched sched sched sched sched sched'; */
@@ -253,4 +269,10 @@ div.sched-body > div.sched-block {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.stack-list > * {
+    display: inline;
+    margin-right: 8px;
+    margin-top: 8px;
 }

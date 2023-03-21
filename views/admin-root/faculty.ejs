@@ -49,38 +49,21 @@
         <table class="table table-bordered table-sm fw-bold my-4 editable" id="faculty-table">
             <thead class="text-center">
                 <tr>
-                    <th class="data-title" style="width: 155px;">
-                        <a role="button">ID</a></i>
-                    </th>
-                    <th class="data-title" style="width: 140px;">
-                        <a role="button">Employment<br>Status</a></i>
-                    </th>
-                    <th class="data-title" style="width: 80px;">
-                        <a role="button">Teaching Load</a></i>
-                    </th>
-                    <th class="data-title">
-                        <a role="button">First Name</a></i>
-                    </th>
-                    <th class="data-title">
-                        <a role="button">Middle Name</a></i>
-                    </th>
-                    <th class="data-title">
-                        <a role="button">Surname</a></i>
-                    </th>
-                    <th class="data-title" style="width: 200px;">
-                        <a role="button">E-mail</a></i>
-                    </th>
-                    <th class="data-title" style="width: 150px;">
-                        <a role="button">Current Schedule</a></i>
-                    </th>
+                    <th class="data-title" style="width: 155px;">ID</th>
+                    <th class="data-title" style="width: 140px;">Employment Status</th>
+                    <th class="data-title" style="width: 80px;">Teaching Load</th>
+                    <th class="data-title">First Name</th>
+                    <th class="data-title">Middle Name</th>
+                    <th class="data-title">Surname</th>
+                    <th class="data-title" style="width: 200px;">E-mail</th>
+                    <th class="data-title" style="width: 150px;">Current Schedule</th>
                     <td class="edit-title">Action</td>
                 </tr>
             </thead>
             <tbody></tbody>
             <tfoot>
                 <tr class="add-data">
-                    <td><input id="faculty_id" type="text" class="form-control w-100 add-td-input unique" title="ID">
-                    </td>
+                    <td><input id="faculty_id" type="text" class="form-control w-100 add-td-input unique" title="ID"></td>
                     <td>
                         <div class="dropdown">
                             <button class="btn btn-secondary dropdown-toggle add-td-input" type="button" id="status"
@@ -106,7 +89,7 @@
                     <td><input id="email" type="email" title="E-mail" class="form-control w-100 add-td-input unique"
                             placeholder="jadelacruz@school.edu.ph">
                     </td>
-                    <td class="constant" id="schedule">N/A</td>
+                    <td class="add-td-input optional" id="schedule" title="Current Schedule"></td>
                 </tr>
             </tfoot>
         </table>

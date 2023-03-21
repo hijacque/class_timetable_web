@@ -44,9 +44,9 @@
             <table class="table table-bordered table-sm fw-bold my-4 editable" id="departments-table">
                 <thead class="text-center">
                     <tr>
-                        <th class="data-title">Department</th>
-                        <th class="data-title">Chairperson</th>
-                        <th class="data-title" style="width: 50%;">Recent Activity</th>
+                        <th class="data-title" style="width: 300px;">Department</th>
+                        <th class="data-title" style="width: 400px;">Chairperson</th>
+                        <th class="data-title">Recent Activity</th>
                         <td class="edit-title">Action</td>
                     </tr>
                 </thead>
@@ -57,10 +57,12 @@
                             <input id="department" type="text" class="form-control w-100 add-td-input unique"
                                 title="Department">
                         </td>
-                        <td class="constant" id="chairperson">
-                            N/A
+                        <td>
+                            <label class="add-td-input optional" id="chairperson" title="Chairperson"></label>
                         </td>
-                        <td class="constant" id="activity">N/A</td>
+                        <td>
+                            <label class="add-td-input optional" id="activity" title="Recent Activity"></label>
+                        </td>
                     </tr>
                 </tfoot>
             </table>
@@ -70,53 +72,54 @@
 <script src="/lib/responsive-table.js"></script>
 <script src="/lib/api/admin-departments.js"></script>
 <script>
+    const initChairUpdate = () => {
+        $(`${departmentsTable.body}>tr`).on("row:edit", async (event) => {
+            let chairColumn = $(event.currentTarget).children().get(1);
+            let origItem = $(chairColumn).text();
+            $(event.currentTarget).data("prevChair", origItem);
+            if (origItem == "NULL") {
+                return;
+            }
+            let deptID = departmentsTable.data[$(event.currentTarget).index()]["id"];
+            let faculty = await getFaculty(deptID, ["faculty_id", "last_name", "first_name", "middle_name"]);
+            if (faculty.length < 2) {
+                return;
+            }
+            
+            let dropMenu = "<ul class='dropdown-menu'>";
+            for (const name of faculty) {
+                let facultyName = `${name.last_name}, ${name.first_name} ${name.middle_name}`;
+                dropMenu += `<li><a class="dropdown-item" role="button">${facultyName} (${name.faculty_id})</a></li>`;
+            }
+            dropMenu += "</ul>";
+            $(chairColumn).empty().append(
+                `<div class="dropdown">` +
+                `<button class="btn btn-secondary dropdown-toggle td-input" type="button" ` +
+                `id="chairperson" data-mdb-toggle="dropdown" aria-expanded="false" ` +
+                `title="${origItem}">${origItem}</button>${dropMenu}` +
+                `</div>`
+            );
+            departmentsTable.initMenuInputs(event.currentTarget);
+        }).on("row:confirm-change", async (event) => {
+            const chairColumn = $(event.currentTarget).children().get(1);
+            let newChair = $(chairColumn).text();
+            const deptID = departmentsTable.data[$(event.currentTarget).index()]["id"];
+            let prevChair = $(event.currentTarget).data("prevChair");
+            if (prevChair != "NULL" && prevChair != newChair) {
+                await updateChair(deptID, $(chairColumn).text());
+                $(event.currentTarget).removeData("prevChair");
+            }
+        });
+    }
+
+    const departmentsTable = new ResponsiveTable("#departments-table");
     const colleges = $(".panel-menu>button.menu-item");
     if (colleges.length > 0) {
         let openCollege = colleges.get(0);
         $(openCollege).addClass("active");
         let collegeTitle = $(".table-title");
         // initialize responsive Departments table
-        const departmentsTable = new ResponsiveTable("#departments-table");
-        departmentsTable.initData(getDepartments(openCollege.id), true, () => {
-            // when editing a row, a dropdown list of faculty members from the department is shown
-            // to choose the chairperson
-            $(`${departmentsTable.body}>tr`).on("row:edit", async (event) => {
-                let deptID = departmentsTable.data[$(event.currentTarget).index()]["id"];
-                let faculty = await getFaculty(deptID, ["faculty_id", "last_name", "first_name", "middle_name"]);
-
-                let chairColumn = $(event.currentTarget).children().get(1);
-                let origItem = $(chairColumn).text();
-                $(event.currentTarget).data("prevChair", origItem);
-                if (origItem == "NULL") {
-                    origItem = "chairperson";
-                }
-
-                let dropMenu = "<ul class='dropdown-menu'>";
-                for (const name of faculty) {
-                    let facultyName = `${name.last_name}, ${name.first_name} ${name.middle_name}`;
-                    dropMenu += `<li><a class="dropdown-item" role="button">${facultyName} (${name.faculty_id})</a></li>`;
-                }
-                dropMenu += "</ul>";
-                $(chairColumn).empty().append(
-                    `<div class="dropdown">` +
-                    `<button class="btn btn-secondary dropdown-toggle td-input" type="button" ` +
-                    `id="chairperson" data-mdb-toggle="dropdown" aria-expanded="false" ` +
-                    `title="${origItem}">${origItem}</button>${dropMenu}` +
-                    `</div>`
-                );
-                departmentsTable.initMenuInputs(event.currentTarget);
-            }).on("row:confirm-change", async (event) => {
-                const chairColumn = $(event.currentTarget).children().get(1);
-                let newChair = $(chairColumn).text();
-                const deptID = departmentsTable.data[$(event.currentTarget).index()]["id"];
-                let prevChair = $(event.currentTarget).data("prevChair");
-                if (prevChair && prevChair != "NULL" && prevChair == newChair) {
-                    await updateChair(deptID, $(chairColumn).text());
-                    $(event.currentTarget).removeData("prevChair");
-                }
-            });
-        });
-
+        departmentsTable.initData(getDepartments(openCollege.id), true, initChairUpdate);
         $(collegeTitle).text("Departments in " + $(openCollege).text());
         // retrieves departments from the open college
         $("button.menu-item").click((event) => {
@@ -126,7 +129,7 @@
                 $(".side-panel").hide();
                 $("button.menu-item.active").removeClass("active");
                 $(activeItem).addClass("active");
-                departmentsTable.initData(getDepartments(activeItem.id), true);
+                departmentsTable.initData(getDepartments(activeItem.id), true, initChairUpdate);
                 $(collegeTitle).text("Departments in " + activeItem.title);
             }
         });
@@ -152,4 +155,5 @@
             console.log(error);
         }
     });
+    
 </script>

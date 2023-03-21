@@ -21,7 +21,7 @@
             </ul>
         </div>
     </div>
-    <div class="shadow-3 bg-white px-5 pt-4">
+    <div class="shadow-3 bg-white px-5 pt-4" style="padding-bottom: 50vh;">
         <h2 style="color: #8673b4;" class="table-title">
             <%= data.colleges[0].name %>
         </h2>
@@ -47,11 +47,11 @@
                         <input id="code" type="text" class="form-control w-100 add-td-input unique reuse" title="Code">
                     </td>
                     <td>
-                        <input id="title" type="text" class="form-control w-100 add-td-input" title="Title">
+                        <input id="title" type="text" class="form-control w-100 add-td-input reuse" title="Title">
                     </td>
                     <td>
                         <div class="dropdown">
-                            <button class="btn btn-secondary dropdown-toggle add-td-input" type="button" id="type"
+                            <button class="btn btn-secondary dropdown-toggle add-td-input optional" type="button" id="type"
                                 data-mdb-toggle="dropdown" aria-expanded="false" title="Type">Type</button>
                             <ul class="dropdown-menu">
                                 <li><a class="dropdown-item" role="button">LEC</a></li>
@@ -72,7 +72,6 @@
     const getSubjects = (collegeID) => new Promise((resolve, reject) => {
         $.get("http://localhost:3000/api/subjects/" + collegeID,
             (data, status) => {
-                console.log(data.subjects);
                 resolve(data.subjects);
             }, "json"
         ).fail((data) => reject(data));
