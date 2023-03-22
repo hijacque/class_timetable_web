@@ -37,8 +37,21 @@
                     <label class="form-label" for="lname">Complete School Name</label>
                 </div>
             </div>
+            <label>No. of terms in a year: </label>
+            <div class="form-check form-check-inline ms-2">
+                <input class="form-check-input" type="radio" name="termType" value="1" id="semester-radio"/>
+                <label class="form-check-label" for="semester-radio">2</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="termType" value="2" id="trimester-radio"/>
+                <label class="form-check-label" for="trimester-radio">3</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="termType" value="3" id="quarter-radio"/>
+                <label class="form-check-label" for="quarter-radio">4</label>
+            </div>
             <!-- Email input -->
-            <div class="form-outline mb-4">
+            <div class="form-outline my-4">
                 <input type="email" name="email" class="form-control" required />
                 <label class="form-label" for="email">E-mail address</label>
             </div>
