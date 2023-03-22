@@ -1,0 +1,20 @@
+html,
+body {
+    height: 100%;
+}
+
+#courses-view > div:last-child > div.dropdown:has(a#add-semester) {
+    z-index: 1;
+    position: fixed;
+    top: 0;
+    right: 0;
+    margin: 24px 48px 0 0;
+}
+
+.semester-header {
+    display: flex;
+    width: 18%;
+    align-items: baseline;
+    justify-content: space-between;
+    margin: 16px 0;
+}

@@ -4,9 +4,9 @@ const { verifySession } = require("./../lib/verification");
 const { createChair, createFaculty } = require("./../lib/account");
 
 // for CRUD purposes, sub-directly controlled from client side
-
 router.use(verifySession);
 
+// for admin control
 router.route("/departments/:collegeID?")
     .get(async (req, res) => {
         if (req.account) {
@@ -16,7 +16,7 @@ router.route("/departments/:collegeID?")
                 `CONCAT(f.last_name, ", ", f.first_name, " ", f.middle_name, " (", f.faculty_id, ")") END AS chairperson, ` +
                 `d.chair_id, "Logged in" as activity FROM Schools s INNER JOIN Colleges col ON ` +
                 `s.id = col.school_id INNER JOIN Departments d ON col.id = d.college_id ` +
-                `LEFT JOIN Faculty f ON d.chair_id = f.id WHERE s.id = "${req.account.id}"`;
+                `LEFT JOIN Faculty f ON d.chair_id = f.id WHERE s.id = "${req.account.id}" ORDER BY d.name`;
             if (req.params.collegeID) {
                 query += ` AND col.id = "${req.params.collegeID}"`
             }
@@ -45,33 +45,54 @@ router.route("/departments/:collegeID?")
     });
 
 router.post("/chairperson/:deptID?", async (req, res) => {
-    if (req.account && req.params.deptID) {
-        const DB = req.app.locals.database;
-        let data = req.body;
-        let chair = data.chair.split("(");
-        let lastName = chair[0].split(",")[0];
-        // console.log(chair[1], lastName);
-        let chairID = await DB.executeQuery(
-            `SELECT id FROM Faculty WHERE faculty_id = '${chair[1].slice(0, -1)}' AND last_name = '${lastName}' LIMIT 1;`
-        );
-        if (chairID.length < 1) {
-            return res.status(402).end();
-        }
-        await DB.executeQuery(
-            `UPDATE Departments d INNER JOIN Colleges col ON d.college_id = col.id ` +
-            `SET d.chair_id = "${chairID[0]["id"]}" WHERE d.id = "${req.params.deptID}" AND ` +
-            `col.school_id = "${req.account.id}" LIMIT 1`
-        );
-        res.status(200).json({
-            message: {
-                mode: 1,
-                title: "Chairperson changed",
-                body: "All chairperson privileges and data have be transferred to the new chairperson."
-            }
-        });
-    } else {
-        res.status(401).end();
+    if (!req.account || !req.params.deptID) {
+        return res.status(401).end();
     }
+
+    const DB = req.app.locals.database;
+    let chair = req.body.chair.split("(");
+    let lastName = chair[0].split(",")[0];
+    chair = chair[1].slice(0, -1);
+    
+    let newChairID = await DB.executeQuery(
+        `SELECT id FROM Faculty WHERE faculty_id = '${chair}' AND last_name = '${lastName}' LIMIT 1;`
+    );
+    newChairID = newChairID[0]["id"];
+
+    if (newChairID.length < 1) {
+        return res.status(402).end();
+    }
+
+    let prevChairID = await DB.executeQuery(
+        `SELECT chair_id FROM Departments WHERE id = '${req.params.deptID}' LIMIT 1;`
+    );
+    prevChairID = prevChairID[0]["id"];
+
+    try {
+        await DB.executeQuery(
+            `UPDATE Users SET type = 2 WHERE id = "${newChairID}" LIMIT 1;` +
+            `UPDATE Users SET type = 3 WHERE id = "${prevChairID}" LIMIT 1;` +
+            `UPDATE Departments d INNER JOIN Colleges col ON d.college_id = col.id ` +
+            `SET d.chair_id = "${newChairID}" WHERE d.id = "${req.params.deptID}" AND ` +
+            `col.school_id = "${req.account.id}" LIMIT 1;`
+        );
+    } catch (error) {
+        return res.status(200).json({
+            message: {
+                mode: 0,
+                title: "Chairperson not changed",
+                body: "An error occured and the chairperson was unable to be changed."
+            }
+        })
+    }
+    
+    res.status(200).json({
+        message: {
+            mode: 1,
+            title: "Chairperson changed",
+            body: "All chairperson privileges and data have been transferred to the new chairperson."
+        }
+    });
 });
 
 router.post("/colleges", async (req, res) => {
@@ -115,6 +136,7 @@ router.route("/faculty/:deptID?")
             if (req.params.deptID) {
                 query += ` AND d.id = "${req.params.deptID}"`
             }
+            query += " ORDER BY f.teach_load";
 
             res.status(200).json({ faculty: await DB.executeQuery(query) });
         } else {
@@ -142,6 +164,7 @@ router.route("/subjects/:collegeID?")
         if (req.params.collegeID) {
             query += ` AND col.id = "${req.params.collegeID}"`
         }
+        query += " ORDER BY sub.code, sub.type"
         res.status(200).json({ subjects: await DB.executeQuery(query) });
     })
     .post(async (req, res) => {
@@ -165,7 +188,7 @@ router.route("/subjects/:collegeID?")
         let type = (subj.type == "LEC") ? 1 : (subj.type == "LAB") ? 2 : "NULL";
         await DB.executeQuery(
             `INSERT INTO Subjects VALUES ('${subjID}', '${req.params.collegeID}', '${subj.code}', '${subj.title}', ` +
-            `${type}, ${subj.units})`
+            `${type}, ${subj.units || 0})`
         );
         res.status(200).json({
             message: {
@@ -184,10 +207,11 @@ router.route("/rooms/:bldgID?")
 
         const DB = req.app.locals.database;
         let query = `SELECT r.name, r.level, r.capacity FROM Rooms r INNER JOIN Buildings b ON r.bldg_id = b.id ` +
-            `WHERE b.school_id = '${req.account.id}'`
+            `WHERE b.school_id = '${req.account.id}'`;
         if (req.params.bldgID) {
-            query += ` AND b.id = "${req.params.bldgID}"`
+            query += ` AND b.id = "${req.params.bldgID}"`;
         }
+        query += ` ORDER BY r.level, r.name`;
         res.status(200).json({ rooms: await DB.executeQuery(query) });
     })
     .post(async (req, res) => {
@@ -199,7 +223,7 @@ router.route("/rooms/:bldgID?")
         let room = req.body;
         let sameRooms = await DB.executeQuery(
             `SELECT COUNT(*) FROM Rooms r INNER JOIN Buildings b ON r.bldg_id = b.id WHERE ` +
-            `b.school_id = '${req.account.id}' AND b.id = '${req.params.bldgID} AND r.name = '${room.name}'`
+            `b.school_id = '${req.account.id}' AND b.id = '${req.params.bldgID}' AND r.name = '${room.name}'`
         );
 
         if (sameRooms[0]["COUNT(*)"] > 0) {
@@ -208,8 +232,8 @@ router.route("/rooms/:bldgID?")
 
         const roomID = crypto.randomBytes(6).toString("base64url");
         await DB.executeQuery(
-            `INSERT INTO Colleges VALUES ('${req.params.bldgID}', '${roomID}', '${room.name}', ` +
-            `${room.level}, ${room.capacity})`
+            `INSERT INTO Rooms VALUES ('${req.params.bldgID}', '${roomID}', '${room.name}', ` +
+            `${room.level}, ${room.capacity || "NULL"})`
         );
         res.status(200).json({
             message: {
@@ -244,5 +268,73 @@ router.post("/buildings", async (req, res) => {
         }
     });
 });
+
+// for chairperson control
+router.post("/courses", (req, res) => {
+    if (!req.account || !req.body.title) {
+        return res.status(401).end();
+    }
+
+    
+})
+router.route("/curriculum/:courseID?")
+    .get(async (req, res) => {
+        if (!req.account || !req.params.courseID) {
+            return res.status(401).end();
+        }
+
+        const DB = req.app.locals.database;
+        const terms = await DB.executeQuery(
+            `SELECT DISTINCT year, term FROM Curricula WHERE course_id = "${req.params.courseID}"`
+        );
+        if (terms.length < 1) {
+            return res.status(200).json({ curriculum: terms });
+        }
+        
+        for (let i = 0; i < terms.length; i++) {
+            terms[i]["subjects"] = await DB.executeQuery(
+                `SELECT sub.code, CONCAT(sub.title, " (", sub.type, ")") as title, sub.units FROM Curricula cu ` +
+                `INNER JOIN Subjects sub ON cu.subj_id WHERE cu.course_id = "${req.params.courseID}" AND ` +
+                `year = ${terms[i]["year"]} AND term = "${terms[i]["term"]}" ORDER BY cu.year, cu.term, sub.code`
+            );
+        }
+        res.status(200).json({ curriculum: terms });
+    }).post(async (req, res) => {
+        if (!req.account || !req.params.courseID) {
+            return res.status(401).end();
+        }
+        
+        const DB = req.app.locals.database;
+        let latestYear = await DB.executeQuery(
+            `SELECT MAX(year) FROM Curricula WHERE course_id = "${req.params.courseID}"`
+        );
+        latestYear = latestYear[0]["MAX(year)"] || 0;
+        const data = req.body;
+        if (data.latestYear != latestYear) {
+            return res.status(409).end();
+        }
+
+        let query = `INSERT INTO Curricula VALUES `;
+        let message;
+        if (data.forNewYear) {
+            const totalTerms = req.account.totalTerms;
+            message = `A new academic year with ${totalTerms} semesters is ready.`;
+            for (let i = 1; i <= totalTerms; i++) {
+                query += `('${req.params.courseID}', NULL, ${latestYear + 1}, '${i}'), `
+            }
+            query = query.slice(0, -2);
+        } else {
+            message = "A summer term in the curriculum is ready."
+            query += `('${req.params.courseID}', NULL, ${latestYear}, 's')`;
+        }
+        await DB.executeQuery(query);
+        res.status(200).json({
+            message: {
+                mode: 1,
+                title: "Curriculum Updated",
+                body: message
+            }
+        });
+    });
 
 module.exports = router;

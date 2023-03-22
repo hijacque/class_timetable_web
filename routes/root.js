@@ -1,6 +1,6 @@
 // required packages
 const router = require("express").Router();
-const { createAdmin, loginAccount, getAdminData } = require("../lib/account");
+const { createAdmin, loginAccount, getAdminData, getChairData } = require("../lib/account");
 const { sendOTP, verifySession, createSession } = require("./../lib/verification");
 require("./../lib/verification");
 require("./../lib/account");
@@ -65,21 +65,28 @@ router.get("/admin/:task?", verifySession, getAdminData, (req, res) => {
     }
 });
 
-router.get("/chair/:task?", verifySession, (req, res) => {
-    const user = req.account;
-    if (user && user.type == "chair") {
-        res.send("This is where chairperson's dashboard will be hehe");
+router.get("/chair/:task?", verifySession, getChairData, (req, res) => {
+    if (req.taskData) {
+        res.render("chair-root/base", {
+            section: req.params.task || "profile",
+            taskData: req.taskData,
+            serverAlert: {}
+        });
     } else {
-        res.redirect("/login");
+        res.redirect("/logout");
     }
 });
 
-router.get("/faculty/:task?", verifySession, (req, res) => {
-    const user = req.account;
-    if (user && user.type == "faculty") {
-        res.send("This is where faculty's dashboard will be hehe");
+router.get("/faculty/:task?", (req, res) => {
+    req.taskData = {};
+    if (req.taskData) {
+        res.render("faculty-root/base", {
+            section: req.params.task || "profile",
+            taskData: {},
+            serverAlert: {}
+        });
     } else {
-        res.redirect("/login");
+        res.redirect("/logout");
     }
 });
 

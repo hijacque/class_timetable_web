@@ -40,18 +40,6 @@ input.display-limit {
     margin-right: 24px;
 }
 
-td.edit-action {
-    width: 85px;
-    padding-left: 16px;
-    padding-right: 16px;
-    vertical-align: middle;
-}
-
-td.edit-action>div {
-    display: flex;
-    justify-content: space-between;
-}
-
 .category {
     padding: 25px 0 0 4%;
     text-align: start;

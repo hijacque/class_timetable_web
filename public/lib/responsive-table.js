@@ -5,8 +5,8 @@ $("body").append(
     `<button type="button" class="btn btn-secondary" data-mdb-dismiss="modal">ok</button></div></div>` +
     `</div></div>`
 );
-let alertModal;
-$(document).ready(() => alertModal = new mdb.Modal($("#table-alert")));
+let tableAlert;
+$(document).ready(() => tableAlert = new mdb.Modal($("#table-alert")));
 
 class ResponsiveTable {
     #table;
@@ -15,7 +15,7 @@ class ResponsiveTable {
     #footer;
     #editOptions;
     #changeOptions;
-    #alertModal;
+    #tableAlert;
 
     addBtn; // for adding new row
     editBtn; // for opening edit view
@@ -26,7 +26,7 @@ class ResponsiveTable {
     cancelButtons;
 
     constructor(id) {
-        $(document).ready(() => this.#alertModal = alertModal);
+        $(document).ready(() => this.#tableAlert = tableAlert);
         this.#table = id;
         this.#footer = `${id}>tfoot>tr.add-data`;
         this.body = `${id}>tbody`;
@@ -40,8 +40,8 @@ class ResponsiveTable {
                 `<td class="add-row text-primary"><a role="button"><i class="fas fa-plus-circle fa-2x"></i></a></td>`
             );
             this.initMenuInputs($(footer));
-            this.editBtn = $(`[data-cts-toggle='table'][data-cts-target='${this.#table}']`).get(0);
-            this.saveBtn = $(`[data-cts-dismiss='table'][data-cts-target='${this.#table}']`).get(0);
+            this.editBtn = $(`[data-cts-toggle='table'][data-cts-target='${id}']`).get(0);
+            this.saveBtn = $(`[data-cts-dismiss='table'][data-cts-target='${id}']`).get(0);
             $(this.saveBtn).hide();
 
             this.addBtn = $(`${footer}>td.add-row>a`).click(() => {
@@ -64,7 +64,7 @@ class ResponsiveTable {
             this.data = [];
         }
 
-        $(`${id}>thead>tr>th.data-title`).click((event) => this.#sortTable(event.currentTarget));
+        $(`${id}>thead>tr>th.data-title`).attr("title", "ASC").click((event) => this.#sortTable(event.currentTarget));
     }
 
     async initData(data = [], asyncData = false, callback = function () { }) {
@@ -142,7 +142,7 @@ class ResponsiveTable {
                 } else if ($(addInputs[i]).hasClass("unique")) {
                     for (let j = 0; j < this.data.length; j++) {
                         if (this.data[j][key] == value) {
-                            this.#showTableAlert(`New data must be unique, change ${title} column`);
+                            this.#showTableAlert(`New data must be unique, change <b>${title}</b> column`);
                             return reject(`new data must be unique`);
                         }
                     }
@@ -151,7 +151,6 @@ class ResponsiveTable {
                 }
 
                 newData[key] = value;
-                console.log(value);
             }
         } else {
             for (let i = 0; i < addInputs.length; i++) {
@@ -179,7 +178,6 @@ class ResponsiveTable {
         this.data.push(newData);
         resolve(newData);
         $(addInputs).not(".reuse").val(null).trigger("menu:reset");
-
         let newRow = $("<tr></tr>");
         for (let i = 0; i < addInputs.length; i++) {
             let key = addInputs[i].id;
@@ -376,11 +374,11 @@ class ResponsiveTable {
     }
 
     #showTableAlert(message) {
-        if (!this.#alertModal) {
+        if (!this.#tableAlert) {
             window.alert(message);
         } else {
             $("#table-alert-title").html(message);
-            this.#alertModal.show();
+            this.#tableAlert.show();
         }
     }
 
@@ -421,7 +419,7 @@ class ResponsiveTable {
 
     #sortTable(baseColumn) {
         const columnTitle = baseColumn.textContent;
-        const order = baseColumn.title.includes("ASC") ? 1 : baseColumn.title.includes("DESC") ? 0 : 2;
+        const sortType = baseColumn.title.includes("ASC") ? 1 : baseColumn.title.includes("DESC") ? 0 : 2;
         let colIndex = $(`${this.#footer} > td`).has(`[title='${columnTitle}']`).index();
 
         if (colIndex < 0) {
@@ -430,27 +428,36 @@ class ResponsiveTable {
         }
 
         const baseColRows = $(`${this.body} > tr > td:nth-child(${colIndex + 1})`).get();
-
         let inputType = $(`${this.#footer}`).find(".add-td-input").get(colIndex).type;
-        baseColRows.sort((a, b) => {
-            let prev = a.textContent || "";
-            let next = b.textContent || "";
-            if (inputType === "number") {
-                prev = (prev.includes(".")) ? parseFloat(prev) : parseInt(prev) || 0;
-                next = (next.includes(".")) ? parseFloat(next) : parseInt(next) || 0;
-                if (order > 0) {
+        if (inputType === "number") {
+            baseColRows.sort((a, b) => {
+                let prev = (a.textContent.includes(".")) ? parseFloat(a.textContent) : parseInt(a.textContent) || 0;
+                let next = (b.textContent.includes(".")) ? parseFloat(b.textContent) : parseInt(b.textContent) || 0;
+                if (sortType > 0) {
                     return next - prev;
                 } else {
                     return prev - next;
                 }
-            } else {
-                if (order > 0) {
+            });
+        } else {
+            baseColRows.sort((a, b) => {
+                let prev = a.textContent;
+                let next = b.textContent;
+                if (sortType > 0) {
                     return next.localeCompare(prev);
                 } else {
                     return prev.localeCompare(next);
                 }
-            }
-        });
+            });
+        }
+
+        if (sortType > 0) {
+            $(`${this.#table}>thead>tr>th.data-title`).attr("title", "ASC");
+            baseColumn.title = "DESC";
+        } else {
+            $(`${this.#table}>thead>tr>th.data-title`).attr("title", "ASC");
+        }
+        
         for (let i = 0; i < baseColRows.length; i++) {
             let row = $(baseColRows[i]).closest("tr");
             $(this.body).prepend(row);
