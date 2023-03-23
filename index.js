@@ -10,7 +10,6 @@ const app = express();
 app.set("view engine", "ejs");
 app.use(express.static("public"));
 app.use(bodyParser.urlencoded({ extended: true }));
-
 app.use(cookieParser(process.env.COOKIE_KEY));
 
 // local app variables
@@ -24,16 +23,11 @@ app.locals.mailer = new AppMailer(
 app.use("/", require("./routes/root"));
 app.use("/help", require("./routes/help"));
 app.use("/api", require("./routes/api"));
-
-// test
-// const crypto = require("node:crypto");
-app.get("/test", (req, res) => {
-    res.status(200).json(req.cookies);
-});
-// console.log(crypto.randomBytes(30).toString("base64"));
+app.use("/schedule", require("./routes/schedule"));
+app.get("*", (req, res) => res.status(404).send("You don't have to go back, but you can't stay here"));
 
 // initialize server
-const port = process.env.PORT || 3000;
+const port = config.PORT || 3000;
 app.listen(port, () => {
     console.log("Server listening on port " + port);
 });

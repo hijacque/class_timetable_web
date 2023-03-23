@@ -10,10 +10,9 @@ router.get("/", (req, res) => {
 });
 
 router.route("/login")
-    .get((req, res) => {
-        let loggedIn = req.signedCookies.ctsSession
-        if (loggedIn) {
-            return res.redirect("/" + loggedIn.type);
+    .get(verifySession, (req, res) => {
+        if (req.account) {
+            return res.redirect("/" + req.account.type);
         }
         if (req.cookies.serverMessage) res.clearCookie("serverMessage");
         res.render("login", { serverAlert: req.cookies.serverMessage });
