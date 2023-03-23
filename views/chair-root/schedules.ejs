@@ -1,3 +1,84 @@
 <div class="bg-light task-view" id="schedules-view">
+    <div class="side-panel">
+        <div class="d-flex mx-4 justify-content-between mb-2">
+            <h4>Schedules</h4>
+            <div>
+                <a type="button"><i class="fas fa-sort-alpha-up-alt"></i></a>
+                <a type="button"><i class="fas fa-search ms-2"></i></a>
+            </div>
+        </div>
+        <!-- <hr class="mb-0"> -->
+        <div class="panel-body">
+            <a type="button" class="collapse-btn" data-mdb-toggle="collapse"
+                data-mdb-target="#open-terms" aria-expanded="false">
+                <i class="fas fa-caret-down me-2"></i><text>Open Schedules</text>
+            </a>
+            <% if (data.openTerms.length> 0) { %>
+                <div class="collapse" id="open-terms">
+                    <div>
+                        <ul class="list-group panel-menu">
+                            <% for (const term of data.openTerms) { %>
+                                <button type="button" class="list-group-item list-group-item-action menu-item"
+                                    title="<%= term.year %><%= term.term %>-term" id="<%= term.id %>">
+                                    <p class="text-truncate m-0">
+                                        <%- term.term_ordinal %>, <%= term.year %>-<%= term.year + 1 %>
+                                    </p>
+                                </button>
+                            <% } %>
+                        </ul>
+                    </div>
+                </div>
+            <% } else { %>
+                <div class="collapse" id="open-terms">
+                    <p>No Open Terms</p>
+                </div>
+            <% } %>
+            <a type="button" class="collapse-btn" data-mdb-toggle="collapse"
+                data-mdb-target="#closed-terms" aria-expanded="false">
+                <i class="fas fa-caret-down me-2"></i><text>Closed Schedules</text>
+            </a>
+            <% if (data.closedTerms.length> 0) { %>
+                <div class="collapse" id="closed-terms">
+                    <div>
+                        <ul class="list-group panel-menu">
+                            <% for (const term of data.closedTerms) { %>
+                                <button type="button" class="list-group-item list-group-item-action menu-item"
+                                    title="<%= term.year %><%= term.term %>-term" id="<%= term.id %>">
+                                    <p class="text-truncate m-0">
+                                        <%= term.year %>-<%= term.term %>
+                                    </p>
+                                </button>
+                            <% } %>
+                        </ul>
+                    </div>
+                </div>
+            <% } else { %>
+                <div class="collapse" id="closed-terms">
+                    <p>No Closed Terms</p>
+                </div>
+            <% } %>
+        </div>
+    </div>
+    <div class="shadow-3 bg-white px-5 pt-4">
+        <div>
+            <a class="btn btn-primary btn-lg btn-rounded btn-top" data-mdb-toggle="dropdown" title="New Schedule" id="add-schedule">
+                <i class="fas fa-plus fa-lg me-3"></i>add schedule
+            </a>
+        </div>
+        <h3 style="color: #8673b4;" id="term-title">
+            <% if (data.openTerms.length> 0) { %>
+                <%- data.openTerms[0].term_ordinal %>, A.Y. <%= data.openTerms[0].year %>-<%= data.openTerms[0].year + 1 %>
+            <% } else if (data.closedTerms.length> 0) { %>
+                <%- data.closedTerms[0].term_ordinal %>, A.Y. <%= data.closedTerms[0].year %>-<%= data.closedTerms[0].year + 1 %>
+            <% } else { %>
+                Woops! No terms found yet, create new schedule now.
+            <% } %>
+        </h3>
+    </div>
     <!-- TODO: create a side-panel to indicate existing schedules within the school -->
 </div>
+<script>
+    $("#add-schedule").click((event) => {
+        window.open("http://localhost:3000/", "_blank");
+    });
+</script>

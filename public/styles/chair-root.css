@@ -3,7 +3,7 @@ body {
     height: 100%;
 }
 
-#courses-view > div:last-child > div.dropdown:has(a#add-semester) {
+div:last-child > div:has(.btn-top) {
     z-index: 1;
     position: fixed;
     top: 0;

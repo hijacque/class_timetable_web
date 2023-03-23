@@ -36,7 +36,7 @@
     <div class="bg-white px-5 pt-4 pb-5">
         <% if (data.courses.length> 0) { %>
             <div class="dropdown">
-                <a class="btn btn-primary btn-lg btn-rounded dropdown-toggle" data-mdb-toggle="dropdown" title="Add semester" id="add-semester">
+                <a class="btn btn-primary btn-lg btn-rounded btn-top dropdown-toggle" data-mdb-toggle="dropdown" title="Add semester" id="add-semester">
                     add semester
                 </a>
                 <ul class="dropdown-menu" aria-labelledby="add-semester">
@@ -65,23 +65,14 @@
     const getCurriculum = (courseID) => new Promise((resolve, reject) => {
         $.get(
             "http://localhost:3000/api/curriculum/" + courseID,
-            (data, status) => { resolve(data.curriculum) }, "json"
+            (data, status) => { resolve(data) }, "json"
         ).fail((data) => console.log(data))
     });
-
-    // const addCurriculumTerm = (courseID, forNewYear) => $.post(
-    //     "http://localhost:3000/api/curriculum/" + courseID, { forNewYear: forNewYear },
-    //     (data, status) => {}
-    // ).fail((data) => console.log(data));
 
     const addSemester = (courseID, semData) => $.post(
         "http://localhost:3000/api/curriculum/" + courseID, semData,
         (data, status) => console.log(data)
     ).fail((data) => console.log(data));
-    // TODO: make #add-semester button reactive to create a new responsive table
-
-    // TODO: get request curriculum terms[] = { semester, year, subjects[] = { code, title, units } }
-    // TODO: create new responsive table per term
     
     const totalTermsPerYear = <%- JSON.stringify(data.totalTerms || 0) %>;
     const semesterTables = [];
@@ -173,11 +164,12 @@
     }
 
     async function initCourseCurriculum(data) {
-        let curriculum = await data;
+        data = await data;
+        const curriculum = data.curriculum;
         const totalTerms = curriculum.length;
-        console.log(
-            `<li><a class="dropdown-item" role="button">${subjects.join('</a></li><li><a class="dropdown-item" role="button">')}</a></li>`
-        );
+        
+        $("label[for='curriculum-title']").text("Total No. of Units: " + data.totalUnits);
+
         const semesterContent = 
             `<thead><th class="data-title" style="width: 300px;" title="ASC">COURSE CODE</th>` +
             `<th class="data-title" title="ASC">COURSE TITLE</th>` +
@@ -189,8 +181,7 @@
                 `<td><div class="dropdown">` +
                     `<button class="btn btn-secondary dropdown-toggle add-td-input unique" type="button" id="title"` +
                     `data-mdb-toggle="dropdown" aria-expanded="false" title="COURSE TITLE">COURSE TITLE</button>` +
-                    `<ul class="dropdown-menu" aria-labelledby="title"><li><a class="dropdown-item" role="button">` +
-                    `${subjects.join('</a></li><li><a class="dropdown-item" role="button">')}</a></li></ul>` +
+                    `<ul class="dropdown-menu" aria-labelledby="title"><li><a class="dropdown-item" role="button"></ul>` +
                 `</div></td>` +
                 `<td><label class="add-td-input optional" id="units" title="UNITS"></label></td>` +
             `</tr></tfoot>`;
