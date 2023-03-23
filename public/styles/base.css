@@ -128,19 +128,27 @@ td.edit-action>div {
     grid-template-columns: 90px auto;
     grid-template-rows: auto;
     height: 100%;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: show;
 }
 
 .nav-bar {
     padding-bottom: 12px;
-    text-align: center;
+    width: 100%;
     height: 100%;
 }
 
 .nav-bar>a.task {
+    padding: 8px 3px 12px 3px;
     height: 65px;
+    text-align: center;
+    border-radius: 0;
     width: inherit;
     display: block;
+}
+
+a#profile.task {
+    margin-top: 52px;
 }
 
 .task-view {

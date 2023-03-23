@@ -1,7 +1,7 @@
 const router = require("express").Router();
 const crypto = require("node:crypto");
 const { verifySession } = require("./../lib/verification");
-const { createChair, createFaculty } = require("./../lib/account");
+const { createFaculty } = require("./../lib/account");
 
 // for CRUD purposes, sub-directly controlled from client side
 router.use(verifySession);
@@ -132,12 +132,11 @@ router.route("/faculty/:deptID?")
             }
             query += `u.email, "My Schedule" AS schedule FROM Colleges col INNER JOIN Departments d ` +
                 `ON col.id = d.college_id INNER JOIN Faculty f ON d.id = f.dept_id INNER JOIN Users u ` +
-                `ON f.id = u.id WHERE col.school_id = "${req.account.id}"`;
+                `ON f.id = u.id WHERE (col.school_id = "${req.account.id}" OR d.chair_id = "${req.account.id}")`;
             if (req.params.deptID) {
                 query += ` AND d.id = "${req.params.deptID}"`
             }
             query += " ORDER BY f.teach_load";
-
             res.status(200).json({ faculty: await DB.executeQuery(query) });
         } else {
             res.status(401).end();
@@ -273,10 +272,9 @@ router.post("/buildings", async (req, res) => {
 router.post("/courses", (req, res) => {
     if (!req.account || !req.body.title) {
         return res.status(401).end();
-    }
+    } 
+});
 
-    
-})
 router.route("/curriculum/:courseID?")
     .get(async (req, res) => {
         if (!req.account || !req.params.courseID) {
@@ -285,7 +283,7 @@ router.route("/curriculum/:courseID?")
 
         const DB = req.app.locals.database;
         const terms = await DB.executeQuery(
-            `SELECT DISTINCT year, term FROM Curricula WHERE course_id = "${req.params.courseID}"`
+            `SELECT DISTINCT year, term FROM Curricula WHERE course_id = "${req.params.courseID}" ORDER BY year, term`
         );
         if (terms.length < 1) {
             return res.status(200).json({ curriculum: terms });
@@ -293,12 +291,18 @@ router.route("/curriculum/:courseID?")
         
         for (let i = 0; i < terms.length; i++) {
             terms[i]["subjects"] = await DB.executeQuery(
-                `SELECT sub.code, CONCAT(sub.title, " (", sub.type, ")") as title, sub.units FROM Curricula cu ` +
-                `INNER JOIN Subjects sub ON cu.subj_id WHERE cu.course_id = "${req.params.courseID}" AND ` +
-                `year = ${terms[i]["year"]} AND term = "${terms[i]["term"]}" ORDER BY cu.year, cu.term, sub.code`
+                `SELECT sub.code, sub.units, CASE WHEN sub.type IS NULL THEN sub.title ELSE ` +
+                `CONCAT(sub.title, " (", sub.type, ")") END as title FROM Curricula cu ` +
+                `LEFT JOIN Subjects sub ON cu.subj_id = sub.id WHERE cu.course_id = "${req.params.courseID}" AND ` +
+                `cu.year = ${terms[i]["year"]} AND cu.term = "${terms[i]["term"]}" AND cu.subj_id IS NOT NULL ` +
+                `ORDER BY sub.code`
             );
         }
-        res.status(200).json({ curriculum: terms });
+        const totalUnits = await DB.executeQuery(
+            `SELECT SUM(sub.units) FROM Curricula cu INNER JOIN Subjects sub ON cu.subj_id = sub.id ` +
+            `WHERE cu.course_id = "${req.params.courseID}" AND cu.subj_id IS NOT NULL`
+        )
+        res.status(200).json({ curriculum: terms, totalUnits: totalUnits[0]["SUM(sub.units)"] });
     }).post(async (req, res) => {
         if (!req.account || !req.params.courseID) {
             return res.status(401).end();
