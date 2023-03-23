@@ -1,0 +1,92 @@
+<div class="bg-light task-view pt-4" id="preference-view">
+    <h3 class="text-center mb-4">
+        Faculty Schedule Preference Form<br>
+        <small class="text-muted">A.Y. 20XX-20XX (x<sup>th</sup> Semester)</small>
+    </h3>
+    <hr>
+    <form action="" method="post" class="px-5">
+        <label class="table-title fw-bold">Your Subject Expertises:</label>
+        <div class="mb-4 mt-2 w-75 stack-list" id="subjects-list">
+            <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle btn-rounded mt-1" type="button" id="day"
+                    data-mdb-toggle="dropdown" aria-expanded="false">Add Field</button>
+                <ul class="dropdown-menu" aria-labelledby="day">
+                    <li><a class="dropdown-item" role="button">Human Computer Interaction</a></li>
+                    <li><a class="dropdown-item" role="button">Intelligent Systems</a></li>
+                    <li><a class="dropdown-item" role="button">Operating Systems</a></li>
+                    <li><a class="dropdown-item" role="button">Introduction to Computing</a></li>
+                    <li><a class="dropdown-item" role="button">CS Elective</a></li>
+                    <li><a class="dropdown-item" role="button">Software Engineering 1</a></li>
+                </ul>
+            </div>
+        </div>
+        <label class="table-title fw-bold">Your Preferred Schedule:</label>
+        <table class="table table-bordered table-sm fw-bold mt-2 mb-4 w-50 editable" id="preferred-schedule">
+            <thead class="text-center">
+                <tr>
+                    <th class="data-title" style="width: 160px;">Day</th>
+                    <th class="data-title">Time-in</th>
+                    <th class="data-title">Time-out</th>
+                    <td class="edit-title">Action</td>
+                </tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot>
+                <tr class="add-data">
+                    <td>
+                        <div class="dropdown">
+                            <button class="btn btn-secondary dropdown-toggle add-td-input unique" type="button" id="day"
+                                data-mdb-toggle="dropdown" aria-expanded="false" title="Day">Day</button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" role="button">Monday</a></li>
+                                <li><a class="dropdown-item" role="button">Tuesday</a></li>
+                                <li><a class="dropdown-item" role="button">Wednesday</a></li>
+                                <li><a class="dropdown-item" role="button">Thursday</a></li>
+                                <li><a class="dropdown-item" role="button">Friday</a></li>
+                                <li><a class="dropdown-item" role="button">Saturday</a></li>
+                                <li><a class="dropdown-item" role="button">Sunday</a></li>
+                            </ul>
+                        </div>
+                    </td>
+                    <td>
+                        <input type="time" class="form-control add-td-input" id="start_time">
+                    </td>
+                    <td>
+                        <input type="time" class="form-control add-td-input" id="end_time">
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+        <button class="btn btn-primary text-center btn-rounded submit" type="button">Submit</button>
+    </form>
+</div>
+<script src="/lib/responsive-table.js"></script>
+<script>
+    const prefSchedTable = new ResponsiveTable("#preferred-schedule");
+
+    const subjectsList = $("div.stack-list#subjects-list");
+    $(subjectsList).find(".dropdown-item").click((event) => {
+        let itemVal = event.currentTarget.textContent;
+        let newItem = $(`<button class="btn btn-outline-secondary btn-rounded stack-list-item">${itemVal}</button>`);
+        let listItem = $(event.currentTarget).parent("li");
+        $(newItem).click(() => {
+            expertises.pop();
+            $(newItem).remove();
+            $(listItem).show();
+        }).hover(
+            () => $(newItem).addClass("btn-outline-danger").removeClass("btn-outline-secondary"),
+            () => $(newItem).removeClass("btn-outline-danger").addClass("btn-outline-secondary")
+        );
+        $(event.currentTarget).closest(".dropdown").after(newItem);
+        $(listItem).hide();
+    });
+
+    $("button.submit").click(() => {
+        const expertises = [];
+        for (const subject of $(subjectsList).find(".stack-list-item").get()) {
+            expertises.push(subject.textContent);
+        }
+        console.log(expertises);
+        // $.post("http://localhost:3000/api/preferences");
+    });
+</script>

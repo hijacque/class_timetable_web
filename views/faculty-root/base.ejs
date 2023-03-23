@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../base') %>
+    <title>Faculty</title>
+    <link rel="stylesheet" href="/styles/faculty-root.css">
+</head>
+<body class="dashboard">
+    <div class="modal fade" id="alert-modal" tabindex="-1" aria-labelledby="alert-title" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="alert-title"><%= (serverAlert) ? serverAlert.title : "" %></h5>
+                </div>
+                <div class="modal-body" id="alert-body"><%= (serverAlert) ? serverAlert.body : "" %></div>
+                <div class="modal-footer text-center">
+                    <button type="button" class="btn btn-secondary" data-mdb-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="nav-bar bg-light">
+        <a role="button" class="task" href="/faculty/schedule" id="schedule">
+            <i class="fas fa-calendar-day"></i><br>Schedule</a>
+        <a role="button" class="task mb-5" href="/faculty/preference" id="preference">
+            <i class="fas fa-clipboard-check"></i><br>Preference</a>
+        <a role="button" class="task" href="/faculty" id="profile">
+            <i class="far fa-user-circle fa-2x"></i><br>Profile</a>
+        <a role="button" href="/logout">
+            <i class="fas fa-sign-out-alt fa-2x"></i><br>Log out</a>
+    </div>
+    
+    <% if (section == "profile") { %>
+        <%- include('profile') %>
+    <% } else if (section == "schedule") { %>
+        <%- include('schedule') %>
+    <% } else if (section == "preference") { %>
+        <%- include('preference') %> 
+    <% } %>
+
+    <!-- MDB -->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.0.0/mdb.min.js"></script>
+    <script>
+        $("div.nav-bar>a>i").addClass("fa-2x mt-1");
+        let openSection = "<%- section %>";
+        console.log(openSection);
+        $("div.nav-bar>a").addClass("btn btn-light rounded-0 px-1 w-100");
+        $(`a.task[id=${openSection}]`)
+        .toggleClass("btn-secondary btn-light border-end border-4 border-primary")
+        .attr("href", null);
+    </script>
+</body>
+</html>
