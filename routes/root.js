@@ -19,13 +19,13 @@ router.route("/login")
 
     }).post(loginAccount, createSession, (req, res) => {
         if (req.account) {
-            return res.redirect("/" + req.account.type);
+            return res.status(200).json({ root: "http://localhost:3000/" + req.account.type, });
         }
         res.cookie("serverMessage", {
             mode: 0,
             title: "Invalid Credentials",
             body: "You entered the wrong e-mail/password."
-        }).redirect("/login");
+        }).status(200).json({ root: "http://localhost:3000/login" });
     });
 
 router.route("/signup")

@@ -40,20 +40,20 @@
                         <h2 class="card-title">Let's get started!</h2>
                     </div>
                     <p class="mt-5 mb-1">Enter your account information</p>
-                    <form action="/login" method="post">
+                    <div>
                         <div class="input-group input-group-lg my-4 shadow-0 align-items-center">
                             <span class="input-group-text">
                                 <i class="fas fa-at fa-lg"></i>
                             </span>
                             <div class="form-outline">
-                                <input type="email" class="form-control form-control-lg shadow-0" name="email" required />
+                                <input type="email" class="form-control form-control-lg shadow-0" name="email" id="email" required />
                                 <label class="form-label" for="email">Account Email</label>
                             </div>
                         </div>
                         <div class="input-group input-group-lg mb-4 shadow-0 align-items-center">
                             <span class="input-group-text border-end-0"><i class="fas fa-lock fa-lg pe-1"></i></span>
                             <div class="form-outline border-start-0">
-                                <input type="password" class="form-control form-control-lg" name="password" required
+                                <input type="password" class="form-control form-control-lg" name="password" id="password" required
                                     value="" />
                                 <label class="form-label" for="password">Password</label>
                             </div>
@@ -61,7 +61,7 @@
                                 <i class="fas fa-eye fa-lg text-white"></i></a>
                         </div>
                         <div class="text-center py-1 mb-4">
-                            <button class="btn btn-primary btn-block rounded-pill btn-lg mb-2" type="submit">Log
+                            <button class="btn btn-primary btn-block rounded-pill btn-lg mb-2" id="submit" type="submit">Log
                                 in</button>
                             <a class="text-muted" href="http://localhost:3000/help"><small>Forgot
                                     password?</small></a>
@@ -71,7 +71,7 @@
                             <p class="mb-0 me-3">Don't have an account?</p>
                             <a href="/signup" class="btn btn-outline-primary btn-rounded btn-sm">Create new</a>
                         </div>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -106,6 +106,15 @@
                 alertModal.show();
             }
         <% } %>
+
+        $("#submit").click(() => {
+            $.post("http://localhost:3000/login", {
+                email: $("#email").val(),
+                password: $("#password").val()
+            }, (data, status) => {
+                window.location.replace(data.root);
+            });
+        });
     </script>
 </body>
 
