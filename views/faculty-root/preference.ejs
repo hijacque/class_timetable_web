@@ -4,7 +4,7 @@
         <small class="text-muted">A.Y. 20XX-20XX (x<sup>th</sup> Semester)</small>
     </h3>
     <hr>
-    <form action="" method="post" class="px-5">
+    <div class="px-5">
         <label class="table-title fw-bold">Your Subject Expertises:</label>
         <div class="mb-4 mt-2 w-75 stack-list" id="subjects-list">
             <div class="dropdown">
@@ -58,16 +58,17 @@
             </tfoot>
         </table>
         <button class="btn btn-primary text-center btn-rounded submit" type="button">Submit</button>
-    </form>
+    </div>
 </div>
 <script src="/lib/responsive-table.js"></script>
 <script>
     const prefSchedTable = new ResponsiveTable("#preferred-schedule");
+    const expertises = [];
 
     const subjectsList = $("div.stack-list#subjects-list");
     $(subjectsList).find(".dropdown-item").click((event) => {
         let itemVal = event.currentTarget.textContent;
-        let newItem = $(`<button class="btn btn-outline-secondary btn-rounded stack-list-item">${itemVal}</button>`);
+        let newItem = $(`<button class="btn btn-outline-secondary btn-rounded stack-list-item" type="button">${itemVal}</button>`);
         let listItem = $(event.currentTarget).parent("li");
         $(newItem).click(() => {
             expertises.pop();
@@ -79,14 +80,19 @@
         );
         $(event.currentTarget).closest(".dropdown").after(newItem);
         $(listItem).hide();
+        expertises.push(itemVal);
+
     });
 
     $("button.submit").click(() => {
-        const expertises = [];
-        for (const subject of $(subjectsList).find(".stack-list-item").get()) {
-            expertises.push(subject.textContent);
-        }
-        console.log(expertises);
-        // $.post("http://localhost:3000/api/preferences");
+        $("#preference-view").empty().append("<h2>No Open Preference Forms</h2>");
+        $("#alert-modal").attr({ "data-mdb-backdrop": "static", "data-mdb-keyboard": "false" });
+        $("#alert-title").text("Your Preference is Recorded").addClass("text-success");
+        $("#alert-body").html(
+            "You're preferred subjects and schedule has been sent to the chairperson.<br>" +
+            "Your final schedule for next semester will be posted by the chairperson."
+        ).addClass("text-success");
+        alertModal.show();
+        // TODO: post answers to some api probableh
     });
 </script>

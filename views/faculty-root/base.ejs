@@ -20,14 +20,14 @@
         </div>
     </div>
     <div class="nav-bar bg-light">
-        <a role="button" class="task" href="/faculty/schedule" id="schedule">
-            <i class="fas fa-calendar-day"></i><br>Schedule</a>
-        <a role="button" class="task mb-5" href="/faculty/preference" id="preference">
-            <i class="fas fa-clipboard-check"></i><br>Preference</a>
-        <a role="button" class="task" href="/faculty" id="profile">
-            <i class="far fa-user-circle fa-2x"></i><br>Profile</a>
-        <a role="button" href="/logout">
-            <i class="fas fa-sign-out-alt fa-2x"></i><br>Log out</a>
+        <a role="button" class="task btn btn-light" id="schedule">
+            <i class="fas fa-calendar-day fa-2x mt-1"></i><br>Schedule</a>
+        <a role="button" class="task btn btn-light" id="preference">
+            <i class="fas fa-clipboard-check fa-2x mt-1"></i><br>Preference</a>
+        <a role="button" class="task btn btn-light" id="profile">
+            <i class="far fa-user-circle fa-2x mt-1"></i><br>Profile</a>
+        <a role="button" class="task btn btn-light" id="logout">
+            <i class="fas fa-sign-out-alt fa-2x mt-1"></i><br>Log out</a>
     </div>
     
     <% if (section == "profile") { %>
@@ -41,13 +41,26 @@
     <!-- MDB -->
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.0.0/mdb.min.js"></script>
     <script>
-        $("div.nav-bar>a>i").addClass("fa-2x mt-1");
+        const alertModal = new mdb.Modal($("#alert-modal"));
+
         let openSection = "<%- section %>";
-        console.log(openSection);
-        $("div.nav-bar>a").addClass("btn btn-light rounded-0 px-1 w-100");
         $(`a.task[id=${openSection}]`)
         .toggleClass("btn-secondary btn-light border-end border-4 border-primary")
-        .attr("href", null);
+        .hover(
+            (event) => $(`div#${event.currentTarget.id}-view>div.side-panel`).show(),
+            (event) => $(`div#${event.currentTarget.id}-view>div.side-panel`).hide()
+        );
+
+        $(`a.task:not([id=${openSection}])`).click((event) => {
+            const task = event.currentTarget.id;
+            if (task == "profile") {
+                window.location.replace("http://localhost:3000/faculty");
+            } else if (task == "logout") {
+                window.location.replace("http://localhost:3000/logout");
+            } else {
+                window.location.replace("http://localhost:3000/faculty/" + task);
+            }
+        });
     </script>
 </body>
 </html>
