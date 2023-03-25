@@ -22,18 +22,18 @@
         </div>
     </div>
     <div class="nav-bar bg-light">
-        <a role="button" class="task" href="/admin/departments" id="departments">
-            <i class="fas fa-sitemap"></i><br><small>Departments</small></a>
-        <a role="button" class="task" href="/admin/faculty" id="faculty">
-            <i class="fas fa-chalkboard-teacher"></i><br>Faculty</a>
-        <a role="button" class="task" href="/admin/subjects" id="subjects">
-            <i class="fas fa-chalkboard"></i><br>Subjects</a>
-        <a role="button" class="task mb-5" href="/admin/rooms" id="rooms">
-            <i class="fas fa-door-closed"></i><br>Rooms</a>
-        <a role="button" class="task" href="/admin" id="profile">
-            <i class="far fa-user-circle fa-2x"></i><br>Profile</a>
-        <a role="button" href="/logout">
-            <i class="fas fa-sign-out-alt fa-2x"></i><br>Log out</a>
+        <a role="button" class="task btn btn-light" id="departments">
+            <i class="fas fa-sitemap fa-2x mt-1"></i><br><small>Departments</small></a>
+        <a role="button" class="task btn btn-light" id="faculty">
+            <i class="fas fa-chalkboard-teacher fa-2x mt-1"></i><br>Faculty</a>
+        <a role="button" class="task btn btn-light" href="/admin/subjects" id="subjects">
+            <i class="fas fa-chalkboard fa-2x mt-1"></i><br>Subjects</a>
+        <a role="button" class="task btn btn-light" id="rooms">
+            <i class="fas fa-door-closed fa-2x mt-1"></i><br>Rooms</a>
+        <a role="button" class="task btn btn-light" id="profile">
+            <i class="far fa-user-circle fa-2x mt-1"></i><br>Profile</a>
+        <a role="button" class="task btn btn-light" id="logout">
+            <i class="fas fa-sign-out-alt fa-2x mt-1"></i><br>Log out</a>
     </div>
     <% if (section == "profile") { %>
         <%- include('profile', taskData) %>
@@ -52,16 +52,29 @@
     <script>
         $("div.nav-bar>a>i").addClass("fa-2x mt-1");
         let openSection = "<%- section %>";
-        $("div.nav-bar>a").addClass("btn btn-light rounded-0 px-1 w-100");
+        // $("div.nav-bar>a").addClass("btn btn-light rounded-0 px-1 w-100");
 
         //task side panel stuffss
-        $(`a.task[id=${openSection}]`)
+        $(`a.task[id=${openSection}]:not(#logout)`)
         .toggleClass("btn-secondary btn-light border-end border-4 border-primary")
         .attr("href", null)
         .hover(
             (event) => $(`div#${event.currentTarget.id}-view>div.side-panel`).show(),
             (event) => $(`div#${event.currentTarget.id}-view>div.side-panel`).hide()
         );
+       
+        $(`a.task:not([id=${openSection}])`).click((event) => {
+            const task = event.currentTarget.id;
+            if (task == "profile") {
+                window.location.replace("http://localhost:3000/admin");
+            } else if (task == "logout") {
+                window.location.replace("http://localhost:3000/logout");
+            } else {
+                window.location.replace("http://localhost:3000/admin/" + task);
+            }
+            
+        });
+
         $(`div#${openSection}-view>div.side-panel`).show().hover(
             (event) => $(event.currentTarget).show(),
             (event) => $(event.currentTarget).hide()
