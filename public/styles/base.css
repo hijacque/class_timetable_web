@@ -100,7 +100,7 @@ textarea {
     background-color: #8673b4;
 }
 
-th.data-title {
+th[table-cts-column] {
     cursor: pointer;
     font-weight: bold
 }
@@ -108,7 +108,6 @@ th.data-title {
 [table-cts-column = 'edit'] { 
     width: 95px;
     text-align: center;
-    font-weight: bold;
 }
 
 .td-input { width: 100%; }
@@ -123,6 +122,10 @@ td.edit-action {
 td.edit-action>div {
     display: flex;
     justify-content: space-between;
+}
+
+.add-td-input:not(.dropdown-toggle) {
+    width: 100%;
 }
 
 .dashboard {

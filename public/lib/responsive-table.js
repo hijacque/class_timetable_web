@@ -30,9 +30,8 @@ class ResponsiveTable {
         this.headers.sort((a, b) => a.ariaColIndex - b.ariaColIndex);
     }
 
-    async initData(data = [], asyncData = false) {
+    async initData(data = []) {
         $(this.body).empty();
-        if (asyncData) { data = await data; }
         this.data = data;
         if (data.length == 0) {
             $(this.body).append(
@@ -178,10 +177,10 @@ class EditableTable extends ResponsiveTable {
     }
 
     async initData(data = [], asyncData = false, callback = function () { }) {
-        super.initData(data, asyncData);
-        if (data.length < 1) {
-            return callback();
+        if (asyncData) {
+            data = await data;
         }
+        super.initData(data);
 
         const headers = this.headers;
         for (const row of data) {
@@ -533,7 +532,10 @@ class DisplayTable extends ResponsiveTable {
     }
 
     async initData(data = [], asyncData = false, callback = function () { }) {
-        super.initData(data, asyncData);
+        if (asyncData) {
+            data = await data;
+        }
+        super.initData(data);
         if (this.data.length > 0) {
             const headers = this.headers;
             for (const row of this.data) {
