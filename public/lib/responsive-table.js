@@ -325,6 +325,9 @@ class EditableTable extends ResponsiveTable {
         $(editBtn).prop("disabled", true).hide();
         this.saveBtn.prop("disabled", false).show();
         $(this.table).find("tr.add-data, td.edit-action, [table-cts-column='edit']").show();
+        if (this.data < 1) {
+            $(`${this.body}>tr.no-data`).hide();
+        }
     };
 
     #closeEditView(saveBtn) {
@@ -338,9 +341,8 @@ class EditableTable extends ResponsiveTable {
         if (hasBlankRow && this.data.length < 1) {
             $(`${this.body}>tr.no-data`).show();
         } else if (this.data.length < 1) {
-            const headers = $(this.table).find("th.data-title").get();
             $(this.body).append(
-                `<tr class="no-data"><td colspan='${headers.length}' class="text-muted">No data to present</td></tr>`
+                `<tr class="no-data"><td colspan='${this.headers.length}' class="text-muted">No data to present</td></tr>`
             );
         } else if (hasBlankRow) {
             $(`${this.body}>tr.no-data`).remove();

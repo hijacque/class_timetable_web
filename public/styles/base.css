@@ -185,6 +185,10 @@ a#profile.task {
     overflow-y: scroll;
 }
 
+.side-panel + div {
+    padding-bottom: 50vh;
+}
+
 a.collapse-btn {
     align-items: center;
     padding: 2px 20px;
