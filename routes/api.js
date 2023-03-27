@@ -16,10 +16,12 @@ router.route("/departments/:collegeID?")
                 `CONCAT(f.last_name, ", ", f.first_name, " ", f.middle_name, " (", f.faculty_id, ")") END AS chairperson, ` +
                 `d.chair_id, "Logged in" as activity FROM Schools s INNER JOIN Colleges col ON ` +
                 `s.id = col.school_id INNER JOIN Departments d ON col.id = d.college_id ` +
-                `LEFT JOIN Faculty f ON d.chair_id = f.id WHERE s.id = "${req.account.id}" ORDER BY d.name`;
+                `LEFT JOIN Faculty f ON d.chair_id = f.id WHERE s.id = "${req.account.id}"`;
             if (req.params.collegeID) {
-                query += ` AND col.id = "${req.params.collegeID}"`
+                query += ` AND col.id = "${req.params.collegeID}"`;
             }
+            query += " ORDER BY d.name";
+            
             res.status(200).json({ departments: await DB.executeQuery(query) });
         } else {
             res.status(401).end();
@@ -136,7 +138,7 @@ router.route("/faculty/:deptID?")
             if (req.params.deptID) {
                 query += ` AND d.id = "${req.params.deptID}"`
             }
-            query += " ORDER BY f.teach_load";
+            query += " ORDER BY f.status, f.teach_load";
             res.status(200).json({ faculty: await DB.executeQuery(query) });
         } else {
             res.status(401).end();

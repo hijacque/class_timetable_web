@@ -41,32 +41,25 @@
                 <i class="fas fa-edit fa-lg me-2"></i>edit table</button>
             <button class="btn btn-success btn-rounded" data-cts-dismiss="table" data-cts-target="#departments-table"
                 aria-hidden="true">save changes</button>
-            <table class="table table-bordered table-sm fw-bold my-4 editable" id="departments-table">
+            <table class="table table-bordered table-sm fw-bold my-4" id="departments-table">
                 <thead class="text-center">
                     <tr>
-                        <th class="data-title" style="width: 300px;">Department</th>
-                        <th class="data-title" style="width: 400px;">Chairperson</th>
-                        <th class="data-title">Recent Activity</th>
-                        <td class="edit-title">Action</td>
+                        <th table-cts-column="department text" style="width: 300px;">Department</th>
+                        <th table-cts-column="chairperson text" style="width: 400px;">Chairperson</th>
+                        <th table-cts-column="activity text">Recent Activity</th>
+                        <td table-cts-column="edit">Action</td>
                     </tr>
                 </thead>
                 <tbody></tbody>
                 <tfoot>
                     <tr class="add-data">
-                        <td>
-                            <input id="department" type="text" class="form-control w-100 add-td-input unique"
-                                title="Department">
-                        </td>
-                        <td>
-                            <label class="add-td-input optional" id="chairperson" title="Chairperson"></label>
-                        </td>
-                        <td>
-                            <label class="add-td-input optional" id="activity" title="Recent Activity"></label>
-                        </td>
+                        <td><input type="text" class="form-control add-td-input unique"></td>
+                        <td><label class="add-td-input optional"></label></td>
+                        <td><label class="add-td-input optional"></label></td>
                     </tr>
                 </tfoot>
             </table>
-            <% } %>
+        <% } %>
     </div>
 </div>
 <script src="/lib/responsive-table.js"></script>
@@ -112,12 +105,13 @@
         });
     }
 
-    const departmentsTable = new ResponsiveTable("#departments-table");
+    const departmentsTable = new EditableTable("#departments-table");
     const colleges = $(".panel-menu>button.menu-item");
     if (colleges.length > 0) {
         let openCollege = colleges.get(0);
         $(openCollege).addClass("active");
         let collegeTitle = $(".table-title");
+
         // initialize responsive Departments table
         departmentsTable.initData(getDepartments(openCollege.id), true, initChairUpdate);
         $(collegeTitle).text("Departments in " + $(openCollege).text());
@@ -139,7 +133,7 @@
                 let addedData = await $(event.currentTarget).data("newRow");
                 if (addedData) { addDepartment(openCollege.id, addedData); }
             } catch (error) {
-                $(departmentsTable.table).find("tbody>tr:last-child").remove();
+                $(`${departmentsTable.body}>tr:last-child`).remove();
                 departmentsTable.data.pop();
             }
             $(event.currentTarget).removeData("newRow");
