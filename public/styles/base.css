@@ -105,11 +105,13 @@ th.data-title {
     font-weight: bold
 }
 
-td.edit-title { 
+[table-cts-column = 'edit'] { 
     width: 95px;
     text-align: center;
     font-weight: bold;
 }
+
+.td-input { width: 100%; }
 
 td.edit-action {
     width: 85px;
@@ -283,4 +285,32 @@ div.sched-body > div.sched-block {
     display: inline;
     margin-right: 8px;
     margin-top: 8px;
+}
+
+.pagination {
+    /* width:100%; */
+    margin: 0 24px 12px 24px;
+}
+
+.page-label {
+    /* max-width: 100%; */
+    margin: 0;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+ul.pagination>li {
+    width: 33.33%;
+    min-width: 0;
+}
+
+ul.pagination>li.title {
+    text-align:center;
+    font-weight: bold;
+    min-width: fit-content;
+    margin: 0 32px;
+    font-size: x-large;
+    vertical-align:middle;
 }
