@@ -24,10 +24,10 @@
         <table class="table table-bordered table-sm fw-bold mt-2 mb-4 w-50 editable" id="preferred-schedule">
             <thead class="text-center">
                 <tr>
-                    <th class="data-title" style="width: 160px;">Day</th>
-                    <th class="data-title">Time-in</th>
-                    <th class="data-title">Time-out</th>
-                    <td class="edit-title">Action</td>
+                    <th table-cts-column="day text" style="width: 160px;">Day</th>
+                    <th table-cts-column="start text">Time-in</th>
+                    <th table-cts-column="end text">Time-out</th>
+                    <td table-cts-column="edit">Action</td>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -35,8 +35,8 @@
                 <tr class="add-data">
                     <td>
                         <div class="dropdown">
-                            <button class="btn btn-secondary dropdown-toggle add-td-input unique" type="button" id="day"
-                                data-mdb-toggle="dropdown" aria-expanded="false" title="Day">Day</button>
+                            <button class="btn btn-secondary dropdown-toggle add-td-input unique" type="button"
+                                data-mdb-toggle="dropdown" aria-expanded="false">Day</button>
                             <ul class="dropdown-menu">
                                 <li><a class="dropdown-item" role="button">Monday</a></li>
                                 <li><a class="dropdown-item" role="button">Tuesday</a></li>
@@ -48,12 +48,8 @@
                             </ul>
                         </div>
                     </td>
-                    <td>
-                        <input type="time" class="form-control add-td-input" id="start_time">
-                    </td>
-                    <td>
-                        <input type="time" class="form-control add-td-input" id="end_time">
-                    </td>
+                    <td><input type="time" class="form-control add-td-input"></td>
+                    <td><input type="time" class="form-control add-td-input"></td>
                 </tr>
             </tfoot>
         </table>
@@ -62,7 +58,7 @@
 </div>
 <script src="/lib/responsive-table.js"></script>
 <script>
-    const prefSchedTable = new ResponsiveTable("#preferred-schedule");
+    const prefSchedTable = new EditableTable("#preferred-schedule");
     const expertises = [];
 
     const subjectsList = $("div.stack-list#subjects-list");

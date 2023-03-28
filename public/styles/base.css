@@ -185,7 +185,7 @@ a#profile.task {
     overflow-y: scroll;
 }
 
-.side-panel + div {
+.task-view>div:last-child {
     padding-bottom: 50vh;
 }
 

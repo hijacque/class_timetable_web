@@ -9,12 +9,12 @@
         </div>
         <!-- <hr class="mb-0"> -->
         <div class="panel-body">
-            <a type="button" class="collapse-btn" data-mdb-toggle="collapse"
-                data-mdb-target="#open-terms" aria-expanded="false">
+            <a type="button" class="collapse-btn" data-mdb-toggle="collapse" data-mdb-target="#open-terms"
+                aria-expanded="false">
                 <i class="fas fa-caret-down me-2"></i><text>Open Schedules</text>
             </a>
             <% if (data.openTerms.length> 0) { %>
-                <div class="collapse" id="open-terms">
+                <div class="collapse" id="open-terms" title="OPEN">
                     <div>
                         <ul class="list-group panel-menu">
                             <% for (const term of data.openTerms) { %>
@@ -24,44 +24,49 @@
                                         <%- term.term_ordinal %>, <%= term.year %>-<%= term.year + 1 %>
                                     </p>
                                 </button>
-                            <% } %>
+                                <% } %>
+                                    <button type="button" class="list-group-item list-group-item-action menu-item"
+                                        title="2099-S">
+                                        <p class="text-truncate m-0">
+                                            Summer, 2099-3000
+                                        </p>
+                                    </button>
                         </ul>
                     </div>
                 </div>
-            <% } else { %>
-                <div class="collapse" id="open-terms">
-                    <p>No Open Terms</p>
-                </div>
-            <% } %>
-            <a type="button" class="collapse-btn" data-mdb-toggle="collapse"
-                data-mdb-target="#closed-terms" aria-expanded="false">
-                <i class="fas fa-caret-down me-2"></i><text>Closed Schedules</text>
-            </a>
-            <% if (data.closedTerms.length> 0) { %>
-                <div class="collapse" id="closed-terms">
-                    <div>
-                        <ul class="list-group panel-menu">
+                <% } else { %>
+                    <div class="collapse" id="open-terms">
+                        <p>No Open Terms</p>
+                    </div>
+                <% } %>
+                    <a type="button" class="collapse-btn" data-mdb-toggle="collapse" data-mdb-target="#closed-terms" aria-expanded="false">
+                        <i class="fas fa-caret-down me-2"></i><text>Closed Schedules</text>
+                    </a>
+                        
+                <% if (data.closedTerms.length> 0) { %>
+                    <div class="collapse" id="closed-terms" title="CLOSED">
+                        <div><ul class="list-group panel-menu">
                             <% for (const term of data.closedTerms) { %>
-                                <button type="button" class="list-group-item list-group-item-action menu-item"
+                                <button type="button"class="list-group-item list-group-item-action menu-item"
                                     title="<%= term.year %><%= term.term %>-term" id="<%= term.id %>">
                                     <p class="text-truncate m-0">
                                         <%= term.year %>-<%= term.term %>
                                     </p>
                                 </button>
                             <% } %>
-                        </ul>
+                        </ul></div>
                     </div>
-                </div>
-            <% } else { %>
-                <div class="collapse" id="closed-terms">
-                    <p>No Closed Terms</p>
-                </div>
-            <% } %>
+                <% } else { %>
+                    <div class="collapse" id="closed-terms">
+                        <p>No Closed Terms</p>
+                    </div>
+                <% } %>
         </div>
     </div>
     <div class="shadow-3 bg-white px-5 pt-4">
         <div>
-            <a class="btn btn-primary btn-lg btn-rounded btn-top" data-mdb-toggle="dropdown" title="New Schedule" id="add-schedule">
+            <a class="btn btn-primary btn-lg btn-rounded btn-top" data-mdb-toggle="dropdown" title="New Schedule"
+                id="add-schedule">
                 <i class="fas fa-plus fa-lg me-3"></i>add schedule
             </a>
         </div>
@@ -74,11 +79,84 @@
                 Woops! No terms found yet, create new schedule now.
             <% } %>
         </h3>
+        <label for="term-title">Status: <span id="term-status"></span></label>
+        <hr>
+        <nav aria-label="Schedule Navigation for Department">
+            <ul class="pagination justify-content-between align-items-stretch">
+                <li class="d-flex align-items-center prev">
+                    <a class="page-link me-2" href="#"><i class="fas fa-chevron-left"></i></a>
+                    <p class="page-label" href="#">Faculty</p>
+                </li>
+                <li class="title">BS Information Technology</li>
+                <li class="d-flex align-items-center justify-content-end next">
+                    <p class="page-label">BS Computer Science</p>
+                    <a class="page-link ms-2" href="#"><i class="fas fa-chevron-right"></i></a>
+                </li>
+                <!-- <li class="page-item"><i class="fas fa-chevron-right ms-2"></i></li> -->
+            </ul>
+        </nav>
+        <table class="table table-bordered table-sm fw-bold my-4" id="{category}-schedule">
+            <thead class="text-center">
+                <tr>
+                    <th table-cts-column="faculty_id text" style="width: 130px;">ID</th>
+                    <th table-cts-column="status text" style="width: 135px;">Status</th>
+                    <th table-cts-column="teach_load number" style="width: 80px;">Load</th>
+                    <th table-cts-column="name text">Name</th>
+                    <th table-cts-column="preference link" style="width: 150px;">Preference</th>
+                    <th table-cts-column="schedule link" style="width: 150px;">Schedule</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot>
+                <tr class="add-data">
+                    <td><input type="text" class="form-control add-td-input unique"></td>
+                    <td>
+                        <div class="dropdown">
+                            <button class="btn btn-secondary dropdown-toggle add-td-input" type="button"
+                                data-mdb-toggle="dropdown" aria-expanded="false">Status</button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" role="button">full-time</a></li>
+                                <li><a class="dropdown-item" role="button">part-time</a></li>
+                            </ul>
+                        </div>
+                    </td>
+                    <td><input type="number" class="form-control add-td-input"></td>
+                    <td><input type="text" class="form-control add-td-input" placeholder="Juan"></td>
+                    <td><label class="add-td-input optional"></label></td>
+                    <td><label class="add-td-input optional"></label></td>
+                </tr>
+            </tfoot>
+        </table>
     </div>
-    <!-- TODO: create a side-panel to indicate existing schedules within the school -->
 </div>
+<script src="/lib/responsive-table.js"></script>
 <script>
+    const getSchedules = (termID, data) => new Promise(
+        (resolve, reject) => $.get(
+            "", {}, 
+            (data, status) => resolve(data)
+        ).fail((data) => reject(data))
+    );
+
+    let openTerm = $(".menu-item:first-child");
+    openTerm.addClass("active");
+
+    const termTitle = $("#term-title").text(openTerm.text());
+    // openTerm.closest(".collapse").addClass("show");
+    const termStatus = $("span#term-status").text(openTerm.closest(".collapse").addClass("show").attr("title"));
+    if (termStatus.text() == "OPEN") {
+        termStatus.addClass("text-success");
+    } else {
+        termStatus.addClass("text-muted");
+    }
+
+    $("#nav-schedules").find(".page-link")
+
     $("#add-schedule").click((event) => {
         window.open("http://localhost:3000/", "_blank");
     });
+
+    function initScheduleTable(data) {
+        // TODO: ???
+    }
 </script>

@@ -33,7 +33,7 @@
                     <% } %>
         </div>
     </div>
-    <div class="bg-white px-5 pt-4 pb-5">
+    <div class="bg-white px-5 pt-4">
         <% if (data.courses.length> 0) { %>
             <div class="dropdown">
                 <a class="btn btn-primary btn-lg btn-rounded btn-top dropdown-toggle" data-mdb-toggle="dropdown" title="Add semester" id="add-semester">
@@ -73,135 +73,49 @@
         "http://localhost:3000/api/curriculum/" + courseID, semData,
         (data, status) => console.log(data)
     ).fail((data) => console.log(data));
-    
-    const totalTermsPerYear = <%- JSON.stringify(data.totalTerms || 0) %>;
-    const semesterTables = [];
-    const subjects = <%- JSON.stringify(data.subjects || []) %>;
-    const courses = $(".panel-menu>button.menu-item");
-    let latestTerm, latestSem, latestYear;
-    let openCourse;
-    if (courses.length > 0) {
-        let courseTitle = $("#curriculum-title");
-        openCourse = courses.get(0);
-        $(openCourse).addClass("active");
-        initCourseCurriculum(getCurriculum(openCourse.id));
 
-        const semTableContent = 
-            `<thead><th class="data-title" style="width: 300px;" title="ASC">COURSE CODE</th>` +
-            `<th class="data-title" title="ASC">COURSE TITLE</th>` +
-            `<th class="data-title" style="width: 100px;" title="ASC">UNITS</th>` +
-            `<td class="edit-title">Action</td></thead>` +
+    function addTermTables(data = []) {
+        const tableContent = 
+            `<thead><th table-cts-column="code text" style="width: 150px;">COURSE CODE</th>` +
+            `<th table-cts-column="title text">COURSE TITLE</th>` +
+            `<th table-cts-column="units number" style="width: 100px;">UNITS</th>` +
+            `<td table-cts-column="edit">Action</td></thead>` +
             `<tbody></tbody>` +
             `<tfoot><tr class="add-data">` +
-                `<td><label class="add-td-input optional" id="code" title="COURSE CODE"></label></td>` +
-                `<td><div class="dropdown">` +
-                    `<button class="btn btn-secondary dropdown-toggle add-td-input unique" type="button" id="title"` +
-                    `data-mdb-toggle="dropdown" aria-expanded="false" title="COURSE TITLE">COURSE TITLE</button>` +
-                    `<ul class="dropdown-menu" aria-labelledby="title"><li><a class="dropdown-item" role="button">` +
-                    `${subjects.join('</a></li><li><a class="dropdown-item" role="button">')}</a></li></ul>` +
-                `</div></td>` +
-                `<td><label class="add-td-input optional" id="units" title="UNITS"></label></td>` +
+                `<td><input type="text" class="form-control add-td-input"></td>` +
+                `<td><input type="text" class="form-control add-td-input"></td>` +
+                `<td><input type="number" class="form-control add-td-input"></td>` +
             `</tr></tfoot>`;
-
-        $("#new-year").click(() => {
-            try {
-                addSemester(openCourse.id, { forNewYear: true, latestYear: latestYear });
-                latestYear++;
-            } catch (error) {
-                return console.log(error);
-            }
-            $("li:has(#new-summer)").show();
-            let view = $("#courses-view>div:last-child");
-            for (let i = 1; i <= totalTermsPerYear; i++) {
-                const newTable = `<div class="semester-header"><h6>${toOrdinal(latestYear)} Year, ${toOrdinal(i)} Semester</h6>` +
-                    `<div><a class="btn btn-primary btn-floating" data-cts-toggle="table" data-cts-target="#${latestYear}-${i}-term">` +
-                    `<i class="fas fa-edit fa-lg me-2"></i></a><a class="btn btn-success btn-floating" data-cts-dismiss="table"` +
-                    `data-cts-target="#${latestYear}-${i}-term"><i class="fas fa-check-double fa-lg me-2"></i></a></div></div>` +
-                    `<table class="table table-bordered table-sm mb-5 editable" id="${latestYear}-${i}-term">${semTableContent}</table>`;
-                view.append(newTable);
-            }
-            view.get(0).scrollTo(0, view.scrollHeight);
-
-            for (let i = 1; i <= totalTermsPerYear; i++) {
-                const newSemTable = new ResponsiveTable(`#${latestYear}-${i}-term`);
-                newSemTable.initData();
-                semesterTables.push(newSemTable);
-            }
-        });
-        $("#new-summer").click(() => {
-            try {
-                addSemester(openCourse.id, { forNewYear: false, latesYear: latestYear });
-            } catch (error) {
-                return console.log(error);
-            }
-            $("li:has(#new-summer)").hide();
-            let view = $("#courses-view>div:last-child").append(
-                `<div class="semester-header"><h6>${toOrdinal(latestYear)} Year, Summer</h6>` +
-                `<div><a class="btn btn-primary btn-floating" data-cts-toggle="table"` +
-                    `data-cts-target="#${latestYear}-s-term"><i class="fas fa-edit fa-lg me-2"></i></a>` +
-                    `<a class="btn btn-success btn-floating" data-cts-dismiss="table"` +
-                    `data-cts-target="#${latestYear}-s-term"><i class="fas fa-check-double fa-lg me-2"></i></a>` +
-                `</div></div>` +
-                `<table class="table table-bordered table-sm mb-4 editable" id="${latestYear}-s-term">${semTableContent}</table>`
-            ).get(0);
-            view.scrollTo(0, view.scrollHeight);
-            const newSemTableSummer = new ResponsiveTable(`#${latestYear}-s-term`);
-            newSemTableSummer.initData();
-            semesterTables.push(newSemTableSummer);
-        });
-
-        $("button.menu-item").click((event) => {
-            let activeItem = event.currentTarget;
-            if (!$(activeItem).hasClass("active")) {
-                let index = $(activeItem).index();
-                openCourse = courses[index];
-                $(".side-panel").hide();
-                $("button.menu-item.active").removeClass("active");
-                $(activeItem).addClass("active");
-                $(courseTitle).text(activeItem.title + " Curriculum");
-            }
-        });
-    }
-
-    async function initCourseCurriculum(data) {
-        data = await data;
-        const curriculum = data.curriculum;
-        const totalTerms = curriculum.length;
         
-        $("label[for='curriculum-title']").text("Total No. of Units: " + data.totalUnits);
-
-        const semesterContent = 
-            `<thead><th class="data-title" style="width: 300px;" title="ASC">COURSE CODE</th>` +
-            `<th class="data-title" title="ASC">COURSE TITLE</th>` +
-            `<th class="data-title" style="width: 100px;" title="ASC">UNITS</th>` +
-            `<td class="edit-title">Action</td></thead>` +
-            `<tbody></tbody>` +
-            `<tfoot><tr class="add-data">` +
-                `<td><label class="add-td-input optional" id="code" title="COURSE CODE"></label></td>` +
-                `<td><div class="dropdown">` +
-                    `<button class="btn btn-secondary dropdown-toggle add-td-input unique" type="button" id="title"` +
-                    `data-mdb-toggle="dropdown" aria-expanded="false" title="COURSE TITLE">COURSE TITLE</button>` +
-                    `<ul class="dropdown-menu" aria-labelledby="title"><li><a class="dropdown-item" role="button"></ul>` +
-                `</div></td>` +
-                `<td><label class="add-td-input optional" id="units" title="UNITS"></label></td>` +
-            `</tr></tfoot>`;
         let view = $("#courses-view>div:last-child");
-        for (let i = 0; i < curriculum.length; i++) {
-            const term = curriculum[i];
+        for (let i = 0; i < data.length; i++) {
+            const term = data[i];
             const newTable = `<div class="semester-header"><h6>${toOrdinal(term.year)} Year, ` +
                 `${(term.term == "s") ? "Summer" : toOrdinal(term.term) + " Semester"}</h6><div>` +
-                `<a class="btn btn-primary btn-floating" data-cts-toggle="table" data-cts-target="#${term.year}-${term.term}-term">` +
-                `<i class="fas fa-edit fa-lg me-2"></i></a><a class="btn btn-success btn-floating" data-cts-dismiss="table"` +
-                `data-cts-target="#${term.year}-${term.term}-term"><i class="fas fa-check-double fa-lg me-2"></i></a></div></div>` +
-                `<table class="table table-bordered table-sm mb-5 editable" id="${term.year}-${term.term}-term">${semesterContent}</table>`;
+                `<a class="btn btn-primary btn-floating" data-cts-toggle="table" ` +
+                `data-cts-target="#${term.year}-${term.term}-term"><i class="fas fa-edit fa-lg me-2"></i></a>` +
+                `<a class="btn btn-success btn-floating" data-cts-dismiss="table" ` +
+                `data-cts-target="#${term.year}-${term.term}-term"><i class="fas fa-check-double fa-lg me-2"></i></a>` +
+                `</div></div>` +
+                `<table class="table table-bordered table-sm mb-5" id="${term.year}-${term.term}-term">${tableContent}</table>`;
             view.append(newTable);
-            const newSemTable = new ResponsiveTable(`#${term.year}-${term.term}-term`);
-            newSemTable.initData(term.subjects);
+            const newSemTable = new EditableTable(`#${term.year}-${term.term}-term`, term.subjects);
             semesterTables.push(newSemTable);
         }
 
-        latestYear = curriculum[totalTerms-1].year;
-        latestTerm = curriculum[totalTerms-1].term;
+        const totalTerms = data.length;
+        console.log(totalTerms);
+        latestYear = data[totalTerms-1].year;
+        latestTerm = data[totalTerms-1].term;
+    }
+
+    async function initCourseCurriculum(data = [], asyncData = false) {
+        if (asyncData) {
+            data = await data;
+        }
+
+        $("label[for='curriculum-title']").text("Total No. of Units: " + data.totalUnits);
+        addTermTables(data.curriculum);
         if (latestSem == "s") {
             $("li:has('#new-summer')").hide();
         }
@@ -220,4 +134,58 @@
             return number;
         }
     }
+    
+    const totalTermsPerYear = <%- JSON.stringify(data.totalTerms || 0) %>;
+    const semesterTables = [];
+    const subjects = <%- JSON.stringify(data.subjects || []) %>;
+    const courses = $(".panel-menu>button.menu-item");
+    let latestTerm, latestSem, latestYear;
+    let openCourse;
+    if (courses.length > 0) {
+        let courseTitle = $("#curriculum-title");
+        openCourse = courses.get(0);
+        $(openCourse).addClass("active");
+        initCourseCurriculum(getCurriculum(openCourse.id), true);
+        
+        $("#new-year").click(() => {
+            try {
+                addSemester(openCourse.id, { forNewYear: true, latestYear: latestYear });
+                latestYear++;
+            } catch (error) {
+                return console.log(error);
+            }
+            $("li:has(#new-summer)").show();
+            let view = $("#courses-view>div:last-child").get(0);
+            view.scrollTo(0, view.scrollHeight);
+            let newTerms = [];
+            for (let i = 1; i <= totalTermsPerYear; i++) {
+                newTerms.push({ year: latestYear, term: i, subjects: [] });
+            }
+            addTermTables(newTerms);
+        });
+        $("#new-summer").click(() => {
+            try {
+                addSemester(openCourse.id, { forNewYear: false, latesYear: latestYear });
+            } catch (error) {
+                return console.log(error);
+            }
+            $("li:has(#new-summer)").hide();
+            let view = $("#courses-view>div:last-child").get(0);
+            view.scrollTo(0, view.scrollHeight);
+            addTermTables([{ year: latestYear, term: "s", subjects:[] }])
+        });
+
+        $("button.menu-item").click((event) => {
+            let activeItem = event.currentTarget;
+            if (!$(activeItem).hasClass("active")) {
+                let index = $(activeItem).index();
+                openCourse = courses[index];
+                $(".side-panel").hide();
+                $("button.menu-item.active").removeClass("active");
+                $(activeItem).addClass("active");
+                $(courseTitle).text(activeItem.title + " Curriculum");
+            }
+        });
+    }
+    
 </script>
