@@ -33,11 +33,6 @@ class ResponsiveTable {
     async initData(data = []) {
         $(this.body).empty();
         this.data = data;
-        if (data.length == 0) {
-            $(this.body).append(
-                `<tr class="no-data"><td colspan='${this.headers.length}' class="text-muted">No data to present</td></tr>`
-            );
-        }
     }
 
     #sortTable(baseColumn) {
@@ -134,6 +129,7 @@ class EditableTable extends ResponsiveTable {
     #footer;
     #editOptions;
     #changeOptions;
+    #alwaysOnEdit;
     addBtn; // for adding new row
     editBtn; // for opening edit view
     saveBtn; // for closing edit view
@@ -146,27 +142,31 @@ class EditableTable extends ResponsiveTable {
     constructor(id, data = [], asyncData = false) {
         super(id);
         const footer = `${id}>tfoot>tr.add-data`;
-        $(id).removeClass("table-hover").find("[table-cts-column='edit']").hide().css("width", "90px");
-        $(footer).hide().append(
+        $(id).removeClass("table-hover").find("[table-cts-column='edit']").css("width", "90px");
+        $(footer).append(
             `<td class="add-row text-primary"><a role="button"><i class="fas fa-plus-circle fa-2x"></i></a></td>`
         );
         this.#initMenuInputs($(footer));
         this.#footer = footer;
         this.editBtn = $(`[data-cts-toggle='table'][data-cts-target='${id}']`);
         this.saveBtn = $(`[data-cts-dismiss='table'][data-cts-target='${id}']`);
-        this.saveBtn.hide();
 
         this.addBtn = $(`${footer}>td.add-row>a`).click(() => {
             $(this.addBtn).data("newRow", this.addNewRow());
         });
 
-        if (this.editBtn || this.saveBtn) {
+        if (this.editBtn.length > 0 && this.saveBtn.length > 0) {
+            $("[table-cts-column='edit']").hide();
+            $(footer).hide();
             this.editBtn.click((event) => this.#openEditView(event.currentTarget));
-            this.saveBtn.click((event) => this.#closeEditView(event.currentTarget));
+            this.saveBtn.click((event) => this.#closeEditView(event.currentTarget)).hide();
         } else {
+            this.editBtn = undefined;
+            this.saveBtn = undefined;
+            this.#alwaysOnEdit = true;
             this.#openEditView();
         }
-
+        
         this.#editOptions = `${id}>tbody>tr>td.edit-action> div.edit-options`;
         this.#changeOptions = `${id}>tbody>tr>td.edit-action> div.confirm-options`;
         this.editButtons = `${this.#editOptions}>a.edit`;
@@ -181,6 +181,11 @@ class EditableTable extends ResponsiveTable {
             data = await data;
         }
         super.initData(data);
+        if (data.length == 0 && $(`${this.table}>thead>tr> [table-cts-column='edit']`).text() == "Action" && !this.#alwaysOnEdit) {
+            $(this.body).append(
+                `<tr class="no-data"><td colspan='${this.headers.length}' class="text-muted">No data to present</td></tr>`
+            );
+        }
 
         const headers = this.headers;
         for (const row of data) {
@@ -206,7 +211,9 @@ class EditableTable extends ResponsiveTable {
             $(this.body).append(newRow);
         }
 
-        $(this.body).find("td.edit-title, td.edit-action").addClass("text-primary").hide();
+        if (!this.#alwaysOnEdit) {
+            $(this.table).find("[table-cts-column='edit'], td.edit-action").addClass("text-primary").hide();
+        }
 
         $(this.#changeOptions).hide();
 
@@ -288,8 +295,8 @@ class EditableTable extends ResponsiveTable {
             const aboutCol = $(this.headers[i]).attr("table-cts-column").split(" ");
             if (!$(addInputs[i]).hasClass("add-td-input")) {
                 $(newRow).append("<td></td>");
-            } else if (aboutCol[1] == "time") {
-                $(newRow).append(`<td>${this.formatTime(newData[aboutCol[0]])}</td>`);
+            // } else if (aboutCol[1] == "time") {
+            //     $(newRow).append(`<td>${this.formatTime(newData[aboutCol[0]])}</td>`);
             } else if ($(addInputs[i]).hasClass("optional") && !newData[aboutCol[0]]) {
                 $(newRow).append("<td></td>");
             } else {
@@ -321,6 +328,10 @@ class EditableTable extends ResponsiveTable {
     });
 
     #openEditView(editBtn) {
+        if (this.#alwaysOnEdit) {
+            return;
+        }
+
         $(this.#footer).show();
         $(editBtn).prop("disabled", true).hide();
         this.saveBtn.prop("disabled", false).show();
@@ -335,6 +346,9 @@ class EditableTable extends ResponsiveTable {
         if (action.text() != "Action") {
             action.text("Action");
             $(`${this.table}>tbody>tr>td>div.confirm-options:visible`).closest("tr").trigger("row:cancel-change");
+        }
+        if (this.#alwaysOnEdit) {
+            return;
         }
 
         let hasBlankRow = $(`${this.body}>tr.no-data`).length > 0;
@@ -561,6 +575,3 @@ class DisplayTable extends ResponsiveTable {
         callback();
     }
 }
-
-// TODO: break down responsive table into editable and display table
-// TODO: change the object initialization in all the pages (admin, chair, faculty)
