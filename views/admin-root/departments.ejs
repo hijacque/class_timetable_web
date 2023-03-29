@@ -126,6 +126,7 @@
                 departmentsTable.initData(getDepartments(activeItem.id), true, initChairUpdate);
                 $(collegeTitle).text("Departments in " + activeItem.title);
             }
+            departmentsTable.saveBtn.trigger("click");
         });
 
         $(departmentsTable.addBtn).click(async (event) => {
