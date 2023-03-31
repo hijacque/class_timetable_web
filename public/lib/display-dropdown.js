@@ -1,7 +1,8 @@
 function displayDropMenu(dropMenuBtn, origLabel) {
-    let dropList = $(dropMenuBtn).next("ul.dropdown-menu");
-    let dropItems = $(dropList).find("a.dropdown-item").get();
-    dropItems.forEach(item => {
+    let dropList = dropMenuBtn.next("ul.dropdown-menu");
+    let dropItems = dropList.find("a.dropdown-item").get();
+    
+    for (const item of dropItems) {
         $(item).click(() => {
             let value = $(item).text();
             if ($(item).text().toLowerCase() == "cancel") {
@@ -12,5 +13,5 @@ function displayDropMenu(dropMenuBtn, origLabel) {
                 $(dropMenuBtn).text(value);
             }
         });
-    });
+    }
 }

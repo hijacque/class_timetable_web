@@ -21,7 +21,7 @@ router.route("/departments/:collegeID?")
                 query += ` AND col.id = "${req.params.collegeID}"`;
             }
             query += " ORDER BY d.name";
-            
+
             res.status(200).json({ departments: await DB.executeQuery(query) });
         } else {
             res.status(401).end();
@@ -55,7 +55,7 @@ router.post("/chairperson/:deptID?", async (req, res) => {
     let chair = req.body.chair.split("(");
     let lastName = chair[0].split(",")[0];
     chair = chair[1].slice(0, -1);
-    
+
     let newChairID = await DB.executeQuery(
         `SELECT id FROM Faculty WHERE faculty_id = '${chair}' AND last_name = '${lastName}' LIMIT 1;`
     );
@@ -87,7 +87,7 @@ router.post("/chairperson/:deptID?", async (req, res) => {
             }
         })
     }
-    
+
     res.status(200).json({
         message: {
             mode: 1,
@@ -130,7 +130,7 @@ router.route("/faculty/:deptID?")
             if (req.query.columns) {
                 query = `SELECT f.${req.query.columns.join(", f.")}, `;
             } else {
-                query = `SELECT f.faculty_id, f.status, f.teach_load, f.first_name, f.middle_name, f.last_name, `;
+                query = `SELECT f.faculty_id, f.status, f.first_name, f.middle_name, f.last_name, `;
             }
             query += `u.email, "My Schedule" AS schedule FROM Colleges col INNER JOIN Departments d ` +
                 `ON col.id = d.college_id INNER JOIN Faculty f ON d.id = f.dept_id INNER JOIN Users u ` +
@@ -138,7 +138,7 @@ router.route("/faculty/:deptID?")
             if (req.params.deptID) {
                 query += ` AND d.id = "${req.params.deptID}"`
             }
-            query += " ORDER BY f.status, f.teach_load";
+            query += " ORDER BY f.status, f.last_name";
             res.status(200).json({ faculty: await DB.executeQuery(query) });
         } else {
             res.status(401).end();
@@ -274,7 +274,7 @@ router.post("/buildings", async (req, res) => {
 router.post("/courses", (req, res) => {
     if (!req.account || !req.body.title) {
         return res.status(401).end();
-    } 
+    }
 });
 
 router.route("/curriculum/:courseID?")
@@ -290,7 +290,7 @@ router.route("/curriculum/:courseID?")
         if (terms.length < 1) {
             return res.status(200).json({ curriculum: terms });
         }
-        
+
         for (let i = 0; i < terms.length; i++) {
             terms[i]["subjects"] = await DB.executeQuery(
                 `SELECT sub.code, sub.units, CASE WHEN sub.type IS NULL THEN sub.title ELSE ` +
@@ -309,7 +309,7 @@ router.route("/curriculum/:courseID?")
         if (!req.account || !req.params.courseID) {
             return res.status(401).end();
         }
-        
+
         const DB = req.app.locals.database;
         let latestYear = await DB.executeQuery(
             `SELECT MAX(year) FROM Curricula WHERE course_id = "${req.params.courseID}"`
@@ -342,5 +342,145 @@ router.route("/curriculum/:courseID?")
             }
         });
     });
+
+router.post("/terms", async (req, res) => {
+    const user = req.account
+    if (!user) {
+        return res.status(401).end();
+    }
+
+    const DB = req.app.locals.database;
+    const year = req.body.year;
+    const term = req.body.term;
+    let sameTerms = await DB.executeQuery(
+        `SELECT t.id FROM Departments d INNER JOIN Colleges col ON d.college_id = col.id INNER JOIN ` +
+        `Terms t ON col.school_id = t.school_id WHERE d.chair_id = "${user.id}" AND ` +
+        `t.year = ${year} AND t.term = "${term}"`
+    );
+    
+    if (sameTerms.length > 0) {
+        return res.status(409).end();
+    }
+
+    let schoolID = await DB.executeQuery(
+        `SELECT col.school_id FROM Departments d INNER JOIN Colleges col ON d.college_id = col.id ` +
+        `WHERE d.chair_id = "${user.id}" LIMIT 1`
+    );
+    schoolID = schoolID[0]["school_id"];
+    const termID = crypto.randomBytes(6).toString("base64url");
+    const faculty = await DB.executeQuery(
+        `SELECT f.id FROM Faculty f INNER JOIN Departments d ON f.dept_id = d.id ` +
+        `WHERE d.chair_id = "${user.id}"`
+    );
+    const yearsPerCourse = await DB.executeQuery(
+        `SELECT DISTINCT co.id, cu.year FROM Courses co INNER JOIN Curricula cu ON co.id = cu.course_id ` +
+        `INNER JOIN Departments d ON co.dept_id = d.id WHERE d.chair_id = '${user.id}'`
+    );
+    
+    for (let i = 0; i < faculty.length; i++) {
+        faculty[i] = `('${termID}', '${faculty[i]["id"]}')`;
+    }
+
+    for (let i = 0; i < yearsPerCourse.length; i++) {
+        const blockID = crypto.randomBytes(6).toString("base64url");
+        yearsPerCourse[i] = `('${blockID}', '${yearsPerCourse[i]["id"]}', '${termID}', ${yearsPerCourse[i]["year"]})`;
+    }
+
+    let query = `INSERT INTO Terms VALUES ('${termID}', '${schoolID}', ${year}, '${term}', 1); ` +
+        `INSERT INTO Blocks (id, course_id, term_id, year) VALUES ${yearsPerCourse.join(",")}; ` +
+        `INSERT INTO Preferences (term_id, faculty_id) VALUES ${faculty.join(",")};`;
+    
+    await DB.executeQuery(query);
+    res.status(200).json({
+        termID: termID,
+        message: {
+            mode: 1,
+            title: "New Term Created",
+            body: `You can now enter the teaching load of the professors for this semester.`
+        }
+    });
+});
+
+router.route("/schedules/:termID")
+    .get(async (req, res) => {
+        const user = req.account;
+        if (!user) {
+            return res.status(401).end();
+        }
+
+        const DB = req.app.locals.database;
+        if (req.query.category == "faculty") {
+            let query = `SELECT f.id, CONCAT(f.last_name, ", ", f.first_name, " ", f.middle_name) as name, ` +
+                `f.faculty_id, f.status AS faculty_status, pref.teach_load, pref.status AS pref_status ` +
+                `FROM Terms t INNER JOIN Preferences pref ON t.id = pref.term_id INNER JOIN ` +
+                `Faculty f ON pref.faculty_id = f.id INNER JOIN Departments d ON f.dept_id = d.id ` +
+                `WHERE d.chair_id = '${user.id}' AND t.id = '${req.params.termID}' ` +
+                `ORDER BY f.status, name`;
+            return res.status(200).json({ schedules: await DB.executeQuery(query) });
+        }
+
+        // TODO: query schedule data from courses
+        let query = `SELECT id, year, block_no, total_students FROM Blocks WHERE course_id = "${req.query.category}" ` +
+            `AND term_id = "${req.params.termID}" ORDER BY year, block_no`;
+        res.status(200).json({ schedules: await DB.executeQuery(query) });
+    });
+
+router.post("/preferences/:termID", async (req, res) => {
+    if (!req.account) {
+        return res.status(401).end();
+    }
+    
+    const DB = req.app.locals.database;
+    await DB.executeQuery(
+        `UPDATE Preferences pref INNER JOIN Faculty f ON pref.faculty_id = f.id INNER JOIN Departments d ` +
+        `ON f.dept_id = d.id SET pref.teach_load = ${req.body.load} WHERE pref.term_id = '${req.params.termID}' AND ` +
+        `f.faculty_id = '${req.body.facultyID}' AND d.chair_id = '${req.account.id}' LIMIT 1`
+    );
+    res.status(200).json({
+        message: {
+            mode: 1,
+            title: "Teaching load updated",
+            body: `We suggest modifying the schedule again to take account new load`
+        }
+    });
+});
+
+router.post("/blocks/:courseID", async (req, res) => {
+    if (!req.account) {
+        return res.status(401).end(); // unauthorized request
+    }
+
+    const DB = req.app.locals.database;
+    const data = req.body;
+    let newBlock = await DB.executeQuery(
+        `SELECT MAX(b.block_no) + 1 AS new_block FROM (SELECT block_no FROM Blocks WHERE year = ${data.year} ` +
+        `AND course_id = '${req.params.courseID}' AND term_id = '${data.termID}') AS b`
+    );
+    
+    if (newBlock < 1) {
+        return res.status(409).end(); // block number conflict
+    }
+
+    const blockID = crypto.randomBytes(6).toString("base64url");
+    newBlock = newBlock[0]["new_block"];
+    let query;
+    if (data.totalStudents) {
+        query = `INSERT INTO Blocks VALUES ('${blockID}', '${req.params.courseID}', '${data.termID}', ` +
+        `${data.year}, ${newBlock}, ${data.totalStudents})`
+    } else {
+        query = `INSERT INTO Blocks (id, term_id, course_id, year, block_no) VALUES ('${blockID}', '${data.termID}', ` +
+        `'${req.params.courseID}', ${data.year}, ${newBlock})`
+    }
+    
+    await DB.executeQuery(query);
+    res.status(200).json({
+        newBlock: newBlock, 
+        message: {
+            mode: 1,
+            title: "New block created",
+            body: `Block ${data.year}-${data.block} is ready for class scheduling.`
+        }
+    });
+});
 
 module.exports = router;

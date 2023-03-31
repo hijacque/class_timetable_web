@@ -1,10 +1,36 @@
 <div class="bg-light task-view" id="schedules-view">
     <div class="side-panel">
-        <div class="d-flex mx-4 justify-content-between mb-2">
-            <h4>Schedules</h4>
-            <div>
-                <a type="button"><i class="fas fa-sort-alpha-up-alt"></i></a>
-                <a type="button"><i class="fas fa-search ms-2"></i></a>
+        <div class="panel-header mx-4">
+            <div class="d-flex justify-content-between">
+                <h4>Schedules</h4>
+                <div>
+                    <a type="button"><i class="fas fa-sort-alpha-up-alt"></i></a>
+                    <a type="button"><i class="fas fa-search ms-2"></i></a>
+                </div>
+            </div>
+            <div class="input-group mb-3">
+                <input
+                  type="number"
+                  class="form-control"
+                  placeholder="Year"
+                  aria-label="Year"
+                  aria-describedby="new-term-year"
+                  id="new-term-year"
+                />
+                <div class="dropdown">
+                    <a class="text-primary dropdown-toggle input-group-text rounded-0" type="button"
+                        data-mdb-toggle="dropdown" aria-expanded="false" id="new-term-sem">Semester</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" role="button">1<sup>st</sup> Semester</a></li>
+                        <li><a class="dropdown-item" role="button">2<sup>nd</sup> Semester</a></li>
+                        <li><a class="dropdown-item" role="button">Summer</a></li>
+                        <li><hr class="dropdown-divider m-0"></li>
+                        <li><a class="dropdown-item text-danger" role="button">Cancel</a></li>
+                    </ul>
+                </div>
+                <a type="button" class="input-group-text" id="add-term">
+                    <i class="fas fa-plus text-primary"></i>
+                </a>
             </div>
         </div>
         <!-- <hr class="mb-0"> -->
@@ -19,18 +45,12 @@
                         <ul class="list-group panel-menu">
                             <% for (const term of data.openTerms) { %>
                                 <button type="button" class="list-group-item list-group-item-action menu-item"
-                                    title="<%= term.year %><%= term.term %>-term" id="<%= term.id %>">
+                                    title="<%= term.year %><%= term.term %>" id="<%= term.id %>">
                                     <p class="text-truncate m-0">
                                         <%- term.term_ordinal %>, <%= term.year %>-<%= term.year + 1 %>
                                     </p>
                                 </button>
-                                <% } %>
-                                    <button type="button" class="list-group-item list-group-item-action menu-item"
-                                        title="2099-S">
-                                        <p class="text-truncate m-0">
-                                            Summer, 2099-3000
-                                        </p>
-                                    </button>
+                            <% } %>
                         </ul>
                     </div>
                 </div>
@@ -48,9 +68,9 @@
                         <div><ul class="list-group panel-menu">
                             <% for (const term of data.closedTerms) { %>
                                 <button type="button"class="list-group-item list-group-item-action menu-item"
-                                    title="<%= term.year %><%= term.term %>-term" id="<%= term.id %>">
+                                    title="<%= term.year %><%= term.term %>" id="<%= term.id %>">
                                     <p class="text-truncate m-0">
-                                        <%= term.year %>-<%= term.term %>
+                                        <%- term.term_ordinal %>, <%= term.year %>-<%= term.year + 1 %>
                                     </p>
                                 </button>
                             <% } %>
@@ -64,10 +84,10 @@
         </div>
     </div>
     <div class="shadow-3 bg-white px-5 pt-4">
+        <% if (data.closedTerms.length > 0 || data.openTerms.length > 0) { %>
         <div>
-            <a class="btn btn-primary btn-lg btn-rounded btn-top" data-mdb-toggle="dropdown" title="New Schedule"
-                id="add-schedule">
-                <i class="fas fa-plus fa-lg me-3"></i>add schedule
+            <a class="btn btn-primary btn-lg btn-rounded btn-top" title="Generate Schedule" id="create-schedule">
+                <i class="fas fa-star fa-lg me-2"></i>generate schedule
             </a>
         </div>
         <h3 style="color: #8673b4;" id="term-title">
@@ -82,81 +102,231 @@
         <label for="term-title">Status: <span id="term-status"></span></label>
         <hr>
         <nav aria-label="Schedule Navigation for Department">
-            <ul class="pagination justify-content-between align-items-stretch">
-                <li class="d-flex align-items-center prev">
-                    <a class="page-link me-2" href="#"><i class="fas fa-chevron-left"></i></a>
-                    <p class="page-label" href="#">Faculty</p>
+            <ul class="pagination" id="schedule-nav">
+                <li class="page-item disabled">
+                    <a class="page-link me-2" type="button"><i class="fas fa-chevron-left"></i></a>
+                    <p class="prev page-label"></p>
                 </li>
-                <li class="title">BS Information Technology</li>
-                <li class="d-flex align-items-center justify-content-end next">
-                    <p class="page-label">BS Computer Science</p>
-                    <a class="page-link ms-2" href="#"><i class="fas fa-chevron-right"></i></a>
+                <li class="page-title"></li>
+                <li class="justify-content-end page-item">
+                    <p class="next page-label"></p>
+                    <a class="page-link ms-2" type="button"><i class="fas fa-chevron-right"></i></a>
                 </li>
                 <!-- <li class="page-item"><i class="fas fa-chevron-right ms-2"></i></li> -->
             </ul>
         </nav>
-        <table class="table table-bordered table-sm fw-bold my-4" id="{category}-schedule">
-            <thead class="text-center">
-                <tr>
-                    <th table-cts-column="faculty_id text" style="width: 130px;">ID</th>
-                    <th table-cts-column="status text" style="width: 135px;">Status</th>
-                    <th table-cts-column="teach_load number" style="width: 80px;">Load</th>
-                    <th table-cts-column="name text">Name</th>
-                    <th table-cts-column="preference link" style="width: 150px;">Preference</th>
-                    <th table-cts-column="schedule link" style="width: 150px;">Schedule</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-            <tfoot>
-                <tr class="add-data">
-                    <td><input type="text" class="form-control add-td-input unique"></td>
-                    <td>
-                        <div class="dropdown">
-                            <button class="btn btn-secondary dropdown-toggle add-td-input" type="button"
-                                data-mdb-toggle="dropdown" aria-expanded="false">Status</button>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" role="button">full-time</a></li>
-                                <li><a class="dropdown-item" role="button">part-time</a></li>
-                            </ul>
-                        </div>
-                    </td>
-                    <td><input type="number" class="form-control add-td-input"></td>
-                    <td><input type="text" class="form-control add-td-input" placeholder="Juan"></td>
-                    <td><label class="add-td-input optional"></label></td>
-                    <td><label class="add-td-input optional"></label></td>
-                </tr>
-            </tfoot>
-        </table>
+        <table class="table table-bordered table-sm my-4"></table>
+        <% } %>
     </div>
 </div>
+
 <script src="/lib/responsive-table.js"></script>
+<script src="/lib/display-dropdown.js"></script>
 <script>
-    const getSchedules = (termID, data) => new Promise(
+    const addTerm = (year, semester) => new Promise((resolve, reject) => $.post(
+        "http://localhost:3000/api/terms", { year: year, term: semester },
+        (data, status) => {
+            resolve(data.termID);
+        }).fail((data) => reject(data))
+    );
+
+    const addBlock = (courseID, year, totalStudents, termID) => new Promise((resolve, reject) => {
+        $.post("http://localhost:3000/api/blocks/" + courseID, 
+            { year: year, totalStudents: totalStudents, termID: termID },
+            (data) => resolve(data.newBlock)
+        ).fail((data) => console.log(data))
+    });
+
+    const getSchedules = (termID, category) => new Promise(
         (resolve, reject) => $.get(
-            "", {}, 
-            (data, status) => resolve(data)
+            "http://localhost:3000/api/schedules/" + termID, {category: category}, 
+            (data, status) => resolve(data.schedules)
         ).fail((data) => reject(data))
     );
 
-    let openTerm = $(".menu-item:first-child");
-    openTerm.addClass("active");
+    function initScheduleTable() {
+        let prev, next;
+        if (tables.length == 1) {
+            $("#schedule-nav> li:has(.prev),li:has(.next)").addClass("disabled");
+        } else if (current > 0) {
+            prev = tables[current-1];
+            const prevItem = $("#schedule-nav>li:has(.prev)").removeClass("disabled").children();
+            prevItem[0].id = prev.id;
+            prevItem[1].textContent = prev.title;
+            if (current == tables.length - 1) {
+                $("#schedule-nav>li:has(.next)").addClass("disabled");
+            }
+        } else if (current < tables.length - 1) {
+            next = tables[current+1];
+            const nextItem = $("#schedule-nav>li:has(.next)").removeClass("disabled").children();
+            nextItem[0].textContent = next.title;
+            nextItem[1].id = next.id;
+            if (current == 0) {
+                $("#schedule-nav>li:has(.prev)").addClass("disabled");
+            }
+        }
+        
+        $("#schedule-nav>li.page-title").text(tables[current].title);
 
-    const termTitle = $("#term-title").text(openTerm.text());
-    // openTerm.closest(".collapse").addClass("show");
-    const termStatus = $("span#term-status").text(openTerm.closest(".collapse").addClass("show").attr("title"));
-    if (termStatus.text() == "OPEN") {
-        termStatus.addClass("text-success");
+        const category = tables[current].id;
+        scheduleTable.empty();
+        // const header = $("#schedule-table>thead").empty();
+        if (category == "faculty") {
+            scheduleTable.attr("id", "faculty-schedule").append(
+                `<thead clas='text-center'><tr><th table-cts-column="faculty_id" style="width: 130px;">ID</th>` +
+                    `<th table-cts-column="faculty_status" style="width: 130px;">Employment Status</th>` +
+                    `<th table-cts-column="teach_load number" style="width: 80px;">Load</th>` +
+                    `<th table-cts-column="name">Name</th>` +
+                    `<th table-cts-column="pref_status" style="width: 120px;">Preference Status</th>` +
+                `<th table-cts-column="edit">Action</th></tr></thead><tbody></tbody>`
+            );
+            const facultyTable = new EditableTable("#faculty-schedule");
+            facultyTable.initData(getSchedules(openTerm.attr("id"), category), true, () => {
+                $(facultyTable.confirmButtons).click(updateLoad);
+                $(`${facultyTable.body}>tr`).click(openSchedule);
+            });
+        } else {
+            scheduleTable.attr("id", "blocks-schedule").append(
+                `<thead clas='text-center'><tr><th table-cts-column="year" style="width: 120px;">Year</th>` +
+                `<th table-cts-column="block_no" style="width: 120px;">Block</th>` +
+                `<th table-cts-column="total_students number" style="width: 160px;">No. of Students</th>` +
+                `<th table-cts-column="edit">Action</th></tr></thead><tbody></tbody>` +
+                `<tfoot><tr class='add-data'>` +
+                    `<td><input type="number" class="form-control add-td-input reuse"></td>` +
+                    `<td><label class="add-td-input optional"></label></td>` +
+                    `<td><input type="number" class="form-control add-td-input optional" min="1" max="100"></td>` +
+                `</tr></tfoot>`
+            );
+
+            const blocksTable = new EditableTable("#blocks-schedule");
+            blocksTable.initData(getSchedules(openTerm.attr("id"), category), true, () => {
+                $(blocksTable.addBtn).click(async () => {
+                    const columns = $(`${blocksTable.body}>tr:last-child>td`).get();
+                    columns[1].textContent = await addBlock(
+                        tables[current].id,
+                        columns[0].textContent, 
+                        columns[2].textContent,
+                        openTerm.attr("id") 
+                    );
+                    $(`${blocksTable.body}>tr:last-child`).click((event) => openSchedule(event));
+                });
+                $(`${blocksTable.body}>tr`).click((event) => openSchedule(event));
+            });
+        }
+    }
+
+    const openSchedule = (rowEvent) => {
+        const clickedCol = $(rowEvent.target).closest("td");
+        if (clickedCol.hasClass("edit-action") || clickedCol.hasClass("no-data") || $(scheduleTable).find("[table-cts-column='edit']").text() != "Action") {
+            return;
+        }
+
+        const row = rowEvent.currentTarget;
+        const category = tables[current].id;
+        if (category == "faculty") {
+            console.log(
+                `http://localhost:3000/schedule/faculty?term=${openTerm.attr("title")}&` +
+                `id=${row.firstChild.textContent}`,);    
+        } else {
+            const columns = row.children;
+            console.log(
+                `http://localhost:3000/schedule/${category}?term=${openTerm.attr("title")}&` +
+                `year=${columns[0].textContent}&block=${columns[1].textContent}`
+            );
+        }
+        
+        // TODO: create new page to show preference and schedule of each faculty
+    }
+
+    const updateLoad = (rowEvent) => {
+        if (!rowEvent.currentTarget.isConnected) {
+            return;
+        }
+        // TODO: upon clicking the confirm edit button, set the changes in POST
+        const columns =  $(event.currentTarget).closest("td").siblings().get();
+        $.post("http://localhost:3000/api/preferences/" + openTerm.attr("id"),
+            { load: columns[2].textContent, facultyID: columns[0].textContent },
+            (data, status) => console.log(data)
+        ).fail((data) => console.log(data));
+    };
+
+    /* 
+    * main proces start here
+    */
+    const tables = <%- JSON.stringify(data.tables) %>; // faculty and courses for schedule table
+    let current = 0; // current index of the schedule table shown
+    
+    let openTerm = $(".menu-item:first-child"); // current academic term opened
+    const scheduleTable = $("#schedules-view>div:last-child>table"); // faculty or blocks schedule table of open term
+    const termTitle = $("#term-title");
+    const termStatus = $("span#term-status");
+    
+    if (openTerm.length > 0) {
+        termStatus.text(openTerm.closest(".collapse").addClass("show").attr("title"));
+        termTitle.text(openTerm.text());
+        openTerm.addClass("active");
+        if (termStatus.text() == "OPEN") {
+            termStatus.addClass("text-success");
+        } else {
+            termStatus.addClass("text-muted");
+        }
+        // for changing the academic term to view
+        $("button.menu-item").click((event) => {
+            openTerm = $(event.currentTarget);
+            $(".menu-item.active").removeClass("active");
+            openTerm.addClass("active");
+            termTitle.text(openTerm.text());
+            current = 0;
+            initScheduleTable();
+        });
+
+        $("#open-terms").find(".menu-item").click((event) => termStatus.addClass("text-success").removeClass("text-muted"));
+
+        $("#closed-terms").find(".menu-item").click((event) => termStatus.addClass("text-muted").removeClass("text-success"));
+
+        initScheduleTable();
+
+        $("#schedule-nav>li:has(.prev)").click(() => {
+            current--;
+            initScheduleTable();
+        });
+        $("#schedule-nav>li:has(.next)").click(() => {
+            current++;
+            initScheduleTable();
+        });
     } else {
-        termStatus.addClass("text-muted");
+        $("#open-terms").addClass("show");
     }
 
-    $("#nav-schedules").find(".page-link")
 
-    $("#add-schedule").click((event) => {
-        window.open("http://localhost:3000/", "_blank");
+    displayDropMenu($("#new-term-sem"), "Semester");
+    $("#add-term").click(async (event) => {
+        const semester = $("#new-term-sem");
+        const year = $("#new-term-year");
+        
+        const termID = await addTerm(year.val(), semester.text()[0]);
+        console.log(termID);
+        if (termID) {
+            if (openTerm.length < 1) {
+                return window.location.replace("http://localhost:3000/chair/schedules");
+            }
+
+            let openSchedMenu = $("#open-terms");
+            $(`<button type="button" class="list-group-item list-group-item-action menu-item" ` +
+                `title="${year.val()}${semester.text()[0]}-term" id="${termID}"><p class="text-truncate m-0">` +
+                `${semester.text()}, ${year.val()}-${parseInt(year.val()) + 1}</p></button>`
+            ).click((event) => {
+                openTerm = $(event.currentTarget);
+                $(".menu-item.active").removeClass("active");
+                openTerm.addClass("active");
+                termTitle.text(openTerm.text());
+                current = 0;
+                initScheduleTable();
+            }).trigger("click").appendTo(openSchedMenu.find(".panel-menu"));
+            
+            semester.text("Semester");
+            year.val(null);
+        }
     });
-
-    function initScheduleTable(data) {
-        // TODO: ???
-    }
+    
 </script>

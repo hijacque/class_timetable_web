@@ -54,8 +54,9 @@ router.get("/logout", (req, res) => {
 
 router.get("/admin/:task?", verifySession, getAdminData, (req, res) => {
     if (req.taskData) {
+        const tasks = ["departments", "faculty", "subjects", "rooms"];
         res.render("admin-root/base", {
-            section: req.params.task || "profile",
+            section: (tasks.includes(req.params.task)) ? req.params.task : "profile" || "profile",
             taskData: req.taskData,
             serverAlert: {}
         });
@@ -66,8 +67,9 @@ router.get("/admin/:task?", verifySession, getAdminData, (req, res) => {
 
 router.get("/chair/:task?", verifySession, getChairData, (req, res) => {
     if (req.taskData) {
+        const tasks = ["schedules", "faculty", "courses"];
         res.render("chair-root/base", {
-            section: req.params.task || "profile",
+            section: (tasks.includes(req.params.task)) ? req.params.task : "profile" || "profile",
             taskData: req.taskData,
             serverAlert: {}
         });
@@ -79,8 +81,9 @@ router.get("/chair/:task?", verifySession, getChairData, (req, res) => {
 router.get("/faculty/:task?", (req, res) => {
     req.taskData = {};
     if (req.taskData) {
+        const tasks = ["schedule", "preference"];
         res.render("faculty-root/base", {
-            section: req.params.task || "profile",
+            section: (tasks.includes(req.params.task)) ? req.params.task : "profile" || "profile",
             taskData: {},
             serverAlert: {}
         });

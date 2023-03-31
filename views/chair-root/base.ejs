@@ -35,14 +35,15 @@
         <a role="button" class="task btn btn-light" id="logout">
             <i class="fas fa-sign-out-alt fa-2x mt-1"></i><br>log out</a>
     </div>
-    <% if (section == "profile") { %>
-        <%- include('profile', taskData) %>
-    <% } else if (section == "schedules") { %>
+    <% if (section == "schedules") { %>
         <%- include('schedules', { data: taskData }) %>
     <% } else if (section == "faculty") { %>
         <%- include('faculty', { data: taskData }) %> 
     <% } else if (section == "courses") { %>
         <%- include('courses', { data: taskData }) %>
+    <% } else { %>
+        <% section = "profile"; %>
+        <%- include('profile', taskData) %>
     <% } %>
 
     <!-- MDB -->
@@ -56,6 +57,7 @@
             (event) => $(`div#${event.currentTarget.id}-view>div.side-panel`).show(),
             (event) => $(`div#${event.currentTarget.id}-view>div.side-panel`).hide()
         );
+
         $(`div#${openSection}-view>div.side-panel`).show().hover(
             (event) => $(event.currentTarget).show(),
             (event) => $(event.currentTarget).hide()

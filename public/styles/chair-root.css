@@ -25,3 +25,42 @@ div:last-child > div:has(.btn-top) {
 #term-status {
     font-weight: 800;
 }
+
+#schedule-nav {
+    justify-content: center;
+    align-items: stretch;
+}
+
+.pagination > li.page-title {
+    font-weight: bold;
+    font-size: xx-large;
+    white-space: nowrap;
+    justify-content: center;
+}
+
+#schedule-nav>li {
+    display: flex;
+    align-items: center;
+}
+
+#schedule-nav>.page-item.disabled {
+    visibility: hidden;
+}
+
+table>tbody>tr>td:not(td.edit-action) { cursor: default; }
+
+#blocks-schedule { 
+    width: 500px;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#faculty-schedule>tbody>tr>td:nth-child(2),
+#faculty-schedule>tbody>tr>td:nth-child(3),
+#faculty-schedule>tbody>tr>td:nth-child(5),
+#faculty-table>tbody>tr>td:nth-child(2),
+#faculty-table>tbody>tr>td:nth-child(7),
+td:has(.td-input) {
+    text-align: center;
+}

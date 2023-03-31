@@ -36,7 +36,7 @@ hr {
     margin: 12px 0;
 }
 
-tfoot {
+tfoot, thead {
     text-align: center;
     vertical-align: middle;
 }
@@ -67,13 +67,22 @@ textarea {
 
 input[type="number"] {
     -webkit-appearance: textfield;
-       -moz-appearance: textfield;
-            appearance: textfield;
-  }
-  input[type=number]::-webkit-inner-spin-button, 
-  input[type=number]::-webkit-outer-spin-button { 
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
     -webkit-appearance: none;
-  }
+}
+
+th[table-cts-column] {
+    vertical-align: middle;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+td { vertical-align: middle; }
   
 .img-body {
     position: relative;
@@ -110,20 +119,10 @@ input[type="number"] {
     background-color: #8673b4;
 }
 
-th[table-cts-column] {
-    vertical-align: middle;
-    cursor: pointer;
-    font-weight: bold;
-}
-
 [table-cts-column = 'edit'] { 
     vertical-align: middle;
     font-weight: bold;
     width: 85px;
-}
-
-tr.text-muted {
-    background-color: #F5F5F5;
 }
 
 td.edit-action {
