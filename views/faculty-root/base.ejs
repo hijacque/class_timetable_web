@@ -30,12 +30,12 @@
             <i class="fas fa-sign-out-alt fa-2x mt-1"></i><br>Log out</a>
     </div>
     
-    <% if (section == "profile") { %>
-        <%- include('profile') %>
-    <% } else if (section == "schedule") { %>
+    <% if (section == "schedule") { %>
         <%- include('schedule') %>
     <% } else if (section == "preference") { %>
         <%- include('preference') %> 
+    <% } else { %>
+        <%- include('profile') %> 
     <% } %>
 
     <!-- MDB -->
