@@ -378,7 +378,8 @@ router.post("/terms", async (req, res) => {
     );
     
     for (let i = 0; i < faculty.length; i++) {
-        faculty[i] = `('${termID}', '${faculty[i]["id"]}')`;
+        const prefID = crypto.randomBytes(6).toString("base64url");
+        faculty[i] = `('${prefID}', '${termID}', '${faculty[i]["id"]}')`;
     }
 
     for (let i = 0; i < yearsPerCourse.length; i++) {
@@ -388,7 +389,7 @@ router.post("/terms", async (req, res) => {
 
     let query = `INSERT INTO Terms VALUES ('${termID}', '${schoolID}', ${year}, '${term}', 1); ` +
         `INSERT INTO Blocks (id, course_id, term_id, year) VALUES ${yearsPerCourse.join(",")}; ` +
-        `INSERT INTO Preferences (term_id, faculty_id) VALUES ${faculty.join(",")};`;
+        `INSERT INTO Preferences (id, term_id, faculty_id) VALUES ${faculty.join(",")};`;
     
     await DB.executeQuery(query);
     res.status(200).json({
@@ -418,8 +419,7 @@ router.route("/schedules/:termID")
                 `ORDER BY f.status, name`;
             return res.status(200).json({ schedules: await DB.executeQuery(query) });
         }
-
-        // TODO: query schedule data from courses
+        
         let query = `SELECT id, year, block_no, total_students FROM Blocks WHERE course_id = "${req.query.category}" ` +
             `AND term_id = "${req.params.termID}" ORDER BY year, block_no`;
         res.status(200).json({ schedules: await DB.executeQuery(query) });

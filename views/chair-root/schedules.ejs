@@ -234,19 +234,16 @@
                 `year=${columns[0].textContent}&block=${columns[1].textContent}`
             );
         }
-        
-        // TODO: create new page to show preference and schedule of each faculty
     }
 
     const updateLoad = (rowEvent) => {
         if (!rowEvent.currentTarget.isConnected) {
             return;
         }
-        // TODO: upon clicking the confirm edit button, set the changes in POST
+        
         const columns =  $(event.currentTarget).closest("td").siblings().get();
         $.post("http://localhost:3000/api/preferences/" + openTerm.attr("id"),
-            { load: columns[2].textContent, facultyID: columns[0].textContent },
-            (data, status) => console.log(data)
+            { load: columns[2].textContent, facultyID: columns[0].textContent }
         ).fail((data) => console.log(data));
     };
 
@@ -290,10 +287,14 @@
             current--;
             initScheduleTable();
         });
+
         $("#schedule-nav>li:has(.next)").click(() => {
             current++;
             initScheduleTable();
         });
+
+        // TODO: create a loading screen into new window that will show an auto-generated schedule
+        // $("#create-schedule").click();
     } else {
         $("#open-terms").addClass("show");
     }

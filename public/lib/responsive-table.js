@@ -162,8 +162,7 @@ class EditableTable extends ResponsiveTable {
         this.cancelButtons = `${this.#changeOptions}>a.cancel`;
         this.initData(data, asyncData);
     }
-
-    //TODO: refactor code to get data from header instead of footer
+    
     async initData(data = [], asyncData = false, callback = function () { }) {
         if (asyncData) {
             data = await data;
@@ -334,7 +333,7 @@ class EditableTable extends ResponsiveTable {
         this.saveBtn.prop("disabled", false).show();
         $(this.table).find("tr.add-data, td.edit-action, [table-cts-column='edit']").show();
         if (this.data < 1) {
-            $(`${this.body}>tr:has(:has(.no-data))`).hide();
+            $(`${this.body}>tr:has(.no-data)`).hide();
         }
     };
 
@@ -348,7 +347,7 @@ class EditableTable extends ResponsiveTable {
             return;
         }
 
-        let blankRow = $(`${this.body}>tr:has(.no-data)`).length > 0;
+        const blankRow = $(`${this.body}>tr:has(.no-data)`);
         if (blankRow.length > 0 && this.data.length < 1) {
             blankRow.show();
         } else if (this.data.length < 1) {
