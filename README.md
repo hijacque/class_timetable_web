@@ -60,13 +60,13 @@ A web-based class schedule and faculty loading system for the Computer Science D
 1. Open your terminal, then "cd" to the folder you want the project to be in
 2. Clone the project by entering the following command:
     ```
-    git clone https://github.com/hijacque/class_timetable_web.git`
+    git clone https://github.com/hijacque/class_timetable_web.git
     ```
 3. Open the project folder that you just cloned from the terminal `cd TO_ROOT_PROJECT_FOLDER`
 4. Start mySQL server by typing `mysql.server start`
 5. Check for `class_sched_sys.sql` file, then enter the command:
     ```
-    mysqldump -u root -p class_sched_sys < class_sched_sys.sql
+    mysql -u root -p class_sched_sys < class_sched_sys.sql
     ```
     Enter your pasword to initialize database schema
 6. Install node package dependencies by entering `npm install` in the terminal
