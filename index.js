@@ -24,6 +24,11 @@ app.use("/", require("./routes/root"));
 app.use("/help", require("./routes/help"));
 app.use("/api", require("./routes/api"));
 app.use("/schedule", require("./routes/schedule"));
+
+app.get("/test", (req, res) => {
+    res.status(200).json(req.signedCookies);
+});
+
 app.get("*", (req, res) => res.status(404).send("You don't have to go back, but you can't stay here"));
 
 // initialize server
