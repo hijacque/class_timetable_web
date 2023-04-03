@@ -26,14 +26,14 @@
             <%= data.colleges[0].name %>
         </h2>
         <br>
-        <button class="btn btn-primary btn-rounded" data-cts-toggle="table" data-cts-target="#subjects-table">
-            <i class="fas fa-edit fa-lg me-2"></i>edit table</button>
+        <a class="btn btn-primary btn-rounded" data-cts-toggle="table" data-cts-target="#subjects-table" href="#table-footer">
+            <i class="fas fa-edit fa-lg me-2"></i>edit table</a>
         <button class="btn btn-success btn-rounded" data-cts-dismiss="table" data-cts-target="#subjects-table"
             aria-hidden="true">save changes</button>
         <table class="table table-bordered table-sm fw-bold my-4" id="subjects-table">
             <thead class="text-center">
                 <tr>
-                    <th table-cts-column="code text">Code</th>
+                    <th table-cts-column="code text" style="width: 180px;">Code</th>
                     <th table-cts-column="title text">Title</th>
                     <th table-cts-column="type text" style="width: 110px;">Type</th>
                     <th table-cts-column="units text" style="width: 90px;">Units</th>
@@ -41,7 +41,7 @@
                 </tr>
             </thead>
             <tbody></tbody>
-            <tfoot>
+            <tfoot id="table-footer">
                 <tr class="add-data">
                     <td><input type="text" class="form-control add-td-input unique reuse"></td>
                     <td><input type="text" class="form-control add-td-input reuse"></td>
@@ -52,6 +52,12 @@
                             <ul class="dropdown-menu">
                                 <li><a class="dropdown-item" role="button">LEC</a></li>
                                 <li><a class="dropdown-item" role="button">LAB</a></li>
+                                <li><hr class="dropdown-divider m-0"></li>
+                                <li>
+                                    <a class="dropdown-item text-danger" role="button" data-cts-reset="dropdown">
+                                        Cancel
+                                    </a>
+                                </li>
                             </ul>
                         </div>
                     </td>
@@ -72,23 +78,30 @@
     });
 
     const addSubject = (collegeID, subjData) => {
-        $.post("http://localhost:3000/api/Subjects/" + collegeID, subjData,
-            (data, status) => {
-                console.log(data);
-            }, "json"
+        $.post("http://localhost:3000/api/Subjects/" + collegeID, subjData, "json"
         ).fail((data) => console.error(data));
     }
 
     const subjectsTable = new EditableTable("#subjects-table");
     const colleges = $(".panel-menu>button.menu-item");
     let collegeTitle = $(".table-title");
+    let openCollege = colleges.get(0);
     if (colleges.length > 0) {
-        let openCollege = colleges.get(0);
         $(openCollege).addClass("active");
         $(collegeTitle).text("Subjects offered in " + openCollege.title);
 
         // initialize responsive Departments table
-        subjectsTable.initData(getSubjects(openCollege.id), true);
+        subjectsTable.initData(getSubjects(openCollege.id), true, 
+            () => $(subjectsTable.addBtn).click(async (event) => {
+                try {
+                    const newSubject = await $(event.currentTarget).data("newRow");
+                    addSubject(openCollege.id, newSubject);
+                } catch (error) {
+                    console.log(error);
+                }
+                $(event.currentTarget).removeData("newRow");
+            }
+        ));
 
         // retrieves the rooms from the chosen building
         $("button.menu-item").click((event) => {
@@ -101,18 +114,6 @@
                 subjectsTable.initData(getSubjects(activeItem.id), true);
                 $(collegeTitle).text("Subjects offered in " + activeItem.title);
             }
-        });
-
-        $(subjectsTable.addBtn).click(async (event) => {
-            try {
-                let addedData = await $(event.currentTarget).data("newRow");
-                if (addedData) { addSubject(openCollege.id, addedData); }
-            } catch (error) {
-                $(`${subjectsTable.body}:last-child`).remove();
-                subjectsTable.data.pop();
-            }
-            
-            $(event.currentTarget).removeData("newRow");
         });
     }
 </script>

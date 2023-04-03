@@ -58,33 +58,39 @@
 <script src="/lib/responsive-table.js"></script>
 <script>
     const newCourse = (title) => $.post(
-        "http://localhost:3000/api/curriculum/", {name: title},
+        "http://localhost:3000/api/courses/", {name: title},
         (data, status) => {}
     ).fail((data) => console.log(data));
 
     const getCurriculum = (courseID) => new Promise((resolve, reject) => {
         $.get(
-            "http://localhost:3000/api/curriculum/" + courseID,
+            "http://localhost:3000/api/curriculums/" + courseID,
             (data, status) => { resolve(data) }, "json"
         ).fail((data) => console.log(data))
     });
 
     const addSemester = (courseID, semData) => $.post(
-        "http://localhost:3000/api/curriculum/" + courseID, semData,
+        "http://localhost:3000/api/curriculums/" + courseID, semData,
         (data, status) => console.log(data)
     ).fail((data) => console.log(data));
+
+    const addSubject = (courseID, subjData) => new Promise((resolve, reject) => {
+        $.post("http://localhost:3000/api/curriculum/" + courseID, subjData,
+            (data) => resolve(data.newSubject)
+        ).fail(data => reject(data))
+    });
 
     function addTermTables(data = []) {
         const tableContent = 
             `<thead><th table-cts-column="code text" style="width: 150px;">COURSE CODE</th>` +
             `<th table-cts-column="title text">COURSE TITLE</th>` +
-            `<th table-cts-column="units number" style="width: 100px;">UNITS</th>` +
+            `<th table-cts-column="units" style="width: 100px;">UNITS</th>` +
             `<td table-cts-column="edit">Action</td></thead>` +
             `<tbody></tbody>` +
             `<tfoot><tr class="add-data">` +
-                `<td><input type="text" class="form-control add-td-input"></td>` +
-                `<td><input type="text" class="form-control add-td-input"></td>` +
-                `<td><input type="number" class="form-control add-td-input"></td>` +
+                `<td><input type="text" class="form-control add-td-input unique reuse"></td>` +
+                `<td><input type="text" class="form-control add-td-input optional"></td>` +
+                `<td><label class="add-td-input optional"></label></td>` +
             `</tr></tfoot>`;
         
         let view = $("#courses-view>div:last-child");
@@ -99,7 +105,25 @@
                 `</div></div>` +
                 `<table class="table table-bordered table-sm mb-5" id="${term.year}-${term.term}-term">${tableContent}</table>`;
             view.append(newTable);
-            const newSemTable = new EditableTable(`#${term.year}-${term.term}-term`, term.subjects);
+
+            const newSemTable = new EditableTable(`#${term.year}-${term.term}-term`);
+            newSemTable.initData(term.subjects, false, () => newSemTable.addBtn.click(async (event) => {
+                const lastRow = $(`${newSemTable.body}>tr:last-child`);
+                try {
+                    const newRow = await $(event.currentTarget).data("newRow");
+                    newRow.year = term.year;
+                    newRow.semester = term.term;
+
+                    const newSubject = await addSubject(openCourse.id, newRow);
+                    const columns = lastRow.children().get();
+                    columns[0].textContent = newSubject.code;
+                    columns[1].textContent = newSubject.title;
+                    columns[2].textContent = newSubject.units;
+                } catch (error) {
+                    lastRow.remove();
+                    console.log(error);
+                }
+            }));
             semesterTables.push(newSemTable);
         }
 
@@ -188,4 +212,7 @@
         });
     }
     
+    $("#add-course").click((event) => {
+        // TODO: call api to add new course
+    });
 </script>

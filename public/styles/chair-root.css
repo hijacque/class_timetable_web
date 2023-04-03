@@ -1,6 +1,8 @@
-html,
-body {
-    height: 100%;
+.side-panel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
 }
 
 div:last-child > div:has(.btn-top) {
@@ -26,11 +28,6 @@ div:last-child > div:has(.btn-top) {
     font-weight: 800;
 }
 
-#schedule-nav {
-    justify-content: center;
-    align-items: stretch;
-}
-
 .pagination > li.page-title {
     font-weight: bold;
     font-size: xx-large;
@@ -38,13 +35,9 @@ div:last-child > div:has(.btn-top) {
     justify-content: center;
 }
 
-#schedule-nav>li {
-    display: flex;
-    align-items: center;
-}
-
-#schedule-nav>.page-item.disabled {
-    visibility: hidden;
+ul.pagination>li {
+    width: 33.33%;
+    min-width: 0;
 }
 
 table>tbody>tr>td:not(td.edit-action) { cursor: default; }

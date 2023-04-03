@@ -1,5 +1,10 @@
 /* Overrides default bootstrap fonts */
 
+html,
+body {
+    height: 100%;
+}
+
 h1,
 h2,
 h3,
@@ -159,7 +164,7 @@ td.edit-action>div {
 
 .nav-bar>a.task {
     padding: 8px 3px 12px 3px;
-    height: 65px;
+    /* height: 65px; */
     text-align: center;
     border-radius: 0;
     width: inherit;
@@ -181,16 +186,12 @@ a#profile.task { margin-top: 54px; }
 }
 
 .side-panel {
-    display: none;
+    overflow-y: scroll;
     width: 300px;
     background-color: white;
     box-shadow: -3px 3px 6px #6c6c6daa;
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
     padding: 24px 0;
-    z-index: 1;
+    margin: 0;
 }
 
 .side-panel>.panel-body {
@@ -221,24 +222,19 @@ a.collapse-btn {
 
 .scheduler {
     position: relative;
-    width: 100%;
     display: grid;
     grid-template-columns: 70px 1fr;
-    border-top: 1px solid black;
-    /* grid-template-areas:
-        'none day day day day day day day'
-        'time sched sched sched sched sched sched sched'; */
-    /* gap: 1px; */
+    padding-top: 1px;
+    background-color: #0f0d11;
+    /* border-top: 1px solid black; */
 }
 
 .scheduler > div.days {
-    /* grid-area: day; */
     display: grid;
     grid-template-columns: repeat(7, minmax(130px, 1fr));
     text-align: center;
     column-gap: 1px;
     padding: 0 1px;
-    background-color: #0f0d11;
 }
 
 .scheduler > div.times  {
@@ -247,7 +243,7 @@ a.collapse-btn {
     display: grid;
     grid-template-rows: repeat(16, 100px);
     text-align: center;
-    background-color: #0f0d11;
+    /* background-color: #0f0d11; */
     color: #8673b4;
     row-gap: 1px;
     padding: 1px 0;
@@ -274,7 +270,7 @@ div.schedules > .sched-grid {
     column-gap: 1px;
 }
 
-.sched-grid > div { background-color: white; }
+.sched-grid > * { background-color: white; }
 
 div.schedules > .sched-body {
     height: inherit;
@@ -307,12 +303,15 @@ div.sched-body > div.sched-block {
 }
 
 .pagination {
-    /* width:100%; */
-    margin: 0 24px 12px 24px;
+    position: relative;
+    width: 100%;
+    margin: 12px 0;
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
 }
 
 .page-label {
-    /* max-width: 100%; */
     margin: 0;
     min-width: 0;
     overflow: hidden;
@@ -320,16 +319,11 @@ div.sched-body > div.sched-block {
     text-overflow: ellipsis;
 }
 
-ul.pagination>li {
-    width: 33.33%;
-    min-width: 0;
+.pagination>li {
+    display: flex;
+    align-items: center;
 }
 
-ul.pagination>li.title {
-    text-align:center;
-    font-weight: bold;
-    min-width: fit-content;
-    margin: 0 32px;
-    font-size: x-large;
-    vertical-align:middle;
+.pagination>.page-item.disabled {
+    visibility: hidden;
 }

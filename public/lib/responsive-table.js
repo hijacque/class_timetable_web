@@ -246,7 +246,7 @@ class EditableTable extends ResponsiveTable {
                     return reject(`choose an item from menu in ${title} column`);
                 } else if ($(addInputs[i]).hasClass("unique")) {
                     for (let j = 0; j < this.data.length; j++) {
-                        if (this.data[j][key] == value) {
+                        if (this.data[j][aboutCol[0]] == value) {
                             this.showTableAlert(`New data must be unique, change <b>${title}</b> column`);
                             return reject(`new data must be unique`);
                         }
@@ -352,7 +352,7 @@ class EditableTable extends ResponsiveTable {
             blankRow.show();
         } else if (this.data.length < 1) {
             $(this.body).append(
-                `<tr class="no-data"><td colspan='${this.headers.length}' class="text-muted">No data to present</td></tr>`
+                `<tr><td colspan='${this.headers.length}' class="text-muted no-data">No data to present</td></tr>`
             );
         } else if (blankRow.length > 0) {
             blankRow.remove();

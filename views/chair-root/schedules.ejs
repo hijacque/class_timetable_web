@@ -224,15 +224,12 @@
         const row = rowEvent.currentTarget;
         const category = tables[current].id;
         if (category == "faculty") {
-            console.log(
-                `http://localhost:3000/schedule/faculty?term=${openTerm.attr("title")}&` +
-                `id=${row.firstChild.textContent}`,);    
+            window.location.href = `http://localhost:3000/schedule/faculty?term=${openTerm.attr("title")}&` +
+                `id=${row.firstChild.textContent}`;    
         } else {
             const columns = row.children;
-            console.log(
-                `http://localhost:3000/schedule/${category}?term=${openTerm.attr("title")}&` +
-                `year=${columns[0].textContent}&block=${columns[1].textContent}`
-            );
+            window.location.href = `http://localhost:3000/schedule/${category}?term=${openTerm.attr("title")}&` +
+                `year=${columns[0].textContent}&block=${columns[1].textContent}`;
         }
     }
 
