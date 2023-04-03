@@ -1,0 +1,52 @@
+body { 
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: 65px 1fr;
+}
+
+.app-bar {
+    position: relative;
+    width: 100vw;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+}
+
+.main-view {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 300px auto;
+    grid-template-rows: auto;
+    overflow-y: hidden;
+}
+
+.main-view> div {
+    overflow: scroll;
+}
+
+.panel-menu {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.block-title {
+    text-align: center;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+#schedule-nav {
+    justify-content: space-between;
+}
+
+nav { padding: 0 12px; }
+
+.about {
+    margin: 0 12px 36px 70px;
+}
+
+.scheduler {
+    margin-right: 12px;
+    margin-bottom: 24px;
+}

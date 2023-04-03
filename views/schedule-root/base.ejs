@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <%- include('../base') %>
+        <title>Edit Schedule</title>
+        <link rel="stylesheet" href="/styles/schedule-root.css">
+</head>
+
+<body>
+    <div class="app-bar bg-light">
+        <a type="button" onclick="history.back()"><i class="fas fa-arrow-left fa-2x"></i></a>
+        <h5 class="panel-title text-muted my-0">1<sup>st</sup> Semester, 20XX-20XX</h5>
+        <div></div>
+    </div>
+    <div class="main-view">
+        <% if (category == "faculty") { %>
+            <%- include('faculty', {deptClasses:deptClasses, otherClasses:otherClasses}) %>
+        <% } else { %>
+            <%- include('blocks', {deptClasses:deptClasses, otherClasses:otherClasses}) %>
+        <% } %>
+    </div>
+    
+    <!-- MDB -->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.0.0/mdb.min.js"></script>
+    <script>
+        $(".menu-item").click((event) => {
+            // TODO: open a modal form asking for the which classes to assign
+            console.log(event.currentTarget);
+        });
+    </script>
+</body>
+
+</html>
