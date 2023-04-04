@@ -134,7 +134,7 @@
         $.post("http://localhost:3000/api/blocks/" + courseID, 
             { year: year, totalStudents: totalStudents, termID: termID },
             (data) => resolve(data.newBlock)
-        ).fail((data) => console.log(data))
+        ).fail((data) => reject(data))
     });
 
     const getSchedules = (termID, category) => new Promise(
@@ -200,15 +200,21 @@
 
             const blocksTable = new EditableTable("#blocks-schedule");
             blocksTable.initData(getSchedules(openTerm.attr("id"), category), true, () => {
-                $(blocksTable.addBtn).click(async () => {
-                    const columns = $(`${blocksTable.body}>tr:last-child>td`).get();
-                    columns[1].textContent = await addBlock(
-                        tables[current].id,
-                        columns[0].textContent, 
-                        columns[2].textContent,
-                        openTerm.attr("id") 
-                    );
-                    $(`${blocksTable.body}>tr:last-child`).click((event) => openSchedule(event));
+                $(blocksTable.addBtn).click(async (event) => {
+                    try {
+                        const newData = await $(event.currentTarget).data("newRow");
+                        const newBlock = await addBlock(
+                            tables[current].id,
+                            newData.year, 
+                            newData.total_students,
+                            openTerm.attr("id")
+                        );
+                        $(`${blocksTable.body}>tr:last-child`).click((event) => openSchedule(event))
+                            .children("td:nth-child(2)").text(newBlock);
+                    } catch (error) {
+                        console.log("woopss");
+                        $(`${blocksTable.body}>tr:last-child`).remove();
+                    }
                 });
                 $(`${blocksTable.body}>tr`).click((event) => openSchedule(event));
             });
@@ -298,15 +304,19 @@
 
 
     displayDropMenu($("#new-term-sem"), "Semester");
+
     $("#add-term").click(async (event) => {
         const semester = $("#new-term-sem");
         const year = $("#new-term-year");
+
+        if (semester.text() == "Semester" || !year.val()) {
+            return;
+        }
         
         const termID = await addTerm(year.val(), semester.text()[0]);
-        console.log(termID);
         if (termID) {
             if (openTerm.length < 1) {
-                return window.location.replace("http://localhost:3000/chair/schedules");
+                return location.reload();
             }
 
             let openSchedMenu = $("#open-terms");

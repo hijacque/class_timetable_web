@@ -395,8 +395,7 @@ router.post("/terms", async (req, res) => {
     }
 
     const DB = req.app.locals.database;
-    const year = req.body.year;
-    const term = req.body.term;
+    const { year, term } = req.body;
     let sameTerms = await DB.executeQuery(
         `SELECT t.id FROM Departments d INNER JOIN Colleges col ON d.college_id = col.id INNER JOIN ` +
         `Terms t ON col.school_id = t.school_id WHERE d.chair_id = "${user.id}" AND ` +
@@ -501,26 +500,32 @@ router.post("/blocks/:courseID", async (req, res) => {
     }
 
     const DB = req.app.locals.database;
-    const data = req.body;
+    const { termID, year, totalStudents } = req.body;
     let newBlock = await DB.executeQuery(
-        `SELECT MAX(b.block_no) + 1 AS new_block FROM (SELECT block_no FROM Blocks WHERE year = ${data.year} ` +
-        `AND course_id = '${req.params.courseID}' AND term_id = '${data.termID}') AS b`
+        `SELECT MAX(b.block_no) + 1 AS new_block FROM (SELECT block_no FROM Blocks WHERE year = ${year} ` +
+        `AND course_id = '${req.params.courseID}' AND term_id = '${termID}' AND block_no IS NOT NULL) AS b `
     );
     
-    if (newBlock < 1) {
+    newBlock = newBlock[0]["new_block"];
+    if (!newBlock || newBlock <= 1) {
         return res.status(409).end(); // block number conflict
     }
 
     const blockID = crypto.randomBytes(6).toString("base64url");
-    newBlock = newBlock[0]["new_block"];
     let query;
-    if (data.totalStudents) {
-        query = `INSERT INTO Blocks VALUES ('${blockID}', '${req.params.courseID}', '${data.termID}', ` +
-        `${data.year}, ${newBlock}, ${data.totalStudents})`
+    if (totalStudents) {
+        query = `INSERT INTO Blocks VALUES ('${blockID}', '${req.params.courseID}', '${termID}', ` +
+        `${year}, ${newBlock}, ${totalStudents}); `
     } else {
-        query = `INSERT INTO Blocks (id, term_id, course_id, year, block_no) VALUES ('${blockID}', '${data.termID}', ` +
-        `'${req.params.courseID}', ${data.year}, ${newBlock})`
+        query = `INSERT INTO Blocks (id, term_id, course_id, year, block_no) VALUES ('${blockID}', '${termID}', ` +
+        `'${req.params.courseID}', ${year}, ${newBlock}); `
     }
+
+    query += `INSERT INTO Schedules (term_id, subj_id, block_id) ` +
+        `SELECT b.term_id, cu.subj_id, b.id FROM Blocks b INNER JOIN Curricula cu ON b.course_id = cu.course_id ` +
+        `AND b.year = cu.year INNER JOIN Terms t ON b.term_id = t.id AND cu.term = t.term WHERE ` +
+        `b.term_id = '${termID}' AND b.year = ${year} AND b.block_no = ${newBlock} AND cu.subj_id IS NOT NULL ` +
+        `ORDER BY b.year, b.block_no;`
     
     await DB.executeQuery(query);
     res.status(200).json({
@@ -528,7 +533,7 @@ router.post("/blocks/:courseID", async (req, res) => {
         message: {
             mode: 1,
             title: "New block created",
-            body: `Block ${data.year}-${data.block} is ready for class scheduling.`
+            body: `Block ${year}-${newBlock} is ready for class scheduling.`
         }
     });
 });

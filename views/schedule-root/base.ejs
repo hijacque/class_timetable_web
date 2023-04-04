@@ -13,22 +13,17 @@
         <h5 class="panel-title text-muted my-0">1<sup>st</sup> Semester, 20XX-20XX</h5>
         <div></div>
     </div>
-    <div class="main-view">
-        <% if (category == "faculty") { %>
-            <%- include('faculty', {deptClasses:deptClasses, otherClasses:otherClasses}) %>
-        <% } else { %>
-            <%- include('blocks', {deptClasses:deptClasses, otherClasses:otherClasses}) %>
-        <% } %>
-    </div>
+    <% if (category == "faculty") { %>
+        <%- include('faculty', {deptClasses:schedule.deptClasses, otherClasses:schedule.otherClasses}) %>
+    <% } else { %>
+        <%- include('blocks', {deptClasses:deptClasses, otherClasses:otherClasses}) %>
+    <% } %>
     
     <!-- MDB -->
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.0.0/mdb.min.js"></script>
     <script>
-        $(".menu-item").click((event) => {
-            // TODO: open a modal form asking for the which classes to assign
-            console.log(event.currentTarget);
-        });
+        const newClassForm = new mdb.Modal(document.getElementById('add-class'));
+        // newClassForm.show();
     </script>
 </body>
-
 </html>

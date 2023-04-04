@@ -15,8 +15,7 @@ router.get("/:category", getSchedules, (req, res) => {
     // TODO: check if category param is faculty of a valid course id in the department
     res.render("schedule-root/base", {
         category: req.params.category,
-        deptClasses: req.deptClasses, 
-        otherClasses: req.otherClasses
+        schedule: req.data
     });
 });
 
