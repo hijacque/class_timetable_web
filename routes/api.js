@@ -472,6 +472,30 @@ router.route("/schedules/:termID")
         let query = `SELECT id, year, block_no, total_students FROM Blocks WHERE course_id = "${req.query.category}" ` +
             `AND term_id = "${req.params.termID}" ORDER BY year, block_no`;
         res.status(200).json({ schedules: await DB.executeQuery(query) });
+
+    }).post(async (req, res) => {
+        const user = req.account;
+        if (!user) {
+            return res.status(401).end();
+        }
+
+        const DB = req.app.locals.database;
+        const { mode, room, block, day, start, end } = req.body.schedule;
+        const facultyID = req.body.faculty;
+        let roomID;
+        if (room == "") {
+            roomID = await DB.executeQuery(
+                `SELECT r.id FROM ROOMS r INNER JOIN Buildings b ON r.bldg_id = b.id INNER JOIN Terms t ON ` +
+                `b.school_id = t.school_id LEFT JOIN Schedules sc ON r.id = sc.room_id WHERE sc.day != '${day}' OR ` +
+                `(sc.start > '${start}' AND sc.start > '${end}') OR (sc.end < '${start}' AND sc.end < '${end}')`
+            )
+        }
+        
+        console.log(req.body);
+
+        return res.status(200).json({
+            message: "New class assigned."
+        });
     });
 
 router.post("/preferences/:termID", async (req, res) => {

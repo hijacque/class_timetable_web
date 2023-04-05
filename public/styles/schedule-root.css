@@ -50,3 +50,17 @@ nav { padding: 0 12px; }
     margin-right: 12px;
     margin-bottom: 24px;
 }
+
+#class-day, #class-mode {
+    width: 135px;
+}
+
+#class-subject, #class-block, #class-faculty, #class-hours {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.modal-body>label { 
+    font-weight: bold;
+    margin-right: 6px;
+}

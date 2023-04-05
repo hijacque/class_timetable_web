@@ -291,9 +291,8 @@ div.sched-body > div.sched-block {
     margin: 2px 8px 4px 8px;
     border-radius: 12px;
     box-shadow: 0 1px 5px #b6b3b977;
+    line-height: 20px;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
 }
 
 .stack-list > * {

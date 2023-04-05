@@ -223,18 +223,19 @@
 
     const openSchedule = (rowEvent) => {
         const clickedCol = $(rowEvent.target).closest("td");
-        if (clickedCol.hasClass("edit-action") || clickedCol.hasClass("no-data") || $(scheduleTable).find("[table-cts-column='edit']").text() != "Action") {
+        if (clickedCol.hasClass("edit-action") || clickedCol.hasClass("no-data") 
+            || $(scheduleTable).find("[table-cts-column='edit']").text() != "Action") {
             return;
         }
 
         const row = rowEvent.currentTarget;
         const category = tables[current].id;
         if (category == "faculty") {
-            window.location.href = `http://localhost:3000/schedule/faculty?term=${openTerm.attr("title")}&` +
+            window.location.href = `http://localhost:3000/schedule/faculty?term=${openTerm.attr("id")}&` +
                 `id=${row.firstChild.textContent}`;    
         } else {
             const columns = row.children;
-            window.location.href = `http://localhost:3000/schedule/${category}?term=${openTerm.attr("title")}&` +
+            window.location.href = `http://localhost:3000/schedule/${category}?term=${openTerm.attr("id")}&` +
                 `year=${columns[0].textContent}&block=${columns[1].textContent}`;
         }
     }

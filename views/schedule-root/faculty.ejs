@@ -1,13 +1,54 @@
+<% const {prevFaculty, nextFaculty, current} = schedule %>
 <div class="modal fade" id="add-class" data-mdb-backdrop="static" data-mdb-keyboard="false"
     tabindex="-1" aria-labelledby="add-class-label" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="add-class-label"></h5>
+                <h5 class="modal-title" id="add-class-label">Assign New Class</h5>
                 <button type="button" class="btn-close" data-mdb-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <!-- TODO: create new class form assign manually / automatically -->
+                <label for="class-subject">Subject:</label><span id="class-subject"></span><br>
+                <label for="class-block">Block:</label><span id="class-block"></span><br>
+                <label for="class-faculty">Faculty:</label>
+                <span id="class-faculty"><%= current.name %></span><br>
+                <label for="class-hours">Assigned hours:</label>
+                <span id="class-hours"></span>
+                <hr>
+                <p><small>Class Schedule</small></p>
+                <div class="input-group mb-2">
+                    <div class="dropdown">
+                        <a class="text-primary dropdown-toggle input-group-text rounded-end-0" type="button"
+                            data-mdb-toggle="dropdown" aria-expanded="false" id="class-day">Pick Day</a>
+                        <ul class="dropdown-menu" aria-labelledby="class-day">
+                            <li><a class="dropdown-item" role="button" tabindex="1">MONDAY</a></li>
+                            <li><a class="dropdown-item" role="button" tabindex="2">TUESDAY</a></li>
+                            <li><a class="dropdown-item" role="button" tabindex="3">WEDNESDAY</a></li>
+                            <li><a class="dropdown-item" role="button" tabindex="4">THURSDAY</a></li>
+                            <li><a class="dropdown-item" role="button" tabindex="5">FRIDAY</a></li>
+                            <li><a class="dropdown-item" role="button" tabindex="6">SATURDAY</a></li>
+                            <li><a class="dropdown-item" role="button" tabindex="7">SUNDAY</a></li>
+                            <li><hr class="dropdown-divider m-0"></li>
+                            <li><a class="dropdown-item text-danger" role="button">Cancel</a></li>
+                        </ul>
+                    </div>
+                    <span class="input-group-text"><i class="fas fa-at"></i></span>
+                    <input type="time" id="class-start" class="form-control">
+                    <span class="input-group-text"> - </span>
+                    <input type="time" id="class-end" class="form-control">
+                </div>
+                <div class="input-group mb-3">
+                    <div class="dropdown">
+                        <a class="text-primary dropdown-toggle input-group-text rounded-end-0" type="button"
+                            data-mdb-toggle="dropdown" aria-expanded="false" id="class-mode">Pick Mode</a>
+                        <ul class="dropdown-menu" aria-labelledby="class-mode">
+                            <li><a class="dropdown-item" role="button" tabindex="1">F2F</a></li>
+                            <li><a class="dropdown-item" role="button" tabindex="2">online</a></li>
+                            <li><a class="dropdown-item" role="button" tabindex="3">blended</a></li>
+                        </ul>
+                    </div>
+                    <input type="text" id="class-room" class="form-control" placeholder="Room no." disabled>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-mdb-dismiss="modal">Cancel</button>
@@ -18,10 +59,8 @@
 </div>
 <div class="main-view">
     <div class="side-panel">
-        <div class="panel-header mx-4">
-            <h5 id="college" class="text-truncate" title="College of Urban Agriculture">College of Urban Agriculture
-            </h5>
-            <p>Unassigned Classes</p>
+        <div class="panel-header mx-4 mb-3">
+            <h5>Unassigned Classes</h5>
         </div>
         <div class="panel-body">
             <a type="button" class="collapse-btn" data-mdb-toggle="collapse" data-mdb-target="#department-classes"
@@ -35,7 +74,8 @@
                             <small><%= deptClasses[0].course %></small><br>
                             Year <%= deptClasses[0].year %> - Block <%= deptClasses[0].block_no %>
                         </h6>
-                        <ul class="list-group panel-menu">
+                        <ul class="list-group panel-menu" id="<%= deptClasses[0].block_id %>"
+                            title="<%= deptClasses[0].course %> <%= deptClasses[0].year %> - <%= deptClasses[0].block_no %>">
                         <% for (let i=0; i < deptClasses.length; i++) { %>
                             <% if ((i > 0 && deptClasses[i].year != deptClasses[i-1].year) || (i > 0 && deptClasses[i].block_no != deptClasses[i-1].block_no)) { %>
                                 </ul>
@@ -44,13 +84,16 @@
                                     <small><%= deptClasses[i].course %></small><br>
                                     Year <%= deptClasses[i].year %> - Block <%= deptClasses[i].block_no %>
                                 </h6>
-                                <ul class="list-group panel-menu">
+                                <ul class="list-group panel-menu" id="<%= deptClasses[i].block_id %>"
+                                    title="<%= deptClasses[i].course %> <%= deptClasses[i].year %> - <%= deptClasses[i].block_no %>">
                             <% } %>
-                                <button type="button" class="list-group-item list-group-item-action menu-item"
-                                    title="<%= deptClasses[i].subject %>" id="<%= deptClasses[i].id %>">
+                                <button type="button" title="<%= deptClasses[i].subject %>"
+                                    class="list-group-item list-group-item-action menu-item"
+                                    aria-valuemax="<%= deptClasses[i].req_hours || 0 %>"
+                                    aria-valuenow="<%= deptClasses[i].assigned_time || 0 %>">
                                     <p class="text-truncate m-0"><%= deptClasses[i].subject %></p>
                                 </button>
-                            <% } %>
+                        <% } %>
                         </ul>
                     </div>
                 </div>
@@ -94,7 +137,6 @@
         </div>
     </div>
     <div>
-        <% const {prevFaculty, nextFaculty, current} = schedule %>
         <nav aria-label="Schedule Navigation for Faculty">
             <ul class="pagination" id="schedule-nav">
                 <% if (prevFaculty) { %>
@@ -124,7 +166,7 @@
         </nav>
 
         <div class="about">
-            <h4 class="page-title"><%= current.name %></h4>
+            <h4 class="page-title" id="<%= current.id %>"><%= current.name %></h4>
             <h6 class="text-muted"><%= current.faculty_id %></h6>
             <p>
                 <b>Employment Status:</b> <%= current.status %><br>
@@ -390,9 +432,17 @@
                 </div>
                 <% if (current.teach_load > 0 && current.total_load > 0) { %>
                 <div class="sched-body">
-                    <div class="sched-block" style="grid-column: 3 / span 1; grid-row: 3 / span 3;">
-                        Wadduppp
-                    </div>
+                    <% for (const schedule of current.classes) { %>
+                        <div class="sched-block" data-mdb-toggle="tooltip" data-mdb-html="true"
+                            title="<b><%= schedule.subject %></b><br><small><%= schedule.year %>-<%= schedule.block_no %> <%= schedule.course %><br><i>F2F @ somewhere</i></small>"
+                            style="grid-column: <%= schedule.day %> / span 1; grid-row: <%= schedule.start %> / <%= schedule.end %>;">
+                            <h6 class="text-break"><%= schedule.subject %></h6>
+                            <p class="text-truncate"><small>
+                                <%= schedule.year %>-<%= schedule.block_no %> <%= schedule.course %><br>
+                                <i>F2F @ somewhere</i>
+                            </small></p>
+                        </div>
+                    <% } %>
                 </div>
                 <% } %>
             </div>
@@ -400,9 +450,73 @@
     </div>
 </div>
 
+<script src="/lib/display-dropdown.js"></script>
 <script>
+    const addClass = (facultyID, schedule) => new Promise((resolve, reject) => {
+        $.post("http://localhost:3000/api/schedules/<%= term.id %>",
+            { faculty: facultyID, schedule: schedule},
+            (data) => resolve(data.message)
+        ).fail((error) => reject(error));
+    })
+
     const totalLoad = <%- JSON.stringify(current.total_load) %>;
+    displayDropMenu($("#class-day"), "Pick Day");
+    displayDropMenu($("#class-mode"), "Pick Mode");
+
     $(".menu-item").click((event) => {
+        const newClass = event.currentTarget;
+        $("#class-subject").text(newClass.title);
+        $("#class-hours").text(`${newClass.ariaValueNow} / ${newClass.ariaValueMax}`);
+        const block = $(newClass).closest(".panel-menu");
+        $("#class-block").text(block.attr("title")).attr("aria-valuenow", block.attr("id"));
         newClassForm.show();
     });
+
+    $("[aria-labelledby='class-mode'] > li > a.dropdown-item").click((event) => {
+        const item = event.currentTarget;
+        if (item.textContent == "F2F") {
+            $("#class-room").prop("disabled", false).focus();
+        } else {
+            $("#class-room").prop("disabled", true);
+        }
+    })
+
+    $("#confirm-new-class").click(async (event) => {
+        const day = $("#class-day");
+        const start = $("#class-start");
+        const end = $("#class-end");
+        if (day.text() == "Day" || !start.val() || !end.val()) {
+            return console.log("Missing schedule input.");
+        } else if (start.val() > end.val()) {
+            return console.log("Start time must be earlier than end time");
+        }
+        let startTime = roundMinutes(start.val(), 30);
+        if (startTime < 7 * 60^2) {
+            return console.log("Class must start on or later than 7AM");
+        }
+        
+        let endTime = roundMinutes(end.val(), 30);
+        if (endTime.split(":")[0] > 22 * 60^2) {
+            return console.log("Class must end on or before 10PM");
+        }
+        
+        let mode = $("#class-mode").text();
+        console.log(await addClass($(".page-title").attr("id"), {
+            mode: mode == "Pick Mode" ? "F2F" : mode,
+            room: $("#class-room").val(),
+            block: $("#class-block").attr("aria-valuenow"),
+            day: day.text().slice(0, 3).toLowerCase(),
+            start: startTime,
+            end: endTime,
+        }));
+    });
+
+    function roundMinutes(time, nearestMinutes = 1) {
+        let [hours, mins] = time.split(":");
+        let toMins = parseInt(hours) * 60 + parseInt(mins);
+        const rounded = Math.round(toMins / nearestMinutes) * nearestMinutes;
+        const finalMins = rounded % 60;
+        const finalHours = (rounded - finalMins);
+        return finalHours + finalMins;
+    }
 </script>

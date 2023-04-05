@@ -1,17 +1,13 @@
 function displayDropMenu(dropMenuBtn, origLabel) {
     let dropList = dropMenuBtn.next("ul.dropdown-menu");
-    let dropItems = dropList.find("a.dropdown-item").get();
+    let dropItems = dropList.find("a.dropdown-item");
     
-    for (const item of dropItems) {
-        $(item).click(() => {
-            let value = $(item).text();
-            if ($(item).text().toLowerCase() == "cancel") {
-                $(dropMenuBtn).text(origLabel);
-                $(dropMenuBtn).val("");
-            } else {
-                $(dropMenuBtn).val(value);
-                $(dropMenuBtn).text(value);
-            }
-        });
-    }
+    dropItems.click((event) => {
+        const value = event.currentTarget.textContent;
+        if (value.toLowerCase() == "cancel") {
+            dropMenuBtn.text(origLabel).val(null);
+        } else {
+            dropMenuBtn.val(value).text(value);
+        }
+    });
 }
