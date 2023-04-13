@@ -175,7 +175,7 @@ router.route("/subjects/:collegeID?")
 
         const DB = req.app.locals.database;
         let subj = req.body;
-        
+
         const subjID = crypto.randomBytes(6).toString("base64url");
         let type = (subj.type == "LEC") ? 1 : (subj.type == "LAB") ? 2 : "NULL";
         await DB.executeQuery(
@@ -262,10 +262,37 @@ router.post("/buildings", async (req, res) => {
 });
 
 // for chairperson control
-router.post("/courses", (req, res) => {
-    if (!req.account || !req.body.title) {
+router.post("/courses", async (req, res) => {
+    const user = req.account;
+    if (!req.account || !req.body.name) {
         return res.status(401).end();
     }
+
+    const DB = req.app.locals.database;
+    const sameCourses = await DB.executeQuery(
+        `SELECT co.id FROM (SELECT s.id FROM Departments d INNER JOIN Colleges col ON d.college_id = col.id ` +
+        `INNER JOIN Schools s ON col.school_id = s.id WHERE d.chair_id = '${user.id}') AS school INNER JOIN ` +
+        `Colleges col ON school.id = col.school_id INNER JOIN Departments d ON col.id = d.college_id INNER JOIN ` +
+        `Courses co ON d.id = co.dept_id WHERE co.title = '${req.body.name}'`
+    );
+
+    if (sameCourses.length > 0) {
+        return res.status(409).end();
+    }
+
+    const courseID = crypto.randomBytes(6).toString("base64url");
+    await DB.executeQuery(
+        `INSERT INTO Courses (SELECT '${courseID}', id, '${req.body.name}' FROM Departments ` +
+        `WHERE chair_id = '${user.id}' LIMIT 1)`
+    );
+    res.status(200).json({
+        courseID: courseID,
+        message: {
+            mode: 1,
+            title: "New course created",
+            body: "The new course needs a curriculum to follow"
+        }
+    });
 });
 
 router.route("/curriculums/:courseID?") // getting and adding the semesters in a course's curriculum
@@ -279,7 +306,7 @@ router.route("/curriculums/:courseID?") // getting and adding the semesters in a
             `SELECT DISTINCT year, term FROM Curricula WHERE course_id = "${req.params.courseID}" ORDER BY year, term`
         );
         if (terms.length < 1) {
-            return res.status(200).json({ curriculum: terms });
+            return res.status(200).json({ curriculum: terms, totalUnits: 0 });
         }
 
         for (let i = 0; i < terms.length; i++) {
@@ -291,21 +318,21 @@ router.route("/curriculums/:courseID?") // getting and adding the semesters in a
                 `ORDER BY sub.title, sub.code`
             );
         }
-        const totalUnits = await DB.executeQuery(
-            `SELECT SUM(sub.units) FROM Curricula cu INNER JOIN Subjects sub ON cu.subj_id = sub.id ` +
+        const [{totalUnits}] = await DB.executeQuery(
+            `SELECT SUM(sub.units) AS totalUnits FROM Curricula cu INNER JOIN Subjects sub ON cu.subj_id = sub.id ` +
             `WHERE cu.course_id = "${req.params.courseID}" AND cu.subj_id IS NOT NULL`
-        )
-        res.status(200).json({ curriculum: terms, totalUnits: totalUnits[0]["SUM(sub.units)"] });
+        );
+        res.status(200).json({ curriculum: terms, totalUnits: totalUnits });
     }).post(async (req, res) => {
         if (!req.account || !req.params.courseID) {
             return res.status(401).end();
         }
 
         const DB = req.app.locals.database;
-        let latestYear = await DB.executeQuery(
-            `SELECT MAX(year) FROM Curricula WHERE course_id = "${req.params.courseID}"`
+        let [latestYear] = await DB.executeQuery(
+            `SELECT MAX(year) AS year FROM Curricula WHERE course_id = "${req.params.courseID}"`
         );
-        latestYear = latestYear[0]["MAX(year)"] || 0;
+        latestYear = latestYear.year || 0;
         const data = req.body;
         if (data.latestYear != latestYear) {
             return res.status(409).end();
@@ -314,8 +341,13 @@ router.route("/curriculums/:courseID?") // getting and adding the semesters in a
         let query = `INSERT INTO Curricula VALUES `;
         let message;
         if (data.forNewYear) {
-            const totalTerms = req.account.totalTerms;
+            const [{totalTerms}] = await DB.executeQuery(
+                `SELECT s.total_terms_yearly AS totalTerms FROM Schools s INNER JOIN Colleges col ON s.id = col.school_id ` +
+                `INNER JOIN Departments d ON col.id = d.college_id WHERE d.chair_id = '${req.account.id}' LIMIT 1`
+            )
+            console.log(totalTerms);
             message = `A new academic year with ${totalTerms} semesters is ready.`;
+
             for (let i = 1; i <= totalTerms; i++) {
                 query += `('${req.params.courseID}', NULL, ${latestYear + 1}, '${i}'), `
             }
@@ -324,6 +356,7 @@ router.route("/curriculums/:courseID?") // getting and adding the semesters in a
             message = "A summer term in the curriculum is ready."
             query += `('${req.params.courseID}', NULL, ${latestYear}, 's')`;
         }
+        
         await DB.executeQuery(query);
         res.status(200).json({
             message: {
@@ -344,18 +377,18 @@ router.post("/curriculum/:courseID", async (req, res) => { // adding a subject i
     const data = req.body;
     let subjID;
     if (!data.title) {
-        subjID = await DB.executeQuery(
+        [subjID] = await DB.executeQuery(
             `SELECT id, code, CASE WHEN type IS NULL THEN title ELSE CONCAT(title, " (", type, ")") ` +
             `END as title, units FROM Subjects WHERE code = '${data.code}' OR title ${data.title} LIMIT 1`
         );
     } else {
-        subjID = await DB.executeQuery(
+        [subjID] = await DB.executeQuery(
             `SELECT id, code, CASE WHEN type IS NULL THEN title ELSE CONCAT(title, " (", type, ")") ` +
             `END as title, units FROM Subjects WHERE code = '${data.code}' LIMIT 1`
         );
     }
-    
-    if (subjID.length == 0) {
+
+    if (!subjID) {
         return res.status(404).end();
     }
 
@@ -363,9 +396,7 @@ router.post("/curriculum/:courseID", async (req, res) => { // adding a subject i
         `SELECT subj_id FROM Curricula WHERE course_id = '${req.params.courseID}' AND year = ${data.year} ` +
         `AND term = '${data.semester}'`
     );
-
-    subjID = subjID[0];
-    // TODO: add classes for blocks in open term schedules
+    
     if (semesterContent <= 1) {
         await DB.executeQuery(
             `UPDATE Curricula SET subj_id = '${subjID["id"]}' WHERE course_id = '${req.params.courseID}' ` +
@@ -401,7 +432,7 @@ router.post("/terms", async (req, res) => {
         `Terms t ON col.school_id = t.school_id WHERE d.chair_id = "${user.id}" AND ` +
         `t.year = ${year} AND t.term = "${term}"`
     );
-    
+
     if (sameTerms.length > 0) {
         return res.status(409).end();
     }
@@ -420,18 +451,17 @@ router.post("/terms", async (req, res) => {
         `SELECT DISTINCT co.id, cu.year FROM Courses co INNER JOIN Curricula cu ON co.id = cu.course_id ` +
         `INNER JOIN Departments d ON co.dept_id = d.id WHERE d.chair_id = '${user.id}'`
     );
-    
+
     for (let i = 0; i < faculty.length; i++) {
         const prefID = crypto.randomBytes(6).toString("base64url");
         faculty[i] = `('${prefID}', '${termID}', '${faculty[i]["id"]}')`;
     }
-    
+
     for (let i = 0; i < yearsPerCourse.length; i++) {
         const blockID = crypto.randomBytes(6).toString("base64url");
         yearsPerCourse[i] = `('${blockID}', '${yearsPerCourse[i]["id"]}', '${termID}', ${yearsPerCourse[i]["year"]})`;
     }
-
-    // TODO: INSERT blank schedules depending on the 
+    
     let query = `INSERT INTO Terms VALUES ('${termID}', '${schoolID}', ${year}, '${term}', 1); ` +
         `INSERT INTO Blocks (id, course_id, term_id, year) VALUES ${yearsPerCourse.join(",")}; ` +
         `INSERT INTO Preferences (id, term_id, faculty_id) VALUES ${faculty.join(",")};` +
@@ -439,7 +469,7 @@ router.post("/terms", async (req, res) => {
         `SELECT b.term_id, cu.subj_id, b.id FROM Blocks b INNER JOIN Curricula cu ON b.course_id = cu.course_id ` +
         ` AND b.year = cu.year WHERE b.term_id = '${termID}' AND cu.term = '${term}' AND cu.subj_id IS NOT NULL ` +
         `ORDER BY b.year, b.block_no`
-    
+
     await DB.executeQuery(query);
     res.status(200).json({
         termID: termID,
@@ -459,18 +489,19 @@ router.route("/schedules/:termID")
         }
 
         const DB = req.app.locals.database;
+        let query;
         if (req.query.category == "faculty") {
-            let query = `SELECT f.id, CONCAT(f.last_name, ", ", f.first_name, " ", f.middle_name) as name, ` +
-                `f.faculty_id, f.status AS faculty_status, pref.teach_load, pref.status AS pref_status ` +
-                `FROM Terms t INNER JOIN Preferences pref ON t.id = pref.term_id INNER JOIN ` +
-                `Faculty f ON pref.faculty_id = f.id INNER JOIN Departments d ON f.dept_id = d.id ` +
+            query = `SELECT f.id, CONCAT(f.last_name, ", ", f.first_name, " ", f.middle_name) AS name, ` +
+                `f.faculty_id, CONCAT(pref.assigned_load, " / ", f.teach_load) AS teach_load, pref.status AS pref_status, ` +
+                `f.status AS faculty_status FROM Terms t INNER JOIN Preferences pref ON t.id = pref.term_id ` +
+                `INNER JOIN Faculty f ON pref.faculty_id = f.id INNER JOIN Departments d ON f.dept_id = d.id ` +
                 `WHERE d.chair_id = '${user.id}' AND t.id = '${req.params.termID}' ` +
                 `ORDER BY f.status, name`;
-            return res.status(200).json({ schedules: await DB.executeQuery(query) });
+        } else {
+            query = `SELECT id, year, block_no, total_students FROM Blocks WHERE course_id = "${req.query.category}" ` +
+            `AND term_id = "${req.params.termID}" ORDER BY year, block_no`;
         }
         
-        let query = `SELECT id, year, block_no, total_students FROM Blocks WHERE course_id = "${req.query.category}" ` +
-            `AND term_id = "${req.params.termID}" ORDER BY year, block_no`;
         res.status(200).json({ schedules: await DB.executeQuery(query) });
 
     }).post(async (req, res) => {
@@ -480,43 +511,77 @@ router.route("/schedules/:termID")
         }
 
         const DB = req.app.locals.database;
-        const { mode, room, block, day, start, end } = req.body.schedule;
+        const { subject, mode, room, block, partial } = req.body.schedule;
+        let { day, start, end } = req.body.schedule;
         const facultyID = req.body.faculty;
+        
+        const conflicts = await DB.executeQuery(
+            `SELECT sc.day, sc.start, sc.end FROM Schedules sc LEFT JOIN Rooms r ON sc.room_id = r.id ` +
+            `WHERE (sc.faculty_id = '${facultyID}' OR sc.block_id = '${block}') AND sc.day = ${day} AND ` +
+            `((sc.start < ${start} AND sc.end > ${start}) OR (sc.start < ${end} AND sc.end > ${end}) OR ` +
+            `(sc.start > ${start} AND sc.start > ${end}) OR (sc.end < ${start} AND sc.end < ${end})) ` +
+            `ORDER BY sc.start`
+        );
+        console.log(conflicts);
+
+        if (conflicts.length > 0) {
+            let classHours = end - start;
+            const lastConflict = conflicts.at(-1);
+            if (lastConflict.end + classHours <= 22*60) {
+                start = lastConflict.end;
+                end = lastConflict.end + classHours;
+            } else {
+                return res.status(409).end();
+            }
+        }
+        console.log(day, start, end);
+
         let roomID;
-        if (room == "") {
-            roomID = await DB.executeQuery(
-                `SELECT r.id FROM ROOMS r INNER JOIN Buildings b ON r.bldg_id = b.id INNER JOIN Terms t ON ` +
-                `b.school_id = t.school_id LEFT JOIN Schedules sc ON r.id = sc.room_id WHERE sc.day != '${day}' OR ` +
-                `(sc.start > '${start}' AND sc.start > '${end}') OR (sc.end < '${start}' AND sc.end < '${end}')`
-            )
+        if (mode == 1 && room == "") {
+            const [{ id }] = await DB.executeQuery(
+                `SELECT CONCAT("'", r.id, "'") AS id FROM ROOMS r INNER JOIN Buildings b ON r.bldg_id = b.id ` +
+                `INNER JOIN Terms t ON  b.school_id = t.school_id LEFT JOIN Schedules sc ON r.id = sc.room_id ` +
+                `WHERE sc.day != ${day} OR ((sc.start > ${start} AND sc.start >= ${end}) OR ` +
+                `(sc.end <= ${start} AND sc.end < ${end})) OR (sc.faculty_id IS NULL AND ` +
+                `sc.day IS NULL AND sc.start IS NULL AND sc.end IS NULL) LIMIT 1`
+            );
+            roomID = id;
+        } else if (mode == 1) {
+            const regexRoom = room.split(" ");
+            const [{ id }] = await DB.executeQuery(
+                `SELECT CONCAT("'", r.id, "'") AS id FROM ROOMS r INNER JOIN Buildings b ON r.bldg_id = b.id ` +
+                `INNER JOIN Terms t ON  b.school_id = t.school_id LEFT JOIN Schedules sc ON r.id = sc.room_id ` +
+                `WHERE r.name LIKE '%${regexRoom.join("%")}%' AND (sc.day != ${day} OR ((sc.start > ${start} AND ` +
+                `sc.start >= ${end}) OR (sc.end <= ${start} AND sc.end < ${end})) OR (sc.faculty_id IS NULL AND ` +
+                `sc.day IS NULL AND sc.start IS NULL AND sc.end IS NULL)) LIMIT 1`
+            );
+            roomID = id;
         }
         
-        console.log(req.body);
+        let query;
+        if (partial == 'true') {
+            query = `INSERT INTO Schedules VALUES ('${req.params.termID}', '${subject}', '${block}', ` +
+                `'${facultyID}', ${(!roomID) ? "NULL" : roomID}, ${day}, ${start}, ${end}, ${mode})`;
+        } else {
+            query = `UPDATE Schedules SET faculty_id = '${facultyID}', ` +
+                `room_id = ${(!roomID) ? "NULL" : roomID}, day = ${day}, start = ${start}, ` +
+                `end = ${end}, mode = ${mode} WHERE block_id = '${block}' AND subj_id = '${subject}' AND ` +
+                `term_id = '${req.params.termID}' AND faculty_id IS NULL LIMIT 1;` +
+                `UPDATE Schedules sc LEFT JOIN Subjects s ON sc.subj_id = s.id INNER JOIN Preferences p ` +
+                `ON sc.term_id = p.term_id SET p.assigned_load = p.assigned_load + s.units WHERE ` +
+                `sc.term_id = '${req.params.termID}' AND sc.subj_id = '${subject}' AND sc.faculty_id = '${facultyID}';`;
+        }
 
+        // console.log(query);
+        await DB.executeQuery(query);
         return res.status(200).json({
-            message: "New class assigned."
+            message: {
+                mode: 1,
+                title: "New Class Assigned",
+                body: `If the schedule is not fully loaded, please assign the remaining hours`
+            }
         });
     });
-
-router.post("/preferences/:termID", async (req, res) => {
-    if (!req.account) {
-        return res.status(401).end();
-    }
-    
-    const DB = req.app.locals.database;
-    await DB.executeQuery(
-        `UPDATE Preferences pref INNER JOIN Faculty f ON pref.faculty_id = f.id INNER JOIN Departments d ` +
-        `ON f.dept_id = d.id SET pref.teach_load = ${req.body.load} WHERE pref.term_id = '${req.params.termID}' AND ` +
-        `f.faculty_id = '${req.body.facultyID}' AND d.chair_id = '${req.account.id}' LIMIT 1`
-    );
-    res.status(200).json({
-        message: {
-            mode: 1,
-            title: "Teaching load updated",
-            body: `We suggest modifying the schedule again to take account new load`
-        }
-    });
-});
 
 router.post("/blocks/:courseID", async (req, res) => {
     if (!req.account) {
@@ -529,7 +594,7 @@ router.post("/blocks/:courseID", async (req, res) => {
         `SELECT MAX(b.block_no) + 1 AS new_block FROM (SELECT block_no FROM Blocks WHERE year = ${year} ` +
         `AND course_id = '${req.params.courseID}' AND term_id = '${termID}' AND block_no IS NOT NULL) AS b `
     );
-    
+
     newBlock = newBlock[0]["new_block"];
     if (!newBlock || newBlock <= 1) {
         return res.status(409).end(); // block number conflict
@@ -539,10 +604,10 @@ router.post("/blocks/:courseID", async (req, res) => {
     let query;
     if (totalStudents) {
         query = `INSERT INTO Blocks VALUES ('${blockID}', '${req.params.courseID}', '${termID}', ` +
-        `${year}, ${newBlock}, ${totalStudents}); `
+            `${year}, ${newBlock}, ${totalStudents}); `
     } else {
         query = `INSERT INTO Blocks (id, term_id, course_id, year, block_no) VALUES ('${blockID}', '${termID}', ` +
-        `'${req.params.courseID}', ${year}, ${newBlock}); `
+            `'${req.params.courseID}', ${year}, ${newBlock}); `
     }
 
     query += `INSERT INTO Schedules (term_id, subj_id, block_id) ` +
@@ -550,14 +615,56 @@ router.post("/blocks/:courseID", async (req, res) => {
         `AND b.year = cu.year INNER JOIN Terms t ON b.term_id = t.id AND cu.term = t.term WHERE ` +
         `b.term_id = '${termID}' AND b.year = ${year} AND b.block_no = ${newBlock} AND cu.subj_id IS NOT NULL ` +
         `ORDER BY b.year, b.block_no;`
-    
+
     await DB.executeQuery(query);
     res.status(200).json({
-        newBlock: newBlock, 
+        newBlock: newBlock,
         message: {
             mode: 1,
             title: "New block created",
             body: `Block ${year}-${newBlock} is ready for class scheduling.`
+        }
+    });
+});
+
+// faculty control
+router.post("/preferences/:prefID", async (req, res) => {
+    const user = req.account;
+    if (!user) {
+        return res.status(401).end();
+    }
+
+    const DB = req.app.locals.database;
+    let {subjects, schedules} = req.body;
+
+    schedules = schedules.filter((val) => {
+        return val.start && val.end;
+    });
+
+    if (schedules.length > 0) {
+        await DB.executeQuery(
+            `INSERT INTO PrefSchedules VALUES ` +
+            `(${schedules.map((val) => Object.values(val).join(", ")).join("), (")})`
+        );
+    }
+
+    if (subjects.length > 0) {
+        await DB.executeQuery(
+            `INSERT INTO PrefSubjects SELECT '${req.params.prefID}', sub.id FROM Faculty f INNER JOIN Departments d ON ` +
+            `f.dept_id = d.id INNER JOIN Subjects sub ON d.college_id = sub.college_id WHERE f.id = '${user.id}' ` +
+            `AND sub.title IN ('${subjects.join("', '")}') ORDER BY sub.title`
+        );
+    }
+
+    await DB.executeQuery(
+        `UPDATE Preferences SET status = 2 WHERE id = '${req.params.prefID}' AND faculty_id = '${user.id}'`
+    );
+    
+    res.status(200).json({
+        message: {
+            mode: 1,
+            title: "Teaching load updated",
+            body: `We suggest modifying the schedule again to take account new load`
         }
     });
 });

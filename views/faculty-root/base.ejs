@@ -31,9 +31,9 @@
     </div>
     
     <% if (section == "schedule") { %>
-        <%- include('schedule') %>
+        <%- include('schedule', {data: taskData}) %>
     <% } else if (section == "preference") { %>
-        <%- include('preference') %> 
+        <%- include('preference', {data: taskData}) %> 
     <% } else { %>
         <%- include('profile') %> 
     <% } %>
@@ -54,11 +54,11 @@
         $(`a.task:not([id=${openSection}])`).click((event) => {
             const task = event.currentTarget.id;
             if (task == "profile") {
-                window.location.replace("http://localhost:3000/faculty");
+                window.location.replace("/faculty");
             } else if (task == "logout") {
-                window.location.replace("http://localhost:3000/logout");
+                window.location.replace("/logout");
             } else {
-                window.location.replace("http://localhost:3000/faculty/" + task);
+                window.location.replace("/faculty/" + task);
             }
         });
     </script>

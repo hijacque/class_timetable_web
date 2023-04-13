@@ -65,11 +65,11 @@
         $(`a.task:not([id=${openSection}])`).click((event) => {
             const task = event.currentTarget.id;
             if (task == "profile") {
-                window.location.replace("http://localhost:3000/chair");
+                window.location.replace("/chair");
             } else if (task == "logout") {
-                window.location.replace("http://localhost:3000/logout");
+                window.location.replace("/logout");
             } else {
-                window.location.replace("http://localhost:3000/chair/" + task);
+                window.location.replace("/chair/" + task);
             }
             
         });

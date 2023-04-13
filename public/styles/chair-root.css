@@ -5,13 +5,13 @@
     z-index: 1;
 }
 
-div:last-child > div:has(.btn-top) {
+/* div:last-child > div:has(.btn-top) {
     z-index: 1;
     position: fixed;
     top: 0;
     right: 0;
     margin: 24px 48px 0 0;
-}
+} */
 
 .semester-header {
     display: flex;

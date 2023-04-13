@@ -81,9 +81,9 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.0.0/mdb.min.js"></script>
     <script>
         const alertModal = new mdb.Modal($("#alert-modal"));
-        $.getScript("/lib/password-validation.js", () => {
-            initValidatePassword(alertModal);
-        });
+        // $.getScript("/lib/password-validation.js", () => {
+        //     initValidatePassword(alertModal);
+        // });
         
         // don't mind the lint warnings, it can't recognize ejs syntax
         <% if (serverAlert) { %>
@@ -108,7 +108,7 @@
         <% } %>
 
         $("#submit").click(() => {
-            $.post("http://localhost:3000/login", {
+            $.post("/login", {
                 email: $("#email").val(),
                 password: $("#password").val()
             }, (data, status) => {

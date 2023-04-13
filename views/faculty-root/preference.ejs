@@ -1,65 +1,101 @@
 <div class="bg-light task-view pt-4" id="preference-view">
+    <% const {term, subjOptions} = data %>
+    <% if (term) { %>
     <h3 class="text-center mb-4">
         Faculty Schedule Preference Form<br>
-        <small class="text-muted">A.Y. 20XX-20XX (x<sup>th</sup> Semester)</small>
+        <small class="text-muted">
+            A.Y. <%= term.year %>-<%= term.year + 1 %> (<%- term.term %> Semester)
+        </small>
     </h3>
     <hr>
     <div class="px-5">
         <label class="table-title fw-bold">Your Subject Expertises:</label>
         <div class="mb-4 mt-2 w-75 stack-list" id="subjects-list">
             <div class="dropdown">
-                <button class="btn btn-secondary dropdown-toggle btn-rounded mt-1" type="button" id="day"
+                <button class="btn btn-secondary dropdown-toggle btn-rounded mt-1" type="button" id="pref-subj"
                     data-mdb-toggle="dropdown" aria-expanded="false">Add Field</button>
-                <ul class="dropdown-menu" aria-labelledby="day">
-                    <li><a class="dropdown-item" role="button">Human Computer Interaction</a></li>
-                    <li><a class="dropdown-item" role="button">Intelligent Systems</a></li>
-                    <li><a class="dropdown-item" role="button">Operating Systems</a></li>
-                    <li><a class="dropdown-item" role="button">Introduction to Computing</a></li>
-                    <li><a class="dropdown-item" role="button">CS Elective</a></li>
-                    <li><a class="dropdown-item" role="button">Software Engineering 1</a></li>
+                <ul class="dropdown-menu" aria-labelledby="pref-subj">
+                    <% for (const {title} of subjOptions) { %>
+                    <li><a class="dropdown-item" role="button"><%= title %></a></li>
+                    <% } %>
                 </ul>
             </div>
         </div>
         <label class="table-title fw-bold">Your Preferred Schedule:</label>
-        <table class="table table-bordered table-sm fw-bold mt-2 mb-4 w-50 editable" id="preferred-schedule">
+        <table class="table table-bordered table-sm fw-bold mt-2 mb-4 w-50 editable" id="pref-schedule">
             <thead class="text-center">
                 <tr>
-                    <th table-cts-column="day text" style="width: 160px;">Day</th>
-                    <th table-cts-column="start text">Time-in</th>
-                    <th table-cts-column="end text">Time-out</th>
-                    <td table-cts-column="edit">Action</td>
+                    <th style="width: 160px;">Day</th>
+                    <th>Time-in</th>
+                    <th>Time-out</th>
                 </tr>
             </thead>
-            <tbody></tbody>
-            <tfoot>
-                <tr class="add-data">
-                    <td>
-                        <div class="dropdown">
-                            <button class="btn btn-secondary dropdown-toggle add-td-input unique" type="button"
-                                data-mdb-toggle="dropdown" aria-expanded="false">Day</button>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" role="button">Monday</a></li>
-                                <li><a class="dropdown-item" role="button">Tuesday</a></li>
-                                <li><a class="dropdown-item" role="button">Wednesday</a></li>
-                                <li><a class="dropdown-item" role="button">Thursday</a></li>
-                                <li><a class="dropdown-item" role="button">Friday</a></li>
-                                <li><a class="dropdown-item" role="button">Saturday</a></li>
-                                <li><a class="dropdown-item" role="button">Sunday</a></li>
-                            </ul>
-                        </div>
-                    </td>
-                    <td><input type="time" class="form-control add-td-input"></td>
-                    <td><input type="time" class="form-control add-td-input"></td>
+            <tbody>
+                <tr>
+                    <td>Monday</td>
+                    <td><input type="time" class="form-control start-time"></td>
+                    <td><input type="time" class="form-control end-time"></td>
                 </tr>
-            </tfoot>
+                <tr>
+                    <td>Tuesday</td>
+                    <td><input type="time" class="form-control start-time"></td>
+                    <td><input type="time" class="form-control end-time"></td>
+                </tr>
+                <tr>
+                    <td>Wednesday</td>
+                    <td><input type="time" class="form-control start-time"></td>
+                    <td><input type="time" class="form-control end-time"></td>
+                </tr>
+                <tr>
+                    <td>Thursday</td>
+                    <td><input type="time" class="form-control start-time"></td>
+                    <td><input type="time" class="form-control end-time"></td>
+                </tr>
+                <tr>
+                    <td>Friday</td>
+                    <td><input type="time" class="form-control start-time"></td>
+                    <td><input type="time" class="form-control end-time"></td>
+                </tr>
+                <tr>
+                    <td>Saturday</td>
+                    <td><input type="time" class="form-control start-time"></td>
+                    <td><input type="time" class="form-control end-time"></td>
+                </tr>
+                <tr>
+                    <td>Sunday</td>
+                    <td><input type="time" class="form-control start-time"></td>
+                    <td><input type="time" class="form-control end-time"></td>
+                </tr>
+            </tbody>
         </table>
-        <button class="btn btn-primary text-center btn-rounded submit" type="button">Submit</button>
+        <div>
+            <a class="btn btn-primary btn-lg btn-rounded btn-top mt-2" title="Submit preference form" 
+                id="submit-pref" type="button">
+                <i class="fas fa-check fa-lg me-2"></i>submit
+            </a>
+        </div>
     </div>
+    <% } else { %>
+        <h2 class='text-center'>No Open Preference Forms</h2>
+    <% } %>
 </div>
-<script src="/lib/responsive-table.js"></script>
+<% if (term) { %>
 <script>
-    const prefSchedTable = new EditableTable("#preferred-schedule");
     const expertises = [];
+    const submitPreference = (schedules) => new Promise((resolve, reject) => $.post(
+        "http://localhost:3000/api/preferences/<%= term.pref_id %>",
+        {subjects: expertises, schedules: schedules || []}, 
+        (data) => resolve(data), "json",
+    ).fail((data) => reject(data)));
+
+    function roundMinutes(time, nearestMinutes = 1) {
+        let [hours, mins] = time.split(":");
+        let toMins = parseInt(hours) * 60 + parseInt(mins);
+        const rounded = Math.round(toMins / nearestMinutes) * nearestMinutes;
+        const finalMins = rounded % 60;
+        const finalHours = (rounded - finalMins);
+        return finalHours + finalMins;
+    }
 
     const subjectsList = $("div.stack-list#subjects-list");
     $(subjectsList).find(".dropdown-item").click((event) => {
@@ -80,15 +116,35 @@
 
     });
 
-    $("button.submit").click(() => {
-        $("#preference-view").empty().append("<h2>No Open Preference Forms</h2>");
-        $("#alert-modal").attr({ "data-mdb-backdrop": "static", "data-mdb-keyboard": "false" });
+    $("#submit-pref").click(async () => {
+        const prefSchedules = $("#pref-schedule>tbody>tr").get().map((row, i) => {
+            let start = $(row).find(".start-time").val();
+            let end = $(row).find(".end-time").val();
+
+            // flip times to continue
+            if (start > end) {
+                return {
+                    day: i, 
+                    start: (start) ? roundMinutes(end, 30) : null,
+                    end: (end) ? roundMinutes(start, 30) : null
+                };
+            }
+            return {
+                day: i, 
+                start: (start) ? roundMinutes(start, 30) : null,
+                end: (end) ? roundMinutes(end, 30) : null
+            };
+        });
+
+        console.log(await submitPreference(prefSchedules));
+        
+        $("#preference-view").empty().append("<h2 class='text-center'>No Open Preference Forms</h2>");
         $("#alert-title").text("Your Preference is Recorded").addClass("text-success");
         $("#alert-body").html(
-            "You're preferred subjects and schedule has been sent to the chairperson.<br>" +
-            "Your final schedule for next semester will be posted by the chairperson."
-        ).addClass("text-success");
+            "Your preferred subjects and schedule has been recorded.<br><br>" +
+            "The official schedule for next semester will be posted by the chairperson."
+        );
         alertModal.show();
-        // TODO: post answers to some api probableh
     });
 </script>
+<% } %>

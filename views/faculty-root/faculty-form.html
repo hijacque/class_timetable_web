@@ -1,0 +1,115 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Schedule Preference</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <link rel="icon" href="{% static 'images/favicon.ico' %}">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+    <!-- MDB -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.0.0/mdb.min.css" rel="stylesheet" />
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans&family=Ubuntu:wght@400;700&display=swap"
+        rel="stylesheet">
+    <!-- Override Fonts -->
+    <link rel="stylesheet" href="{% static 'custom.css' %}">
+    <link rel="stylesheet" href="{% static 'faculty-form.css' %}">
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+</head>
+
+<body>
+    <div class="container bg-light">
+        <h4 class="text-center">New Faculty Schedule Preference</h4>
+        <hr>
+        <form action="" method="post" class="px-5">
+            <label>Identification:</label>
+            <div class="form-outline mt-2">
+                <input type="text" class="form-control" name="inputId" required />
+                <label class="form-label" for="inputId">Faculty I.D.</label>
+            </div>
+            <div class="form-outline mt-2">
+                <input type="text" class="form-control" name="inputName" required value=""
+                    placeholder="LAST NAME, FIRST NAME M.I." />
+                <label class="form-label" for="inputName">Full Name</label>
+            </div>
+            <div class="form-outline mt-2">
+                <input type="text" class="form-control" name="inputEmail" required value=""
+                    placeholder="Emailname@plm.edu.ph" />
+                <label class="form-label" for="inputEmail">PLM Email</label>
+            </div><br>
+            <div class="form-group d-flex">
+                <label for="">Employment Status:</label>
+                <!-- Default radio -->
+                <div class="form-check ms-4">
+                    <input class="form-check-input" type="radio" name="inputEmployeeStatus" value="fullTime" />
+                    <label class="form-check-label" for="fullTime"> Full-time </label>
+                </div>
+
+                <!-- Default checked radio -->
+                <div class="form-check ms-2">
+                    <input class="form-check-input" type="radio" name="inputEmployeeStatus" value="partTime" />
+                    <label class="form-check-label" for="partTime"> Part-time </label>
+                </div>
+            </div>
+            <br>
+            <form action="/action_page.php" class="form-group sched-pref">
+                <label for="">Day and Time Availability:</label>
+                <hr>
+                <div class="input-group mb-3 align-items-end">
+                    <button class="btn btn-secondary dropdown-toggle btn-lg rounded day-pref" type="button"
+                        data-mdb-toggle="dropdown" aria-expanded="false" style="width: 150px;">
+                        <span style="padding-right: 5px;">SELECT DAY</span>
+                    </button>
+                    <ul class="dropdown-menu days">
+                        <li><a class="dropdown-item" href="#">Monday</a></li>
+                        <li><a class="dropdown-item" href="#">Tuesday</a></li>
+                        <li><a class="dropdown-item" href="#">Wednesday</a></li>
+                        <li><a class="dropdown-item" href="#">Thursday</a></li>
+                        <li><a class="dropdown-item" href="#">Friday</a></li>
+                        <li><a class="dropdown-item" href="#">Saturday</a></li>
+                        <li><a class="dropdown-item" href="#">Sunday</a></li>
+                    </ul>
+                    <div class="mx-3" style="width: 150px;">
+                        <label for="start"><small>Start time:</small></label>
+                        <input type="time" class="form-control rounded" name="start"
+                            aria-label="Text input with dropdown button" />
+                    </div>
+                    <div style="width: 150px;">
+                        <label for="end"><small>End time:</small></label>
+                        <input type="time" class="form-control rounded" name="end"
+                            aria-label="Text input with dropdown button" />
+                    </div>
+                </div>
+                <button class="btn btn-primary" type="addDateTimeEntry" style="width: 150px;">
+                    ADD PREFERENCE
+                </button>
+                <br>
+                <hr>
+            </form>
+            <button class="btn btn-primary text-center btn-lg btn-rounded mx-5" type="submit">Submit</button>
+        </form>
+
+    </div>
+    <!-- MDB -->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.0.0/mdb.min.js"></script>
+    <script>
+        // for DROPDOWN MENU
+        let days = $("ul.days>li>a.dropdown-item").get();
+        let selectDay = $("button.day-pref>span");
+        days.forEach(day => {
+            $(day).click(() => {
+                $(selectDay).text($(day).text());
+            })
+        });
+    </script>
+</body>
+
+</html>

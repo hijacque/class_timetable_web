@@ -1,6 +1,6 @@
 // required packages
 const router = require("express").Router();
-const { createAdmin, loginAccount, getAdminData, getChairData } = require("../lib/account");
+const { createAdmin, loginAccount, getAdminData, getChairData, getFacultyData } = require("../lib/account");
 const { sendOTP, verifySession, createSession } = require("./../lib/verification");
 require("./../lib/verification");
 require("./../lib/account");
@@ -15,17 +15,17 @@ router.route("/login")
             return res.redirect("/" + req.account.type);
         }
         if (req.cookies.serverMessage) res.clearCookie("serverMessage");
-        res.render("login", { serverAlert: req.cookies.serverMessage });
+        res.render("login", { serverAlert: req.cookies.serverMessage, root: process.env.API_DOMAIN });
 
     }).post(loginAccount, createSession, (req, res) => {
         if (req.account) {
-            return res.status(200).json({ root: "http://localhost:3000/" + req.account.type, });
+            return res.status(200).json({ root: "/" + req.account.type, });
         }
         res.cookie("serverMessage", {
             mode: 0,
             title: "Invalid Credentials",
             body: "You entered the wrong e-mail/password."
-        }).status(200).json({ root: "http://localhost:3000/login" });
+        }).status(200).json({ root: "/login" });
     });
 
 router.route("/signup")
@@ -78,13 +78,11 @@ router.get("/chair/:task?", verifySession, getChairData, (req, res) => {
     }
 });
 
-router.get("/faculty/:task?", (req, res) => {
-    req.taskData = {};
+router.get("/faculty/:task?",verifySession, getFacultyData, (req, res) => {
     if (req.taskData) {
-        const tasks = ["schedule", "preference"];
         res.render("faculty-root/base", {
-            section: (tasks.includes(req.params.task)) ? req.params.task : "profile" || "profile",
-            taskData: {},
+            section: req.params.task || "profile",
+            taskData: req.taskData,
             serverAlert: {}
         });
     } else {

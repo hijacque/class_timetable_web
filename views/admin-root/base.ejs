@@ -66,11 +66,11 @@
         $(`a.task:not([id=${openSection}])`).click((event) => {
             const task = event.currentTarget.id;
             if (task == "profile") {
-                window.location.replace("http://localhost:3000/admin");
+                window.location.replace("/admin");
             } else if (task == "logout") {
-                window.location.replace("http://localhost:3000/logout");
+                window.location.replace("/logout");
             } else {
-                window.location.replace("http://localhost:3000/admin/" + task);
+                window.location.replace("/admin/" + task);
             }
             
         });

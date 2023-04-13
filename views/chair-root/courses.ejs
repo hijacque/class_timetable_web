@@ -57,25 +57,24 @@
 <% let subjects = JSON.stringify(data.subjects) %>
 <script src="/lib/responsive-table.js"></script>
 <script>
-    const newCourse = (title) => $.post(
-        "http://localhost:3000/api/courses/", {name: title},
-        (data, status) => {}
-    ).fail((data) => console.log(data));
+    const addCourse = (title) => new Promise((resolve, reject) => $.post(
+        "/api/courses/", {name: title},
+        (data) => resolve(data.courseID)
+    ).fail((data) => reject(data)));
 
     const getCurriculum = (courseID) => new Promise((resolve, reject) => {
-        $.get(
-            "http://localhost:3000/api/curriculums/" + courseID,
+        $.get("/api/curriculums/" + courseID,
             (data, status) => { resolve(data) }, "json"
         ).fail((data) => console.log(data))
     });
 
     const addSemester = (courseID, semData) => $.post(
-        "http://localhost:3000/api/curriculums/" + courseID, semData,
+        "/api/curriculums/" + courseID, semData,
         (data, status) => console.log(data)
     ).fail((data) => console.log(data));
 
     const addSubject = (courseID, subjData) => new Promise((resolve, reject) => {
-        $.post("http://localhost:3000/api/curriculum/" + courseID, subjData,
+        $.post("/api/curriculum/" + courseID, subjData,
             (data) => resolve(data.newSubject)
         ).fail(data => reject(data))
     });
@@ -128,17 +127,18 @@
         }
 
         const totalTerms = data.length;
-        console.log(totalTerms);
-        latestYear = data[totalTerms-1].year;
-        latestTerm = data[totalTerms-1].term;
+        if (totalTerms > 0) {
+            latestYear = data[totalTerms-1].year;
+            latestTerm = data[totalTerms-1].term;
+        }
     }
 
     async function initCourseCurriculum(data = [], asyncData = false) {
         if (asyncData) {
             data = await data;
         }
-
-        $("label[for='curriculum-title']").text("Total No. of Units: " + data.totalUnits);
+        console.log(data);
+        $("label[for='curriculum-title']").text("Total No. of Units: " + data.totalUnits || 0);
         addTermTables(data.curriculum);
         if (latestSem == "s") {
             $("li:has('#new-summer')").hide();
@@ -163,10 +163,10 @@
     const semesterTables = [];
     const subjects = <%- JSON.stringify(data.subjects || []) %>;
     const courses = $(".panel-menu>button.menu-item");
-    let latestTerm, latestSem, latestYear;
+    const courseTitle = $("#curriculum-title");
+    let latestTerm, latestSem = 0, latestYear = 0;
     let openCourse;
     if (courses.length > 0) {
-        let courseTitle = $("#curriculum-title");
         openCourse = courses.get(0);
         $(openCourse).addClass("active");
         initCourseCurriculum(getCurriculum(openCourse.id), true);
@@ -212,7 +212,15 @@
         });
     }
     
-    $("#add-course").click((event) => {
-        // TODO: call api to add new course
+    $("#add-course").click(async (event) => {
+        try {
+            const newCourse = $("[aria-describedby='add-course']").val();
+            const courseID = await addCourse(newCourse);
+            if (courseID) {
+                return location.reload();
+            }
+        } catch (error) {
+            console.log(error);
+        }
     });
 </script>

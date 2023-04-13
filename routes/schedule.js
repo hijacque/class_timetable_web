@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const { getSchedules } = require("./../lib/schedule");
+const { getSchedules, initSchedGen } = require("./../lib/schedule");
 const { verifySession } = require("./../lib/verification");
 
 router.use(verifySession);
@@ -9,6 +9,11 @@ router.get("/new", (req, res) => {
         res.status(401).redirect("/login");
     }
     res.status(200).render("schedule/new");
+});
+
+router.post("/generate", initSchedGen, (req, res) => {
+    console.log(req.body);
+    res.send("Generating department's schedule");
 });
 
 router.get("/:category", getSchedules, (req, res) => {

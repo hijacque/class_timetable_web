@@ -326,3 +326,11 @@ div.sched-body > div.sched-block {
 .pagination>.page-item.disabled {
     visibility: hidden;
 }
+
+div:last-child > *:has(.btn-top) {
+    z-index: 1;
+    position: fixed;
+    top: 0;
+    right: 0;
+    margin: 24px 48px 0 0;
+}

@@ -9,14 +9,14 @@
 
 <body>
     <div class="app-bar bg-light">
-        <a type="button" onclick="history.back()"><i class="fas fa-arrow-left fa-2x"></i></a>
+        <a type="button" onclick="window.location.replace('/chair/schedules')"><i class="fas fa-arrow-left fa-2x"></i></a>
         <h5 class="panel-title text-muted my-0"><%- term.title %></h5>
         <div></div>
     </div>
     <% if (category == "faculty") { %>
         <%- include('faculty', {deptClasses:schedule.deptClasses, otherClasses:schedule.otherClasses}) %>
     <% } else { %>
-        <%- include('blocks', {deptClasses:deptClasses, otherClasses:otherClasses}) %>
+        <%- include('blocks') %>
     <% } %>
     
     <!-- MDB -->

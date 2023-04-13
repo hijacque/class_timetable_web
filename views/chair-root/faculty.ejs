@@ -46,7 +46,7 @@
 <script src="/lib/responsive-table.js"></script>
 <script>
     const getFaculty = (departmentID) => new Promise((resolve, reject) => {
-        $.get("http://localhost:3000/api/faculty/" + departmentID,
+        $.get("/api/faculty/" + departmentID,
             (data, status) => {
                 resolve(data.faculty);
             }, "json"
@@ -55,7 +55,7 @@
 
 
     const addFaculty = (departmentID, facultyData) => $.post(
-        "http://localhost:3000/api/faculty/" + departmentID, facultyData,
+        "/api/faculty/" + departmentID, facultyData,
         (data, status) => {
             console.log(data);
         }, "json"
