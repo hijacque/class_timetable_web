@@ -88,7 +88,7 @@ th[table-cts-column] {
 }
 
 td { vertical-align: middle; }
-  
+
 .img-body {
     position: relative;
     background-color: #0f0d11;
@@ -192,10 +192,13 @@ a#profile.task { margin-top: 54px; }
     box-shadow: -3px 3px 6px #6c6c6daa;
     padding: 24px 0;
     margin: 0;
+    grid-template-rows: max-content auto;
+    display: none;
 }
 
 .side-panel>.panel-body {
     overflow-y: scroll;
+    align-items: start;
 }
 
 .task-view>div:last-child {

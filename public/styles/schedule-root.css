@@ -30,6 +30,10 @@ body {
     text-overflow: ellipsis;
 }
 
+.side-panel {
+    display: grid;
+}
+
 .block-title {
     text-align: center;
     white-space: nowrap;

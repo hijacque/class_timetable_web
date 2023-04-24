@@ -28,6 +28,10 @@
     font-weight: 800;
 }
 
+#term-title {
+    color: #8673b4;
+}
+
 .pagination > li.page-title {
     font-weight: bold;
     font-size: xx-large;
