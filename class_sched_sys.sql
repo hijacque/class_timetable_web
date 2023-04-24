@@ -19,10 +19,10 @@
 -- Table structure for table `blocks`
 --
 
-DROP TABLE IF EXISTS `Blocks`;
+DROP TABLE IF EXISTS `blocks`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `Blocks` (
+CREATE TABLE `blocks` (
   `id` varchar(8) NOT NULL,
   `course_id` varchar(8) DEFAULT NULL,
   `term_id` varchar(8) DEFAULT NULL,
@@ -32,9 +32,9 @@ CREATE TABLE `Blocks` (
   PRIMARY KEY (`id`),
   KEY `term_id` (`term_id`),
   KEY `course_id` (`course_id`),
-  CONSTRAINT `blocks_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `Courses` (`id`),
-  CONSTRAINT `blocks_ibfk_2` FOREIGN KEY (`term_id`) REFERENCES `Terms` (`id`),
-  CONSTRAINT `blocks_ibfk_3` FOREIGN KEY (`course_id`) REFERENCES `Courses` (`id`)
+  CONSTRAINT `blocks_ibfk_2` FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`),
+  CONSTRAINT `blocks_ibfk_3` FOREIGN KEY (`term_id`) REFERENCES `terms` (`id`),
+  CONSTRAINT `blocks_ibfk_4` FOREIGN KEY (`course_id`) REFERENCES `Courses` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -93,10 +93,10 @@ CREATE TABLE `Courses` (
 -- Table structure for table `curricula`
 --
 
-DROP TABLE IF EXISTS `Curricula`;
+DROP TABLE IF EXISTS `curricula`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `Curricula` (
+CREATE TABLE `curricula` (
   `course_id` varchar(8) DEFAULT NULL,
   `subj_id` varchar(8) DEFAULT NULL,
   `year` int unsigned DEFAULT NULL,
@@ -130,10 +130,10 @@ CREATE TABLE `Departments` (
 -- Table structure for table `faculty`
 --
 
-DROP TABLE IF EXISTS `Faculty`;
+DROP TABLE IF EXISTS `faculty`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `Faculty` (
+CREATE TABLE `faculty` (
   `id` varchar(12) DEFAULT NULL,
   `dept_id` varchar(8) DEFAULT NULL,
   `faculty_id` varchar(50) NOT NULL,
@@ -141,6 +141,7 @@ CREATE TABLE `Faculty` (
   `middle_name` varchar(40) DEFAULT NULL,
   `last_name` varchar(40) NOT NULL,
   `status` enum('full-time','part-time') DEFAULT NULL,
+  `teach_load` int unsigned DEFAULT NULL,
   KEY `id` (`id`),
   KEY `dept_id` (`dept_id`),
   CONSTRAINT `faculty_ibfk_1` FOREIGN KEY (`id`) REFERENCES `Users` (`id`),
@@ -169,14 +170,14 @@ CREATE TABLE `OTPs` (
 -- Table structure for table `preferences`
 --
 
-DROP TABLE IF EXISTS `Preferences`;
+DROP TABLE IF EXISTS `preferences`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `Preferences` (
+CREATE TABLE `preferences` (
   `term_id` varchar(8) DEFAULT NULL,
   `faculty_id` varchar(12) DEFAULT NULL,
-  `teach_load` int unsigned DEFAULT NULL,
-  `status` enum('pending','opened','submitted','closed') DEFAULT 'pending',
+  `assigned_load` int unsigned DEFAULT '0',
+  `status` enum('pending','submitted','unanswered','closed') DEFAULT 'pending',
   `id` varchar(8) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `term_id` (`term_id`),
@@ -215,22 +216,22 @@ CREATE TABLE `PrefSubjects` (
   `subj_id` varchar(8) DEFAULT NULL,
   KEY `pref_id` (`pref_id`),
   KEY `subj_id` (`subj_id`),
-  CONSTRAINT `prefsubjects_ibfk_1` FOREIGN KEY (`pref_id`) REFERENCES `Preferences` (`id`),
-  CONSTRAINT `prefsubjects_ibfk_2` FOREIGN KEY (`subj_id`) REFERENCES `Subjects` (`id`)
+  CONSTRAINT `prefsubjects_ibfk_1` FOREIGN KEY (`pref_id`) REFERENCES `preferences` (`id`),
+  CONSTRAINT `prefsubjects_ibfk_2` FOREIGN KEY (`subj_id`) REFERENCES `subjects` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `Rooms`
+-- Table structure for table `rooms`
 --
 
-DROP TABLE IF EXISTS `Rooms`;
+DROP TABLE IF EXISTS `rooms`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `Rooms` (
+CREATE TABLE `rooms` (
   `bldg_id` varchar(8) DEFAULT NULL,
   `id` varchar(8) NOT NULL,
-  `name` varchar(100) DEFAULT NULL,
+  `name` varchar(100) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
   `level` char(1) DEFAULT NULL,
   `capacity` int unsigned DEFAULT NULL,
   PRIMARY KEY (`id`),
@@ -240,21 +241,22 @@ CREATE TABLE `Rooms` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `Schedules`
+-- Table structure for table `schedules`
 --
 
-DROP TABLE IF EXISTS `Schedules`;
+DROP TABLE IF EXISTS `schedules`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `Schedules` (
+CREATE TABLE `schedules` (
   `term_id` varchar(8) DEFAULT NULL,
   `subj_id` varchar(8) DEFAULT NULL,
   `block_id` varchar(8) DEFAULT NULL,
-  `faculty_id` varchar(8) DEFAULT NULL,
+  `faculty_id` varchar(12) DEFAULT NULL,
   `room_id` varchar(8) DEFAULT NULL,
-  `day` enum('mon','tue','wed','thu','fri','sat','sun') DEFAULT NULL,
-  `start` time DEFAULT NULL,
-  `end` time DEFAULT NULL,
+  `day` int unsigned DEFAULT NULL,
+  `start` int unsigned DEFAULT NULL,
+  `end` int unsigned DEFAULT NULL,
+  `mode` enum('F2F','Online','Blended') DEFAULT NULL,
   KEY `term_id` (`term_id`),
   KEY `subj_id` (`subj_id`),
   KEY `block_id` (`block_id`),
@@ -272,10 +274,10 @@ CREATE TABLE `Schedules` (
 -- Table structure for table `schools`
 --
 
-DROP TABLE IF EXISTS `Schools`;
+DROP TABLE IF EXISTS `schools`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `Schools` (
+CREATE TABLE `schools` (
   `id` varchar(12) DEFAULT NULL,
   `name` varchar(120) NOT NULL,
   `total_terms_yearly` int DEFAULT NULL,
@@ -288,16 +290,18 @@ CREATE TABLE `Schools` (
 -- Table structure for table `subjects`
 --
 
-DROP TABLE IF EXISTS `Subjects`;
+DROP TABLE IF EXISTS `subjects`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `Subjects` (
+CREATE TABLE `subjects` (
   `id` varchar(8) NOT NULL,
   `college_id` varchar(8) DEFAULT NULL,
   `code` varchar(30) NOT NULL,
   `title` varchar(100) NOT NULL,
   `type` enum('LEC','LAB') DEFAULT NULL,
   `units` int unsigned DEFAULT NULL,
+  `req_hours` int unsigned DEFAULT NULL,
+  `pref_rooms` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `college_id` (`college_id`),
   CONSTRAINT `subjects_ibfk_1` FOREIGN KEY (`college_id`) REFERENCES `Colleges` (`id`)
@@ -308,15 +312,15 @@ CREATE TABLE `Subjects` (
 -- Table structure for table `terms`
 --
 
-DROP TABLE IF EXISTS `Terms`;
+DROP TABLE IF EXISTS `terms`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `Terms` (
+CREATE TABLE `terms` (
   `id` varchar(8) NOT NULL,
   `school_id` varchar(12) DEFAULT NULL,
   `year` int unsigned NOT NULL,
   `term` char(1) NOT NULL,
-  `status` tinyint(1) DEFAULT NULL,
+  `status` enum('open','complete','closed') DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `school_id` (`school_id`),
   CONSTRAINT `terms_ibfk_1` FOREIGN KEY (`school_id`) REFERENCES `Schools` (`id`)
@@ -350,4 +354,4 @@ CREATE TABLE `Users` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2023-04-02 22:37:01
+-- Dump completed on 2023-04-24 19:15:00
