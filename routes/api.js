@@ -318,7 +318,7 @@ router.route("/curriculums/:courseID?") // getting and adding the semesters in a
                 `ORDER BY sub.title, sub.code`
             );
         }
-        const [{totalUnits}] = await DB.executeQuery(
+        const [{ totalUnits }] = await DB.executeQuery(
             `SELECT SUM(sub.units) AS totalUnits FROM Curricula cu INNER JOIN Subjects sub ON cu.subj_id = sub.id ` +
             `WHERE cu.course_id = "${req.params.courseID}" AND cu.subj_id IS NOT NULL`
         );
@@ -341,7 +341,7 @@ router.route("/curriculums/:courseID?") // getting and adding the semesters in a
         let query = `INSERT INTO Curricula VALUES `;
         let message;
         if (data.forNewYear) {
-            const [{totalTerms}] = await DB.executeQuery(
+            const [{ totalTerms }] = await DB.executeQuery(
                 `SELECT s.total_terms_yearly AS totalTerms FROM Schools s INNER JOIN Colleges col ON s.id = col.school_id ` +
                 `INNER JOIN Departments d ON col.id = d.college_id WHERE d.chair_id = '${req.account.id}' LIMIT 1`
             )
@@ -356,7 +356,7 @@ router.route("/curriculums/:courseID?") // getting and adding the semesters in a
             message = "A summer term in the curriculum is ready."
             query += `('${req.params.courseID}', NULL, ${latestYear}, 's')`;
         }
-        
+
         await DB.executeQuery(query);
         res.status(200).json({
             message: {
@@ -396,7 +396,7 @@ router.post("/curriculum/:courseID", async (req, res) => { // adding a subject i
         `SELECT subj_id FROM Curricula WHERE course_id = '${req.params.courseID}' AND year = ${data.year} ` +
         `AND term = '${data.semester}'`
     );
-    
+
     if (semesterContent <= 1) {
         await DB.executeQuery(
             `UPDATE Curricula SET subj_id = '${subjID["id"]}' WHERE course_id = '${req.params.courseID}' ` +
@@ -461,7 +461,7 @@ router.post("/terms", async (req, res) => {
         const blockID = crypto.randomBytes(6).toString("base64url");
         yearsPerCourse[i] = `('${blockID}', '${yearsPerCourse[i]["id"]}', '${termID}', ${yearsPerCourse[i]["year"]})`;
     }
-    
+
     let query = `INSERT INTO Terms VALUES ('${termID}', '${schoolID}', ${year}, '${term}', 1); ` +
         `INSERT INTO Blocks (id, course_id, term_id, year) VALUES ${yearsPerCourse.join(",")}; ` +
         `INSERT INTO Preferences (id, term_id, faculty_id) VALUES ${faculty.join(",")};` +
@@ -499,9 +499,9 @@ router.route("/schedules/:termID")
                 `ORDER BY f.status, name`;
         } else {
             query = `SELECT id, year, block_no, total_students FROM Blocks WHERE course_id = "${req.query.category}" ` +
-            `AND term_id = "${req.params.termID}" ORDER BY year, block_no`;
+                `AND term_id = "${req.params.termID}" ORDER BY year, block_no`;
         }
-        
+
         res.status(200).json({ schedules: await DB.executeQuery(query) });
 
     }).post(async (req, res) => {
@@ -510,31 +510,30 @@ router.route("/schedules/:termID")
             return res.status(401).end();
         }
 
+        const { termID } = req.params;
         const DB = req.app.locals.database;
         const { subject, mode, room, block, partial } = req.body.schedule;
         let { day, start, end } = req.body.schedule;
         const facultyID = req.body.faculty;
-        
+        // (rs.start < start && rs.end > start) || (rs.start < end && rs.end > end)
         const conflicts = await DB.executeQuery(
-            `SELECT sc.day, sc.start, sc.end FROM Schedules sc LEFT JOIN Rooms r ON sc.room_id = r.id ` +
-            `WHERE (sc.faculty_id = '${facultyID}' OR sc.block_id = '${block}') AND sc.day = ${day} AND ` +
-            `((sc.start < ${start} AND sc.end > ${start}) OR (sc.start < ${end} AND sc.end > ${end}) OR ` +
-            `(sc.start > ${start} AND sc.start > ${end}) OR (sc.end < ${start} AND sc.end < ${end})) ` +
-            `ORDER BY sc.start`
+            `SELECT sc.faculty_id, sc.block_id, sc.day, sc.start, sc.end FROM Schedules sc LEFT JOIN Rooms r ON ` +
+            `sc.room_id = r.id WHERE sc.term_id = '${termID}' AND (sc.faculty_id = '${facultyID}' OR ` +
+            `sc.block_id = '${block}') AND sc.day = ${day} AND ((sc.start < ${start} AND sc.end > ${start}) OR ` +
+            `(sc.start < ${end} AND sc.end > ${end})) ORDER BY sc.start`
         );
         console.log(conflicts);
 
         if (conflicts.length > 0) {
             let classHours = end - start;
             const lastConflict = conflicts.at(-1);
-            if (lastConflict.end + classHours <= 22*60) {
+            if (lastConflict.end + classHours <= 22 * 60) {
                 start = lastConflict.end;
                 end = lastConflict.end + classHours;
             } else {
                 return res.status(409).end();
             }
         }
-        console.log(day, start, end);
 
         let roomID;
         if (mode == 1 && room == "") {
@@ -557,28 +556,28 @@ router.route("/schedules/:termID")
             );
             roomID = id;
         }
-        
+
         let query;
         if (partial == 'true') {
-            query = `INSERT INTO Schedules VALUES ('${req.params.termID}', '${subject}', '${block}', ` +
+            query = `INSERT INTO Schedules VALUES ('${termID}', '${subject}', '${block}', ` +
                 `'${facultyID}', ${(!roomID) ? "NULL" : roomID}, ${day}, ${start}, ${end}, ${mode})`;
         } else {
-            query = `UPDATE Schedules SET faculty_id = '${facultyID}', ` +
-                `room_id = ${(!roomID) ? "NULL" : roomID}, day = ${day}, start = ${start}, ` +
-                `end = ${end}, mode = ${mode} WHERE block_id = '${block}' AND subj_id = '${subject}' AND ` +
-                `term_id = '${req.params.termID}' AND faculty_id IS NULL LIMIT 1;` +
-                `UPDATE Schedules sc LEFT JOIN Subjects s ON sc.subj_id = s.id INNER JOIN Preferences p ` +
-                `ON sc.term_id = p.term_id SET p.assigned_load = p.assigned_load + s.units WHERE ` +
-                `sc.term_id = '${req.params.termID}' AND sc.subj_id = '${subject}' AND sc.faculty_id = '${facultyID}';`;
-        }
+            query = `UPDATE Schedules SET faculty_id = '${facultyID}', room_id = ${(!roomID) ? "NULL" : roomID}, ` +
+                `day = ${day}, start = ${start}, end = ${end}, mode = ${mode} WHERE block_id = '${block}' AND ` +
+                `subj_id = '${subject}' AND term_id = '${termID}' AND faculty_id IS NULL LIMIT 1;` +
 
-        // console.log(query);
+                `UPDATE Schedules sc LEFT JOIN Subjects s ON sc.subj_id = s.id INNER JOIN Preferences p ` +
+                `ON sc.term_id = p.term_id AND sc.faculty_id = p.faculty_id ` +
+                `SET p.assigned_load = (p.assigned_load + s.units) WHERE sc.term_id = '${termID}' AND ` +
+                `sc.subj_id = '${subject}' AND sc.block_id = '${block}' AND p.faculty_id = '${facultyID}' LIMIT 1;`;
+        };
+        
         await DB.executeQuery(query);
         return res.status(200).json({
             message: {
                 mode: 1,
                 title: "New Class Assigned",
-                body: `If the schedule is not fully loaded, please assign the remaining hours`
+                body: `If the schedule is not fully plotted, please assign the remaining hours`
             }
         });
     });
@@ -635,7 +634,7 @@ router.post("/preferences/:prefID", async (req, res) => {
     }
 
     const DB = req.app.locals.database;
-    let {subjects, schedules} = req.body;
+    let { subjects, schedules } = req.body;
 
     schedules = schedules.filter((val) => {
         return val.start && val.end;
@@ -659,7 +658,7 @@ router.post("/preferences/:prefID", async (req, res) => {
     await DB.executeQuery(
         `UPDATE Preferences SET status = 2 WHERE id = '${req.params.prefID}' AND faculty_id = '${user.id}'`
     );
-    
+
     res.status(200).json({
         message: {
             mode: 1,

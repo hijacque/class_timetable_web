@@ -26,8 +26,6 @@
             <i class="fas fa-sitemap fa-2x mt-1"></i><br>schedules</a>
         <a role="button" class="task btn btn-light" id="faculty">
             <i class="fas fa-chalkboard-teacher fa-2x mt-1"></i><br>faculty</a>
-        <!-- <a role="button" class="task" href="/chair/blocks" id="blocks">
-            <i class="fas fa-users"></i><br>Blocks</a> -->
         <a role="button" class="task btn btn-light" id="courses">
             <i class="fas fa-graduation-cap fa-2x mt-1"></i><br>courses</a>
         <a role="button" class="task btn btn-light" id="profile">
@@ -51,14 +49,14 @@
     <script>
         //navigation task panel stuffss
         let openSection = "<%- section %>";
-        $(`a.task[id=${openSection}]:not(#logout)`)
+        const currentTab = $(`a.task[id=${openSection}]:not(#logout)`)
         .toggleClass("btn-secondary btn-light border-end border-4 border-primary")
         .hover(
             (event) => $(`div#${event.currentTarget.id}-view>div.side-panel`).show(),
             (event) => $(`div#${event.currentTarget.id}-view>div.side-panel`).hide()
         );
-
-        $(`div#${openSection}-view>div.side-panel`).show().hover(
+        
+        $(`div#${openSection}-view>div.side-panel`).hover(
             (event) => $(event.currentTarget).show(),
             (event) => $(event.currentTarget).hide()
         );

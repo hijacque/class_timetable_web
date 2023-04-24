@@ -9,7 +9,16 @@
 
 <body>
     <div class="app-bar bg-light">
-        <a type="button" onclick="window.location.replace('/chair/schedules')"><i class="fas fa-arrow-left fa-2x"></i></a>
+        <% if (category == "faculty") { %>
+            <a type="button" onclick="window.location.href = '/chair/schedules?term=<%= term.code %>'">
+                <i class="fas fa-arrow-left fa-2x"></i>
+            </a>
+        <% } else { %>
+            <a onclick="window.location.href = '/chair/schedules?term=<%= term.id %>&course=<%= category %>'"
+                type="button" >
+                <i class="fas fa-arrow-left fa-2x"></i>
+            </a>
+        <% } %>
         <h5 class="panel-title text-muted my-0"><%- term.title %></h5>
         <div></div>
     </div>
