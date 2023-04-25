@@ -1,89 +1,90 @@
+<% const {prev, current, next, subjOptions} = data %>
 <div class="bg-light task-view pt-4" id="preference-view">
-    <% const {term, subjOptions} = data %>
-    <% if (term) { %>
-    <h3 class="text-center mb-4">
-        Faculty Schedule Preference Form<br>
-        <small class="text-muted">
-            A.Y. <%= term.year %>-<%= term.year + 1 %> (<%- term.term %> Semester)
-        </small>
-    </h3>
-    <hr>
-    <div class="px-5">
-        <label class="table-title fw-bold">Your Subject Expertises:</label>
-        <div class="mb-4 mt-2 w-75 stack-list" id="subjects-list">
-            <div class="dropdown">
-                <button class="btn btn-secondary dropdown-toggle btn-rounded mt-1" type="button" id="pref-subj"
-                    data-mdb-toggle="dropdown" aria-expanded="false">Add Field</button>
-                <ul class="dropdown-menu" aria-labelledby="pref-subj">
-                    <% for (const {title} of subjOptions) { %>
-                    <li><a class="dropdown-item" role="button"><%= title %></a></li>
-                    <% } %>
-                </ul>
+    <% if (current) { %>
+        <% const {year, term} = current %>
+        <h3 class="text-center mb-4">
+            Faculty Schedule Preference Form<br>
+            <small class="text-muted">
+                A.Y. <%= year %>-<%= year + 1 %> (<%- term %> Semester)
+            </small>
+        </h3>
+        <hr>
+        <div class="px-5 pref-form">
+            <label class="table-title fw-bold">Your Subject Expertises:</label>
+            <div class="mb-4 mt-2 w-75 stack-list" id="subjects-list">
+                <div class="dropdown">
+                    <button class="btn btn-secondary dropdown-toggle btn-rounded mt-1" type="button" id="pref-subj"
+                        data-mdb-toggle="dropdown" aria-expanded="false">Add Field</button>
+                    <ul class="dropdown-menu" aria-labelledby="pref-subj">
+                        <% for (const {title} of subjOptions) { %>
+                        <li><a class="dropdown-item" role="button"><%= title %></a></li>
+                        <% } %>
+                    </ul>
+                </div>
+            </div>
+            <label class="table-title fw-bold">Your Preferred Schedule:</label>
+            <table class="table table-bordered table-sm fw-bold mt-2 mb-4 w-50 editable" id="pref-schedule">
+                <thead class="text-center">
+                    <tr>
+                        <th style="width: 160px;">Day</th>
+                        <th>Time-in</th>
+                        <th>Time-out</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Monday</td>
+                        <td><input type="time" class="form-control start-time"></td>
+                        <td><input type="time" class="form-control end-time"></td>
+                    </tr>
+                    <tr>
+                        <td>Tuesday</td>
+                        <td><input type="time" class="form-control start-time"></td>
+                        <td><input type="time" class="form-control end-time"></td>
+                    </tr>
+                    <tr>
+                        <td>Wednesday</td>
+                        <td><input type="time" class="form-control start-time"></td>
+                        <td><input type="time" class="form-control end-time"></td>
+                    </tr>
+                    <tr>
+                        <td>Thursday</td>
+                        <td><input type="time" class="form-control start-time"></td>
+                        <td><input type="time" class="form-control end-time"></td>
+                    </tr>
+                    <tr>
+                        <td>Friday</td>
+                        <td><input type="time" class="form-control start-time"></td>
+                        <td><input type="time" class="form-control end-time"></td>
+                    </tr>
+                    <tr>
+                        <td>Saturday</td>
+                        <td><input type="time" class="form-control start-time"></td>
+                        <td><input type="time" class="form-control end-time"></td>
+                    </tr>
+                    <tr>
+                        <td>Sunday</td>
+                        <td><input type="time" class="form-control start-time"></td>
+                        <td><input type="time" class="form-control end-time"></td>
+                    </tr>
+                </tbody>
+            </table>
+            <div>
+                <a class="btn btn-primary btn-lg btn-rounded btn-top mt-2" title="Submit preference form" 
+                    id="submit-pref" type="button">
+                    <i class="fas fa-check fa-lg me-2"></i>submit
+                </a>
             </div>
         </div>
-        <label class="table-title fw-bold">Your Preferred Schedule:</label>
-        <table class="table table-bordered table-sm fw-bold mt-2 mb-4 w-50 editable" id="pref-schedule">
-            <thead class="text-center">
-                <tr>
-                    <th style="width: 160px;">Day</th>
-                    <th>Time-in</th>
-                    <th>Time-out</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>Monday</td>
-                    <td><input type="time" class="form-control start-time"></td>
-                    <td><input type="time" class="form-control end-time"></td>
-                </tr>
-                <tr>
-                    <td>Tuesday</td>
-                    <td><input type="time" class="form-control start-time"></td>
-                    <td><input type="time" class="form-control end-time"></td>
-                </tr>
-                <tr>
-                    <td>Wednesday</td>
-                    <td><input type="time" class="form-control start-time"></td>
-                    <td><input type="time" class="form-control end-time"></td>
-                </tr>
-                <tr>
-                    <td>Thursday</td>
-                    <td><input type="time" class="form-control start-time"></td>
-                    <td><input type="time" class="form-control end-time"></td>
-                </tr>
-                <tr>
-                    <td>Friday</td>
-                    <td><input type="time" class="form-control start-time"></td>
-                    <td><input type="time" class="form-control end-time"></td>
-                </tr>
-                <tr>
-                    <td>Saturday</td>
-                    <td><input type="time" class="form-control start-time"></td>
-                    <td><input type="time" class="form-control end-time"></td>
-                </tr>
-                <tr>
-                    <td>Sunday</td>
-                    <td><input type="time" class="form-control start-time"></td>
-                    <td><input type="time" class="form-control end-time"></td>
-                </tr>
-            </tbody>
-        </table>
-        <div>
-            <a class="btn btn-primary btn-lg btn-rounded btn-top mt-2" title="Submit preference form" 
-                id="submit-pref" type="button">
-                <i class="fas fa-check fa-lg me-2"></i>submit
-            </a>
-        </div>
-    </div>
     <% } else { %>
         <h2 class='text-center'>No Open Preference Forms</h2>
     <% } %>
 </div>
-<% if (term) { %>
+<% if (current) { %>
 <script>
     const expertises = [];
     const submitPreference = (schedules) => new Promise((resolve, reject) => $.post(
-        "http://localhost:3000/api/preferences/<%= term.pref_id %>",
+        "http://localhost:3000/api/preferences/<%= current.pref_id %>",
         {subjects: expertises, schedules: schedules || []}, 
         (data) => resolve(data), "json",
     ).fail((data) => reject(data)));
@@ -99,6 +100,7 @@
 
     const subjectsList = $("div.stack-list#subjects-list");
     $(subjectsList).find(".dropdown-item").click((event) => {
+        $(".pref-form").scrollTop(0);
         let itemVal = event.currentTarget.textContent;
         let newItem = $(`<button class="btn btn-outline-secondary btn-rounded stack-list-item" type="button">${itemVal}</button>`);
         let listItem = $(event.currentTarget).parent("li");

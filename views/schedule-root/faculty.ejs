@@ -146,7 +146,7 @@
             <ul class="pagination" id="schedule-nav">
                 <% if (prevFaculty) { %>
                     <li class="page-item">
-                        <a href="/schedule/faculty?term=<%= term.id %>&id=<%= prevFaculty.id %>"
+                        <a href="/schedule/faculty?term=<%= term.code %>&id=<%= prevFaculty.faculty_id %>"
                             class="page-link me-2" type="button" ><i class="fas fa-chevron-left"></i></a>
                         <p class="prev page-label"><%= prevFaculty.name %></p>
                     </li>
@@ -160,7 +160,7 @@
                 <% if (nextFaculty) { %>
                     <li class="justify-content-end page-item" id="<%= nextFaculty.id %>">
                         <p class="next page-label"><%= nextFaculty.name %></p>
-                        <a href="/schedule/faculty?term=<%= term.id %>&id=<%= nextFaculty.id %>" 
+                        <a href="/schedule/faculty?term=<%= term.code %>&id=<%= nextFaculty.faculty_id %>" 
                             class="page-link ms-2" type="button"><i class="fas fa-chevron-right"></i></a>
                     </li>
                 <% } else { %>
@@ -173,7 +173,12 @@
         </nav>
         
         <div class="about">
-            <h4 class="page-title" id="<%= id %>"><%= name %></h4>
+            <div class="d-flex">
+                <h4 class="page-title" id="<%= id %>"><%= name %></h4>
+                <button type="button" class="ms-4 btn btn-secondary btn-floating" title="Export schedules">
+                    <i class="fas fa-cloud-arrow-down fa-lg"></i>
+                </button>
+            </div>
             <h6 class="text-muted"><%= faculty_id %></h6>
             <p>
                 <b>Employment Status:</b> <%= status %><br>
@@ -469,8 +474,8 @@
 
 <script src="/lib/display-dropdown.js"></script>
 <script>
-    const startHeightSched = <%- JSON.stringify(Math.min(...classes.map(o => o.start))) %>;
-    console.log(startHeightSched);
+    const startHeightSched = <%- JSON.stringify(Math.min(...classes.map(c => c.start) )) %>;
+    
     if (startHeightSched > 9) {
         $(document).ready(() => setTimeout(() => {
             $(".main-view>div:last-child").stop().animate({scrollTop: startHeightSched * 43 + 235}, 1000, 'swing');
@@ -482,7 +487,10 @@
             { faculty: facultyID, schedule: schedule},
             () => location.reload(),
             "json"
-        ).fail((error) => reject(error));
+        ).fail((error) => {
+            console.log(error);
+            reject(error);
+        });
     });
 
     displayDropMenu($("#class-day"), "Pick Day");
@@ -522,6 +530,7 @@
         const day = $("#class-day");
         const start = $("#class-start");
         const end = $("#class-end");
+        const reqMinutes = parseFloat($("#class-hours").text().slice(-1)) * 60;
         if (day.text() == "Pick Day" || !start.val() || !end.val()) {
             return console.log("Missing schedule input.");
         } else if (start.val() > end.val()) {
@@ -533,10 +542,14 @@
         }
         
         let endTime = roundMinutes(end.val(), 30);
+
         if (endTime > 22 * 60) {
             return console.log("Class must end on or before 10PM");
+        } else if (end - start > reqMinutes) {
+            console.log("Assigned time exceeds required hours.");
+            endTime = Math.trunc(startTime + reqMinutes);
         }
-        
+        console.log(day.attr("aria-valuenow"), startTime, endTime);
         try {
             await addClass($(".page-title").attr("id"), {
                 subject: $("#class-subject").attr("aria-valuenow"),
@@ -546,7 +559,7 @@
                 day: day.attr("aria-valuenow"),
                 start: startTime,
                 end: endTime,
-                partial: $("#class-hours").text().split(" ")[0] != "0"
+                partial: ($("#class-hours").text().split(" ")[0] != "0")
             });
         } catch (error) {
             console.log(error);

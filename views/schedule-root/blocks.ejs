@@ -1,3 +1,416 @@
-<div>
-    <h2 class="page-title"></h2>
+<div class="modal fade" id="add-class" data-mdb-backdrop="static" data-mdb-keyboard="false"
+    tabindex="-1" aria-labelledby="add-class-label" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="add-class-label">Assign New Class</h5>
+                <button type="button" class="btn-close" data-mdb-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <label for="class-subject">Subject:</label><span id="class-subject"></span><br>
+                <label for="class-hours">Assigned hours:</label>
+                <span id="class-hours"></span><br>
+                <div class="input-group mb-2">
+                    <label for="class-faculty">Faculty:</label>
+                    <div class="dropdown">
+                        <a class="text-primary dropdown-toggle input-group-text rounded-end-0" type="button"
+                            data-mdb-toggle="dropdown" aria-expanded="false" id="class-facutly">Pick Day</a>
+                        <ul class="dropdown-menu" aria-labelledby="class-day">
+                            <!-- faculty items { last_name, first_name middle_name (assigned_load / teach_load) } -->
+                            <li><hr class="dropdown-divider m-0"></li>
+                            <li><a class="dropdown-item text-danger" role="button">Cancel</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <hr>
+                <p><small>Class Schedule</small></p>
+                <div class="input-group mb-2">
+                    <div class="dropdown">
+                        <a class="text-primary dropdown-toggle input-group-text rounded-end-0" type="button"
+                            data-mdb-toggle="dropdown" aria-expanded="false" id="class-day">Pick Day</a>
+                        <ul class="dropdown-menu" aria-labelledby="class-day">
+                            <li><a class="dropdown-item" role="button" data-cts-enum="1">MONDAY</a></li>
+                            <li><a class="dropdown-item" role="button" data-cts-enum="2">TUESDAY</a></li>
+                            <li><a class="dropdown-item" role="button" data-cts-enum="3">WEDNESDAY</a></li>
+                            <li><a class="dropdown-item" role="button" data-cts-enum="4">THURSDAY</a></li>
+                            <li><a class="dropdown-item" role="button" data-cts-enum="5">FRIDAY</a></li>
+                            <li><a class="dropdown-item" role="button" data-cts-enum="6">SATURDAY</a></li>
+                            <li><a class="dropdown-item" role="button" data-cts-enum="7">SUNDAY</a></li>
+                            <li><hr class="dropdown-divider m-0"></li>
+                            <li><a class="dropdown-item text-danger" role="button">Cancel</a></li>
+                        </ul>
+                    </div>
+                    <span class="input-group-text"><i class="fas fa-at"></i></span>
+                    <input type="time" id="class-start" class="form-control">
+                    <span class="input-group-text"> - </span>
+                    <input type="time" id="class-end" class="form-control">
+                </div>
+                <div class="input-group mb-3">
+                    <div class="dropdown">
+                        <a class="text-primary dropdown-toggle input-group-text rounded-end-0" type="button"
+                            data-mdb-toggle="dropdown" aria-expanded="false" id="class-mode">Pick Mode</a>
+                        <ul class="dropdown-menu" aria-labelledby="class-mode">
+                            <li><a class="dropdown-item" role="button" data-cts-enum="1">F2F</a></li>
+                            <li><a class="dropdown-item" role="button" data-cts-enum="2">online</a></li>
+                            <li><a class="dropdown-item" role="button" data-cts-enum="3">blended</a></li>
+                            <li><hr class="dropdown-divider m-0"></li>
+                            <li><a class="dropdown-item text-danger" role="button">Cancel</a></li>
+                        </ul>
+                    </div>
+                    <input type="text" id="class-room" class="form-control" placeholder="Room no." disabled>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-mdb-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirm-new-class">Assign</button>
+            </div>
+        </div>
+    </div>
 </div>
+<div class="main-view">
+    <div class="side-panel">
+        <div class="panel-header mx-4 mb-3">
+            <h5>Unassigned Classes</h5>
+        </div>
+        <div class="panel-body">
+            <% if (classes.length > 0) { %>
+            <ul class="list-group panel-menu" id="<%= block_id %>">
+                <% for (const {subj_id, subject, req_hours, assigned_time} of classes) { %>
+                    <button type="button" title="<%= subject %>" itemid="<%= subj_id %>"
+                        class="list-group-item list-group-item-action menu-item"
+                        aria-valuemax="<%= req_hours || 0 %>"
+                        aria-valuenow="<%= assigned_time || 0 %>">
+                        <p class="text-truncate m-0"><%= subject %></p>
+                    </button>
+                <% } %>
+            </ul>
+            <% } else { %>
+                <hr>
+                <p class="text-muted text-center">No more classes</p>
+            <% } %>
+        </div>
+    </div>
+    <div>
+        <nav aria-label="Schedule Navigation for Faculty">
+            <h6>{ Course Title }</h6>
+            <ul class="pagination" id="schedule-nav">
+                <% if (prevBlock) { %>
+                    <% const {block_id, ordinal_year, block} = prevBlock %>
+                    <li class="page-item">
+                        <a href="/schedule/block?term=<%= term.code %>&id=<%= block_id %>" id="<%= block_id %>" 
+                            class="page-link me-2" type="button" ><i class="fas fa-chevron-left"></i></a>
+                        <p class="prev page-label"><%= ordinal_year %> year, Block <%= block %></p>
+                    </li>
+                <% } else { %>
+                    <li class="page-item disabled">
+                        <a class="page-link me-2" type="button"><i class="fas fa-chevron-left"></i></a>
+                        <p class="prev page-label"></p>
+                    </li>
+                <% } %>
+
+                <% if (nextBlock) { %>
+                    <% const {block_id, ordinal_year, block} = nextBlock %>
+                    <li class="justify-content-end page-item" id="<%= block_id %>">
+                        <p class="next page-label"><%= ordinal_year %> year, Block <%= block %></p>
+                        <a href="/schedule/block?term=<%= term.code %>&id=<%= block_id %>" 
+                            class="page-link ms-2" type="button"><i class="fas fa-chevron-right"></i></a>
+                    </li>
+                <% } else { %>
+                    <li class="justify-content-end page-item disabled">
+                        <p class="next page-label"></p>
+                        <a class="page-link ms-2" type="button"><i class="fas fa-chevron-right"></i></a>
+                    </li>
+                <% } %>
+            </ul>
+        </nav>
+        <div class="about">
+            <div class="d-flex">
+                <h4 class="page-title" id="<%= block.id %>"><%= ordinal_year %> year, Block <%= block %></h4>
+                <button type="button" class="ms-4 btn btn-secondary btn-floating" title="Export schedules">
+                    <i class="fas fa-cloud-arrow-down fa-lg"></i>
+                </button>
+            </div>
+        </div>
+        <div class="scheduler">
+            <div></div>
+            <div class="days">
+                <div>MON</div>
+                <div>TUE</div>
+                <div>WED</div>
+                <div>THU</div>
+                <div>FRI</div>
+                <div>SAT</div>
+                <div>SUN</div>
+            </div>
+            <div class="times">
+                <div>7 AM</div>
+                <div>8 AM</div>
+                <div>9 AM</div>
+                <div>10 AM</div>
+                <div>11 AM</div>
+                <div>12 PM</div>
+                <div>1 PM</div>
+                <div>2 PM</div>
+                <div>3 PM</div>
+                <div>4 PM</div>
+                <div>5 PM</div>
+                <div>6 PM</div>
+                <div>7 PM</div>
+                <div>8 PM</div>
+                <div>9 PM</div>
+                <div>10 PM</div>
+            </div>
+            <div class="schedules">
+                <div class="sched-grid">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+                <div class="sched-body">
+                    <% for (const schedule of classes) { %>
+                        <div class="sched-block" data-mdb-toggle="tooltip" data-mdb-html="true"
+                            <% if (schedule.room) { %>
+                            title="<b><%= schedule.subject %></b><br><small><%= schedule.faculty_name %><br><i><%= schedule.mode %> @ <%= schedule.room %></i></small>"
+                            <% } else { %>
+                            title="<b><%= schedule.subject %></b><br><small><%= schedule.faculty_name %><br><i><%= schedule.mode %></i></small>"
+                            <% } %>
+                            style="grid-column: <%= schedule.day %> / span 1; grid-row: <%= schedule.start %> / <%= schedule.end %>;">
+                            <h6 class="text-break"><%= schedule.subject %></h6>
+                            <p class="text-truncate"><small>
+                                <%= schedule.faculty_name %><br>
+                                <% if (schedule.room) { %>
+                                    <i><%= schedule.mode %> @ <%= schedule.room %></i>
+                                <% } else { %>
+                                    <i><%= schedule.mode %></i>
+                                <% } %>
+                            </small></p>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/lib/display-dropdown.js"></script>
