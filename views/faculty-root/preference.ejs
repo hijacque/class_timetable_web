@@ -1,84 +1,107 @@
-<% const {prev, current, next, subjOptions} = data %>
-<div class="bg-light task-view pt-4" id="preference-view">
-    <% if (current) { %>
-        <% const {year, term} = current %>
-        <h3 class="text-center mb-4">
-            Faculty Schedule Preference Form<br>
-            <small class="text-muted">
-                A.Y. <%= year %>-<%= year + 1 %> (<%- term %> Semester)
-            </small>
-        </h3>
-        <hr>
-        <div class="px-5 pref-form">
-            <label class="table-title fw-bold">Your Subject Expertises:</label>
-            <div class="mb-4 mt-2 w-75 stack-list" id="subjects-list">
-                <div class="dropdown">
-                    <button class="btn btn-secondary dropdown-toggle btn-rounded mt-1" type="button" id="pref-subj"
-                        data-mdb-toggle="dropdown" aria-expanded="false">Add Field</button>
-                    <ul class="dropdown-menu" aria-labelledby="pref-subj">
-                        <% for (const {title} of subjOptions) { %>
-                        <li><a class="dropdown-item" role="button"><%= title %></a></li>
-                        <% } %>
-                    </ul>
-                </div>
-            </div>
-            <label class="table-title fw-bold">Your Preferred Schedule:</label>
-            <table class="table table-bordered table-sm fw-bold mt-2 mb-4 w-50 editable" id="pref-schedule">
-                <thead class="text-center">
-                    <tr>
-                        <th style="width: 160px;">Day</th>
-                        <th>Time-in</th>
-                        <th>Time-out</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Monday</td>
-                        <td><input type="time" class="form-control start-time"></td>
-                        <td><input type="time" class="form-control end-time"></td>
-                    </tr>
-                    <tr>
-                        <td>Tuesday</td>
-                        <td><input type="time" class="form-control start-time"></td>
-                        <td><input type="time" class="form-control end-time"></td>
-                    </tr>
-                    <tr>
-                        <td>Wednesday</td>
-                        <td><input type="time" class="form-control start-time"></td>
-                        <td><input type="time" class="form-control end-time"></td>
-                    </tr>
-                    <tr>
-                        <td>Thursday</td>
-                        <td><input type="time" class="form-control start-time"></td>
-                        <td><input type="time" class="form-control end-time"></td>
-                    </tr>
-                    <tr>
-                        <td>Friday</td>
-                        <td><input type="time" class="form-control start-time"></td>
-                        <td><input type="time" class="form-control end-time"></td>
-                    </tr>
-                    <tr>
-                        <td>Saturday</td>
-                        <td><input type="time" class="form-control start-time"></td>
-                        <td><input type="time" class="form-control end-time"></td>
-                    </tr>
-                    <tr>
-                        <td>Sunday</td>
-                        <td><input type="time" class="form-control start-time"></td>
-                        <td><input type="time" class="form-control end-time"></td>
-                    </tr>
-                </tbody>
-            </table>
+<% const {current, subjOptions, forms} = data %>
+<div class="bg-light task-view" id="preference-view">
+    <div class="side-panel px-3">
+        <h4>Pending<br>Preference Forms</h4>
+        <div class="mt-4 panel-body">
+            <% if (forms.length > 0) { %>
+                <ul class="list-group panel-menu">
+                    <% for (const {pref_id, year, ordinal_term, term} of forms) { %>
+                        <a type="button" class="list-group-item list-group-item-action menu-item"
+                            href="/faculty/preference?term=<%= year %><%= term %>"
+                            title="<%= year %><%= term %>" id="<%= pref_id %>" >
+                            <p class="text-truncate m-0">
+                                <%= year %>-<%= year + 1 %>, <%- ordinal_term %> Semester
+                            </p>
+                        </a>
+                    <% } %>
+                </ul>
+            <% } else { %>
+                <p class="text-muted text-center">No Courses</p>
+            <% } %>
+        </div>
+    </div>
+    <div class="pt-4 bg-white">
+        <% if (current) { %>
             <div>
                 <a class="btn btn-primary btn-lg btn-rounded btn-top mt-2" title="Submit preference form" 
                     id="submit-pref" type="button">
                     <i class="fas fa-check fa-lg me-2"></i>submit
                 </a>
             </div>
-        </div>
-    <% } else { %>
-        <h2 class='text-center'>No Open Preference Forms</h2>
-    <% } %>
+
+            <% const {pref_id, year, ordinal_term, term} = current %>
+            <h3 class="text-center mb-4">
+                Faculty Schedule Preference Form<br>
+                <small class="text-muted">
+                    <%= year %>-<%= year + 1 %>, <%- ordinal_term %> Semester
+                </small>
+            </h3>
+            <hr>
+            <div class="px-5">
+                <label class="table-title fw-bold">Your Subject Expertises:</label>
+                <div class="mb-4 mt-2 w-75 stack-list" id="subjects-list">
+                    <div class="dropdown">
+                        <button class="btn btn-secondary dropdown-toggle btn-rounded mt-1" type="button" id="pref-subj"
+                            data-mdb-toggle="dropdown" aria-expanded="false">Add Field</button>
+                        <ul class="dropdown-menu" aria-labelledby="pref-subj">
+                            <% for (const {title} of subjOptions) { %>
+                            <li><a class="dropdown-item" role="button"><%= title %></a></li>
+                            <% } %>
+                        </ul>
+                    </div>
+                </div>
+                <label class="table-title fw-bold">Your Preferred Schedule:</label>
+                <table class="table table-bordered table-sm fw-bold mt-2 mb-4 w-50 editable" id="pref-schedule">
+                    <thead class="text-center">
+                        <tr>
+                            <th style="width: 160px;">Day</th>
+                            <th>Time-in</th>
+                            <th>Time-out</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Monday</td>
+                            <td><input type="time" class="form-control start-time"></td>
+                            <td><input type="time" class="form-control end-time"></td>
+                        </tr>
+                        <tr>
+                            <td>Tuesday</td>
+                            <td><input type="time" class="form-control start-time"></td>
+                            <td><input type="time" class="form-control end-time"></td>
+                        </tr>
+                        <tr>
+                            <td>Wednesday</td>
+                            <td><input type="time" class="form-control start-time"></td>
+                            <td><input type="time" class="form-control end-time"></td>
+                        </tr>
+                        <tr>
+                            <td>Thursday</td>
+                            <td><input type="time" class="form-control start-time"></td>
+                            <td><input type="time" class="form-control end-time"></td>
+                        </tr>
+                        <tr>
+                            <td>Friday</td>
+                            <td><input type="time" class="form-control start-time"></td>
+                            <td><input type="time" class="form-control end-time"></td>
+                        </tr>
+                        <tr>
+                            <td>Saturday</td>
+                            <td><input type="time" class="form-control start-time"></td>
+                            <td><input type="time" class="form-control end-time"></td>
+                        </tr>
+                        <tr>
+                            <td>Sunday</td>
+                            <td><input type="time" class="form-control start-time"></td>
+                            <td><input type="time" class="form-control end-time"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        <% } else { %>
+            <h2 class='text-center'>No Open Preference Forms</h2>
+        <% } %>
+    </div>
 </div>
 <% if (current) { %>
 <script>
@@ -140,13 +163,16 @@
 
         console.log(await submitPreference(prefSchedules));
         
-        $("#preference-view").empty().append("<h2 class='text-center'>No Open Preference Forms</h2>");
+        $("#preference-view").empty();
         $("#alert-title").text("Your Preference is Recorded").addClass("text-success");
         $("#alert-body").html(
             "Your preferred subjects and schedule has been recorded.<br><br>" +
             "The official schedule for next semester will be posted by the chairperson."
         );
+        $("#confirm-alert").click(() => location.reload());
         alertModal.show();
     });
+
+    const currentForm = $("#<%= current.pref_id %>").addClass("active");
 </script>
 <% } %>

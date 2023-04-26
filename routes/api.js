@@ -131,7 +131,7 @@ router.route("/faculty/:deptID?")
             if (req.query.columns) {
                 query = `SELECT f.${req.query.columns.join(", f.")}, `;
             } else {
-                query = `SELECT f.faculty_id, f.status, f.first_name, f.middle_name, f.last_name, `;
+                query = `SELECT f.faculty_id, f.teach_load, f.status, f.first_name, f.middle_name, f.last_name, `;
             }
             
             query += `u.email, "My Schedule" AS schedule FROM Colleges col INNER JOIN Departments d ` +
@@ -630,6 +630,7 @@ router.post("/blocks/:courseID", async (req, res) => {
 
 // faculty control
 router.post("/preferences/:prefID", async (req, res) => {
+    // check if logged in, that is req.account is defined
     const user = req.account;
     if (!user) {
         return res.status(401).end();
@@ -637,23 +638,23 @@ router.post("/preferences/:prefID", async (req, res) => {
 
     const DB = req.app.locals.database;
     let { subjects, schedules } = req.body;
-
     schedules = schedules.filter((val) => {
-        return val.start && val.end;
+        const {start, end} = val;
+        return start != "" && end != "" && parseInt(start) < parseInt(end);
     });
-
+    
     if (schedules.length > 0) {
         await DB.executeQuery(
             `INSERT INTO PrefSchedules VALUES ` +
-            `(${schedules.map((val) => Object.values(val).join(", ")).join("), (")})`
+            `(${schedules.map((val) => `'${req.params.prefID}', ` + Object.values(val).join(", ")).join(`), (`)})`
         );
     }
 
     if (subjects.length > 0) {
         await DB.executeQuery(
-            `INSERT INTO PrefSubjects SELECT '${req.params.prefID}', sub.id FROM Faculty f INNER JOIN Departments d ON ` +
+            `INSERT INTO PrefSubjects SELECT DISTINCT '${req.params.prefID}', sub.id FROM Faculty f INNER JOIN Departments d ON ` +
             `f.dept_id = d.id INNER JOIN Subjects sub ON d.college_id = sub.college_id WHERE f.id = '${user.id}' ` +
-            `AND sub.title IN ('${subjects.join("', '")}') ORDER BY sub.title`
+            `AND sub.title IN ('${subjects.join("', '")}')`
         );
     }
 
