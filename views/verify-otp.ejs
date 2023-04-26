@@ -3,26 +3,24 @@
 
 <head>
     <%- include('base') %>
-    <title>OTP Verification</title>
+        <title>OTP Verification</title>
 </head>
 
 <body>
-    <% if (serverAlert) { %>
-        <div class="modal fade" id="alert-modal" tabindex="-1" aria-labelledby="alert-title" aria-hidden="true"
+    <div class="modal fade" id="alert-modal" tabindex="-1" aria-labelledby="alert-title" aria-hidden="true"
         data-mdb-backdrop="static" data-mdb-keyboard="false">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="alert-title">title</h5>
-                    </div>
-                    <div class="modal-body" id="alert-body">message here...</div>
-                    <div class="modal-footer text-center">
-                        <button type="button" class="btn btn-secondary" data-mdb-dismiss="modal">OK</button>
-                    </div>
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="alert-title">title</h5>
+                </div>
+                <div class="modal-body" id="alert-body">message here...</div>
+                <div class="modal-footer text-center">
+                    <button type="button" class="btn btn-secondary" data-mdb-dismiss="modal">OK</button>
                 </div>
             </div>
         </div>
-    <% } %>
+    </div>
     <h1>Enter OTP we sent to your e-mail</h1>
     <input type="text" id="pin" maxlength="6" class="text-uppercase">
     <button type="button" class="btn btn-primary" id="submit">Confirm</button>
@@ -47,7 +45,7 @@
                     $(cancelBtn).toggleClass("btn-secondary btn-danger");
                     $(footer).append(
                         '<form action="/help/resend-otp" method="POST">' +
-                            '<button type="submit" class="btn btn-secondary" name="resend" value="1">Yes</button>' +
+                        '<button type="submit" class="btn btn-secondary" name="resend" value="1">Yes</button>' +
                         '</form>'
                     );
                     alertModal.show();
@@ -57,7 +55,7 @@
                 }
             });
         });
-        
+
         const eAlert = "#alert-modal";
         const alertModal = new mdb.Modal(eAlert);
     </script>
