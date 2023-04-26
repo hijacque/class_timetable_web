@@ -74,21 +74,22 @@ A web-based class schedule and faculty loading system for the Computer Science D
 8. Open the `.env` file and fill it with the following:
     ```
     DB_PORT="localhost"
-    DB_USER=“class_sched_sys_user”
-    DB_PASSWORD=“class_sched_sys_user's_PASSWORD”
+    DB_USER="class_sched_sys_user"
+    DB_PASSWORD="class_sched_sys_user's_PASSWORD"
     DB_NAME="class_sched_sys"
 
     API_PORT=3000
     API_DOMAIN="localhost"
-    API_KEY=“RANDOM_32LENGTH_STRING1”
+    API_KEY="RANDOM_32LENGTH_STRING1"
 
     SMTP_PORT=587
     SMTP="smtp.gmail.com"
     SMTP_SENDER="YOUR_GMAIL_ADDRESS"
     SMTP_PASSWORD="GMAIL_APP_PASSWORD"
 
-    COOKIE_KEY="RANDOM_32LENGTH_STRING2”
-    HELP_KEY="RANDOM_32LENGTH_STRING3”
+    COOKIE_KEY="RANDOM_32LENGTH_STRING2"
+    HELP_KEY="RANDOM_32LENGTH_STRING3"
+    DB_PORT="localhost"
     ```
 9. Your computer is now a local server for the project
 10. Open your terminal and enter `node index.js` or if you have _nodemon_ use `nodemon index.js`
