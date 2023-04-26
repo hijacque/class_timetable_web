@@ -31,7 +31,7 @@ A web-based class schedule and faculty loading system for the Computer Science D
     * Create new user of the project's database
     ```
     CREATE USER 'class_sched_sys_user'@'localhost' IDENTIFIED BY 'YOUR_PASSWORD';
-    GRANT ALL PRIVILEGE ON class_sched_sys.* TO 'class_sched_sys_user'@'localhost';
+    GRANT ALL PRIVILEGES ON class_sched_sys.* TO 'class_sched_sys_user'@'localhost';
     ```
 8. If no errors occur and the database is created, exit sql terminal by typing `\q` or `exit`
 
@@ -79,6 +79,7 @@ A web-based class schedule and faculty loading system for the Computer Science D
     DB_NAME="class_sched_sys"
 
     API_PORT=3000
+    API_DOMAIN="localhost"
     API_KEY=“RANDOM_32LENGTH_STRING1”
 
     SMTP_PORT=587
