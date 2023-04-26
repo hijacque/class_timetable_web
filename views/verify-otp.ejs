@@ -7,30 +7,31 @@
 </head>
 
 <body>
-    <div class="modal fade" id="alert-modal" tabindex="-1" aria-labelledby="alert-title" aria-hidden="true"
-    data-mdb-backdrop="static" data-mdb-keyboard="false">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="alert-title">title</h5>
-                </div>
-                <div class="modal-body" id="alert-body">message here...</div>
-                <div class="modal-footer text-center">
-                    <button type="button" class="btn btn-secondary" data-mdb-dismiss="modal">OK</button>
+    <% if (serverAlert) { %>
+        <div class="modal fade" id="alert-modal" tabindex="-1" aria-labelledby="alert-title" aria-hidden="true"
+        data-mdb-backdrop="static" data-mdb-keyboard="false">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="alert-title">title</h5>
+                    </div>
+                    <div class="modal-body" id="alert-body">message here...</div>
+                    <div class="modal-footer text-center">
+                        <button type="button" class="btn btn-secondary" data-mdb-dismiss="modal">OK</button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    <% } %>
     <h1>Enter OTP we sent to your e-mail</h1>
     <input type="text" id="pin" maxlength="6" class="text-uppercase">
     <button type="button" class="btn btn-primary" id="submit">Confirm</button>
     <!-- MDB -->
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.0.0/mdb.min.js"></script>
     <script>
-        const eAlert = "#alert-modal";
-        const alertModal = new mdb.Modal(eAlert);
         $("#submit").click((event) => {
-            $.post("/help/<%- subhelp %>", { pin: $("#pin").val() }, (data) => {
+            $.post("/help/<%- subHelp %>", { pin: $("#pin").val() }, (data) => {
+                console.log(data);
                 if (data.redirect) {
                     window.location.href = "http://localhost:3000/" + data.redirect;
                 }
@@ -57,6 +58,8 @@
             });
         });
         
+        const eAlert = "#alert-modal";
+        const alertModal = new mdb.Modal(eAlert);
     </script>
 </body>
 

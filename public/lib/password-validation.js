@@ -58,6 +58,7 @@ function initValidatePassword(alertModal) {
             $("#submit").css("cursor", "wait");
             $("input").css("cursor", "wait");
             $("input").prop("readonly", true);
+            $("input[type=radio]").prop("disabled", true);
         }
     });
 }

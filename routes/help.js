@@ -29,9 +29,9 @@ router.get("/account/:helpID?", async (req, res) => {
 
 router.route("/open-account/admin")
     .get(getOTP, (req, res) => {
-        if (req.cookies.serverMessage) {
+        if (req.cookies.serverMessage || req.validHelpID) {
             res.clearCookie("serverMessage");
-            res.render("verify-otp", { serverAlert: req.cookies.serverMessage, subHelp: "open-account" });
+            res.render("verify-otp", { serverAlert: req.cookies.serverMessage, subHelp: "open-account/admin" });
         } else {
             res.redirect("/help");
         }
@@ -52,7 +52,7 @@ router.route("/open-account/chair")
     .get((req, res) => {
         if (req.cookies.serverMessage) {
             res.clearCookie("serverMessage");
-            res.render("verify-otp", { serverAlert: req.cookies.serverMessage, subHelp: "open-account" });
+            res.render("verify-otp", { serverAlert: req.cookies.serverMessage, subHelp: "open-account/admin" });
         } else {
             res.redirect("/help")
         }

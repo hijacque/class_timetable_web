@@ -34,7 +34,7 @@ router.route("/signup")
         res.render("signup", { serverAlert: req.cookies.serverMessage });
     })
     .post(createAdmin, sendOTP, (req, res) => {
-        if (req.account) {
+        if (req.accountID) {
             res.cookie("serverMessage", {
                 title: "OTP sent to " + req.body.email,
                 body: "Verify your account via the link we sent.",
