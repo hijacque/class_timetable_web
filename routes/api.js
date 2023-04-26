@@ -9,23 +9,24 @@ router.use(verifySession);
 // for admin control
 router.route("/departments/:collegeID?")
     .get(async (req, res) => {
-        if (req.account) {
-            const DB = req.app.locals.database;
-            let query =
-                `SELECT d.id, d.name AS department, CASE WHEN d.chair_id IS NULL THEN "NULL" ELSE ` +
-                `CONCAT(f.last_name, ", ", f.first_name, " ", f.middle_name, " (", f.faculty_id, ")") END AS chairperson, ` +
-                `d.chair_id, "Logged in" as activity FROM Schools s INNER JOIN Colleges col ON ` +
-                `s.id = col.school_id INNER JOIN Departments d ON col.id = d.college_id ` +
-                `LEFT JOIN Faculty f ON d.chair_id = f.id WHERE s.id = "${req.account.id}"`;
-            if (req.params.collegeID) {
-                query += ` AND col.id = "${req.params.collegeID}"`;
-            }
-            query += " ORDER BY d.name";
-
-            res.status(200).json({ departments: await DB.executeQuery(query) });
-        } else {
-            res.status(401).end();
+        if (!req.account) {
+            return res.status(401).end();
         }
+
+        const DB = req.app.locals.database;
+        let query =
+            `SELECT d.id, d.name AS department, CASE WHEN d.chair_id IS NULL THEN "NULL" ELSE ` +
+            `CONCAT(f.last_name, ", ", f.first_name, " ", f.middle_name, " (", f.faculty_id, ")") END AS chairperson, ` +
+            `d.chair_id, "Logged in" as activity FROM Schools s INNER JOIN Colleges col ON ` +
+            `s.id = col.school_id INNER JOIN Departments d ON col.id = d.college_id ` +
+            `LEFT JOIN Faculty f ON d.chair_id = f.id WHERE s.id = "${req.account.id}"`;
+        if (req.params.collegeID) {
+            query += ` AND col.id = "${req.params.collegeID}"`;
+        }
+        query += " ORDER BY d.name";
+
+        res.status(200).json({ departments: await DB.executeQuery(query) });
+
     }).post(async (req, res) => {
         if (req.account && req.params.collegeID) {
             const DB = req.app.locals.database;
@@ -132,6 +133,7 @@ router.route("/faculty/:deptID?")
             } else {
                 query = `SELECT f.faculty_id, f.status, f.first_name, f.middle_name, f.last_name, `;
             }
+            
             query += `u.email, "My Schedule" AS schedule FROM Colleges col INNER JOIN Departments d ` +
                 `ON col.id = d.college_id INNER JOIN Faculty f ON d.id = f.dept_id INNER JOIN Users u ` +
                 `ON f.id = u.id WHERE (col.school_id = "${req.account.id}" OR d.chair_id = "${req.account.id}")`;
@@ -571,7 +573,7 @@ router.route("/schedules/:termID")
                 `SET p.assigned_load = (p.assigned_load + s.units) WHERE sc.term_id = '${termID}' AND ` +
                 `sc.subj_id = '${subject}' AND sc.block_id = '${block}' AND p.faculty_id = '${facultyID}' LIMIT 1;`;
         };
-        
+
         await DB.executeQuery(query);
         return res.status(200).json({
             message: {

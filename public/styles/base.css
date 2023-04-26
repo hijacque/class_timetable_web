@@ -81,10 +81,11 @@ input[type=number]::-webkit-outer-spin-button {
     -webkit-appearance: none;
 }
 
+th { font-weight: bold; }
+
 th[table-cts-column] {
     vertical-align: middle;
     cursor: pointer;
-    font-weight: bold;
 }
 
 td { vertical-align: middle; }
