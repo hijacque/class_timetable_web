@@ -6,7 +6,8 @@
     <link rel="stylesheet" href="/styles/faculty-root.css">
 </head>
 <body class="dashboard">
-    <div class="modal fade" id="alert-modal" tabindex="-1" aria-labelledby="alert-title" aria-hidden="true">
+    <div class="modal fade" id="alert-modal" tabindex="-1" aria-labelledby="alert-title" aria-hidden="true"
+        data-mdb-backdrop="static" data-mdb-keyboard="false">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -14,7 +15,9 @@
                 </div>
                 <div class="modal-body" id="alert-body"><%= (serverAlert) ? serverAlert.body : "" %></div>
                 <div class="modal-footer text-center">
-                    <button type="button" class="btn btn-secondary" data-mdb-dismiss="modal">OK</button>
+                    <button type="button" class="btn btn-secondary" data-mdb-dismiss="modal" id="confirm-alert">
+                        OK
+                    </button>
                 </div>
             </div>
         </div>
@@ -61,6 +64,11 @@
                 window.location.replace("/faculty/" + task);
             }
         });
+
+        $(`div#${openSection}-view>div.side-panel`).hover(
+            (event) => $(event.currentTarget).show(),
+            (event) => $(event.currentTarget).hide()
+        );
     </script>
 </body>
 </html>

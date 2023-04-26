@@ -51,6 +51,7 @@
                 <tr>
                     <th table-cts-column="faculty_id text" style="width: 130px;">ID</th>
                     <th table-cts-column="status text" style="width: 140px;">Employment Status</th>
+                    <th table-cts-column="email number">Teach<br>Load</th>
                     <th table-cts-column="last_name text">Surname</th>
                     <th table-cts-column="first_name text">First Name</th>
                     <th table-cts-column="middle_name text">Middle Name</th>
@@ -73,6 +74,7 @@
                             </ul>
                         </div>
                     </td>
+                    <td><input type="number" class="form-control add-td-input"></td>
                     <td><input type="text" class="form-control add-td-input" placeholder="Dela Cruz"></td>
                     <td><input type="text" class="form-control add-td-input" placeholder="Juan"></td>
                     <td><input type="text" class="form-control add-td-input" placeholder="Antonio"></td>
@@ -143,7 +145,9 @@
         $(facultyTable.addBtn).click(async (event) => {
             try {
                 let addedData = await $(event.currentTarget).data("newRow");
-                if (addedData) { addFaculty(openDepartment.id, addedData); }
+                if (addedData) {
+                    addFaculty(openDepartment.id, addedData); 
+                }
             } catch (error) {
                 $(`${facultyTable.body}:last-child`).remove();
                 facultyTable.data.pop();
