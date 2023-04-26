@@ -274,10 +274,10 @@ CREATE TABLE `schedules` (
 -- Table structure for table `schools`
 --
 
-DROP TABLE IF EXISTS `schools`;
+DROP TABLE IF EXISTS `Schools`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `schools` (
+CREATE TABLE `Schools` (
   `id` varchar(12) DEFAULT NULL,
   `name` varchar(120) NOT NULL,
   `total_terms_yearly` int DEFAULT NULL,
