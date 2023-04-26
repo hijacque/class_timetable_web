@@ -49,7 +49,7 @@
     <script>
         //navigation task panel stuffss
         let openSection = "<%- section %>";
-        const currentTab = $(`a.task[id=${openSection}]:not(#logout)`)
+        $(`a.task[id=${openSection}]:not(#logout)`)
         .toggleClass("btn-secondary btn-light border-end border-4 border-primary")
         .hover(
             (event) => $(`div#${event.currentTarget.id}-view>div.side-panel`).show(),

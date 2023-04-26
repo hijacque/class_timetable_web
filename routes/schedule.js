@@ -29,7 +29,6 @@ router.get('/failed/:term', (req, res) => {
 });
 
 router.get("/faculty", getFacultySched, (req, res) => {
-    // TODO: check if category param is faculty of a valid course id in the department
     res.render("schedule-root/base", {
         category: "faculty",
         term: req.term,
@@ -38,8 +37,6 @@ router.get("/faculty", getFacultySched, (req, res) => {
 });
 
 router.get("/:blockID", getBlockSched, (req, res) => {
-    console.log("Viewing block schedule...");
-    // TODO: check if category param is faculty of a valid course id in the department
     res.render("schedule-root/base", {
         category: req.params.blockID,
         term: req.term,

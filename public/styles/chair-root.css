@@ -57,7 +57,7 @@ table>tbody>tr>td:not(td.edit-action) { cursor: default; }
 #faculty-schedule>tbody>tr>td:nth-child(3),
 #faculty-schedule>tbody>tr>td:nth-child(5),
 #faculty-table>tbody>tr>td:nth-child(2),
-#faculty-table>tbody>tr>td:nth-child(7),
+#faculty-table>tbody>tr>td:nth-child(3),
 td:has(.td-input) {
     text-align: center;
 }
