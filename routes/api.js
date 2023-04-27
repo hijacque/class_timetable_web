@@ -133,7 +133,7 @@ router.route("/faculty/:deptID?")
             } else {
                 query = `SELECT f.faculty_id, f.teach_load, f.status, f.first_name, f.middle_name, f.last_name, `;
             }
-            
+
             query += `u.email, "My Schedule" AS schedule FROM Colleges col INNER JOIN Departments d ` +
                 `ON col.id = d.college_id INNER JOIN Faculty f ON d.id = f.dept_id INNER JOIN Users u ` +
                 `ON f.id = u.id WHERE (col.school_id = "${req.account.id}" OR d.chair_id = "${req.account.id}")`;
@@ -162,8 +162,8 @@ router.route("/subjects/:collegeID?")
         }
 
         const DB = req.app.locals.database;
-        let query = `SELECT sub.code, sub.title, sub.units, sub.type FROM Subjects sub INNER JOIN Colleges col ON ` +
-            `sub.college_id = col.id AND col.school_id = '${req.account.id}'`
+        let query = `SELECT sub.code, sub.title, sub.units, sub.req_hours, sub.type, sub.pref_rooms FROM Subjects sub ` +
+            `INNER JOIN Colleges col ON sub.college_id = col.id AND col.school_id = '${req.account.id}'`
         if (req.params.collegeID) {
             query += ` AND col.id = "${req.params.collegeID}"`
         }
@@ -176,19 +176,19 @@ router.route("/subjects/:collegeID?")
         }
 
         const DB = req.app.locals.database;
-        let subj = req.body;
+        let { code, title, type, units, req_hours, pref_rooms } = req.body;
 
         const subjID = crypto.randomBytes(6).toString("base64url");
-        let type = (subj.type == "LEC") ? 1 : (subj.type == "LAB") ? 2 : "NULL";
+        type = (type == "LEC") ? 1 : (type == "LAB") ? 2 : "NULL";
         await DB.executeQuery(
-            `INSERT INTO Subjects VALUES ('${subjID}', '${req.params.collegeID}', '${subj.code}', '${subj.title}', ` +
-            `${type}, ${subj.units || 0})`
+            `INSERT INTO Subjects VALUES ('${subjID}', '${req.params.collegeID}', '${code}', '${title}', ` +
+            `${type}, ${units || 0}, ${req_hours || 0}, '${pref_rooms}')`
         );
         res.status(200).json({
             message: {
                 mode: 1,
                 title: "New Subject Added",
-                body: `${subj.title} (${subj.type}) is available for the college curriculum.`
+                body: `${title} (${type}) is available for the college curriculum.`
             }
         });
     });
@@ -376,17 +376,24 @@ router.post("/curriculum/:courseID", async (req, res) => { // adding a subject i
     }
 
     const DB = req.app.locals.database;
-    const data = req.body;
+    const {code, title} = req.body;
+    const {courseID} = req.params;
     let subjID;
-    if (!data.title) {
+    if (code && title) {
         [subjID] = await DB.executeQuery(
             `SELECT id, code, CASE WHEN type IS NULL THEN title ELSE CONCAT(title, " (", type, ")") ` +
-            `END as title, units FROM Subjects WHERE code = '${data.code}' OR title ${data.title} LIMIT 1`
+            `END as title, units FROM Subjects WHERE code = '${code}' OR title LIKE '%${title}%' LIMIT 1`
+        );
+    } else if (title) {
+        [subjID] = await DB.executeQuery(
+            `SELECT s.id, s.code, CASE WHEN type IS NULL THEN title ELSE CONCAT(title, " (", type, ")") ` +
+            `END as title, units FROM Subjects s INNER JOIN Curricula cu ON s.id = cu.subj_id ` +
+            `WHERE s.title LIKE '%${title}$' AND cu.course_id != '${courseID}' LIMIT 1`
         );
     } else {
         [subjID] = await DB.executeQuery(
             `SELECT id, code, CASE WHEN type IS NULL THEN title ELSE CONCAT(title, " (", type, ")") ` +
-            `END as title, units FROM Subjects WHERE code = '${data.code}' LIMIT 1`
+            `END as title, units FROM Subjects WHERE code = '${code}' LIMIT 1`
         );
     }
 
@@ -394,23 +401,23 @@ router.post("/curriculum/:courseID", async (req, res) => { // adding a subject i
         return res.status(404).end();
     }
 
+    const {year, semester} = req.body;
     const semesterContent = await DB.executeQuery(
-        `SELECT subj_id FROM Curricula WHERE course_id = '${req.params.courseID}' AND year = ${data.year} ` +
-        `AND term = '${data.semester}'`
+        `SELECT subj_id FROM Curricula WHERE course_id = '${req.params.courseID}' AND year = ${year} ` +
+        `AND term = '${semester}'`
     );
 
     if (semesterContent <= 1) {
         await DB.executeQuery(
-            `UPDATE Curricula SET subj_id = '${subjID["id"]}' WHERE course_id = '${req.params.courseID}' ` +
-            `AND year = ${data.year} AND term = '${data.semester}' LIMIT 1`
+            `UPDATE Curricula SET subj_id = '${subjID.id}' WHERE course_id = '${req.params.courseID}' ` +
+            `AND year = ${year} AND term = '${semester}' LIMIT 1`
         );
     } else {
         await DB.executeQuery(
-            `INSERT INTO Curricula VALUES ('${req.params.courseID}', '${subjID["id"]}', ${data.year}, '${data.semester}')`
+            `INSERT INTO Curricula VALUES ('${req.params.courseID}', '${subjID.id}', ${year}, '${semester}')`
         );
     }
 
-    subjID["id"] = undefined;
     res.status(200).json({
         newSubject: subjID,
         message: {
@@ -439,37 +446,40 @@ router.post("/terms", async (req, res) => {
         return res.status(409).end();
     }
 
-    let schoolID = await DB.executeQuery(
-        `SELECT col.school_id FROM Departments d INNER JOIN Colleges col ON d.college_id = col.id ` +
+    const [{ schoolID }] = await DB.executeQuery(
+        `SELECT col.school_id AS schoolID FROM Departments d INNER JOIN Colleges col ON d.college_id = col.id ` +
         `WHERE d.chair_id = "${user.id}" LIMIT 1`
     );
-    schoolID = schoolID[0]["school_id"];
+
     const termID = crypto.randomBytes(6).toString("base64url");
-    const faculty = await DB.executeQuery(
-        `SELECT f.id FROM Faculty f INNER JOIN Departments d ON f.dept_id = d.id ` +
-        `WHERE d.chair_id = "${user.id}"`
-    );
-    const yearsPerCourse = await DB.executeQuery(
-        `SELECT DISTINCT co.id, cu.year FROM Courses co INNER JOIN Curricula cu ON co.id = cu.course_id ` +
-        `INNER JOIN Departments d ON co.dept_id = d.id WHERE d.chair_id = '${user.id}'`
+    const faculty = await DB.executeQuery(`SELECT id FROM Faculty ORDER by dept_id`);
+
+    const courses = await DB.executeQuery(
+        `SELECT DISTINCT co.id, MAX(cu.year) AS total_years FROM Courses co INNER JOIN Curricula cu ON co.id = cu.course_id ` +
+        `INNER JOIN Departments d ON co.dept_id = d.id GROUP BY co.id`
     );
 
     for (let i = 0; i < faculty.length; i++) {
         const prefID = crypto.randomBytes(6).toString("base64url");
-        faculty[i] = `('${prefID}', '${termID}', '${faculty[i]["id"]}')`;
+        faculty[i] = `('${prefID}', '${termID}', '${faculty[i].id}')`;
     }
 
-    for (let i = 0; i < yearsPerCourse.length; i++) {
-        const blockID = crypto.randomBytes(6).toString("base64url");
-        yearsPerCourse[i] = `('${blockID}', '${yearsPerCourse[i]["id"]}', '${termID}', ${yearsPerCourse[i]["year"]})`;
+    const blocks = [];
+    for (const course of courses) {
+        const { id, total_years } = course;
+        for (let i = 1; i <= total_years; i++) {
+            const blockID = crypto.randomBytes(6).toString("base64url");
+            blocks.push(`('${blockID}', '${id}', '${termID}', ${i})`);
+        }
     }
 
+    console.log(faculty);
     let query = `INSERT INTO Terms VALUES ('${termID}', '${schoolID}', ${year}, '${term}', 1, current_timestamp); ` +
-        `INSERT INTO Blocks (id, course_id, term_id, year) VALUES ${yearsPerCourse.join(",")}; ` +
+        `INSERT INTO Blocks (id, course_id, term_id, year) VALUES ${blocks.join(",")}; ` +
         `INSERT INTO Preferences (id, term_id, faculty_id) VALUES ${faculty.join(",")};` +
         `INSERT INTO Schedules (term_id, subj_id, block_id) ` +
         `SELECT b.term_id, cu.subj_id, b.id FROM Blocks b INNER JOIN Curricula cu ON b.course_id = cu.course_id ` +
-        ` AND b.year = cu.year WHERE b.term_id = '${termID}' AND cu.term = '${term}' AND cu.subj_id IS NOT NULL ` +
+        `AND b.year = cu.year WHERE b.term_id = '${termID}' AND cu.term = '${term}' AND cu.subj_id IS NOT NULL ` +
         `ORDER BY b.year, b.block_no`
 
     await DB.executeQuery(query);
@@ -639,10 +649,10 @@ router.post("/preferences/:prefID", async (req, res) => {
     const DB = req.app.locals.database;
     let { subjects, schedules } = req.body;
     schedules = schedules.filter((val) => {
-        const {start, end} = val;
+        const { start, end } = val;
         return start != "" && end != "" && parseInt(start) < parseInt(end);
     });
-    
+
     if (schedules.length > 0) {
         await DB.executeQuery(
             `INSERT INTO PrefSchedules VALUES ` +
