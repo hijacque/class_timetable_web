@@ -23,8 +23,8 @@ router.route("/login")
         }
         res.cookie("serverMessage", {
             mode: 0,
-            title: "Invalid Credentials",
-            body: "You entered the wrong e-mail/password."
+            title: res.locals.error_title,
+            body: res.locals.error_body
         }).status(200).json({ root: "/login" });
     });
 
