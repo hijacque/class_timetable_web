@@ -32,9 +32,9 @@ CREATE TABLE `blocks` (
   PRIMARY KEY (`id`),
   KEY `term_id` (`term_id`),
   KEY `course_id` (`course_id`),
-  CONSTRAINT `blocks_ibfk_2` FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`),
-  CONSTRAINT `blocks_ibfk_3` FOREIGN KEY (`term_id`) REFERENCES `terms` (`id`),
-  CONSTRAINT `blocks_ibfk_4` FOREIGN KEY (`course_id`) REFERENCES `Courses` (`id`)
+  CONSTRAINT `blocks_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`),
+  CONSTRAINT `blocks_ibfk_2` FOREIGN KEY (`term_id`) REFERENCES `terms` (`id`),
+  CONSTRAINT `blocks_ibfk_3` FOREIGN KEY (`course_id`) REFERENCES `Courses` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -188,17 +188,17 @@ CREATE TABLE `preferences` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `PrefSchedules`
+-- Table structure for table `prefSchedules`
 --
 
-DROP TABLE IF EXISTS `PrefSchedules`;
+DROP TABLE IF EXISTS `prefSchedules`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `PrefSchedules` (
+CREATE TABLE `prefSchedules` (
   `pref_id` varchar(8) DEFAULT NULL,
-  `day` enum('mon','tue','wed','thu','fri','sat','sun') DEFAULT NULL,
-  `start` time DEFAULT NULL,
-  `end` time DEFAULT NULL,
+  `day` int unsigned DEFAULT NULL,
+  `start` int unsigned DEFAULT NULL,
+  `end` int unsigned DEFAULT NULL,
   KEY `pref_id` (`pref_id`),
   CONSTRAINT `prefschedules_ibfk_1` FOREIGN KEY (`pref_id`) REFERENCES `preferences` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -321,6 +321,7 @@ CREATE TABLE `terms` (
   `year` int unsigned NOT NULL,
   `term` char(1) NOT NULL,
   `status` enum('open','complete','closed') DEFAULT NULL,
+  `created_on` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `school_id` (`school_id`),
   CONSTRAINT `terms_ibfk_1` FOREIGN KEY (`school_id`) REFERENCES `Schools` (`id`)
@@ -354,4 +355,4 @@ CREATE TABLE `Users` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2023-04-24 19:15:00
+-- Dump completed on 2023-04-27 20:16:47
