@@ -7,39 +7,44 @@
                 <a type="button"><i class="fas fa-search ms-2"></i></a>
             </div>
         </div>
-        <!-- <hr class="mb-0"> -->
+        <hr>
         <div class="panel-body">
-            <% for (const college of data.colleges) { %>
-                <a type="button" class="collapse-btn" title="<%= college.name %>" data-mdb-toggle="collapse"
-                    data-mdb-target="#<%= college.id %>-departments" aria-expanded="false">
-                    <i class="fas fa-caret-down me-2"></i><text>
-                        <%= college.name %>
-                    </text>
-                </a>
-                <% if (college.departments.length> 0) { %>
-                    <div class="collapse" id="<%= college.id %>-departments">
-                        <div>
-                            <ul class="list-group panel-menu">
-                                <% for (const department of college.departments) { %>
-                                    <button type="button" class="list-group-item list-group-item-action menu-item"
-                                        title="<%= department.name %>" id="<%= department.id %>">
-                                        <p class="text-truncate m-0">
-                                            <%= department.name %>
-                                        </p>
-                                    </button>
-                                    <% } %>
-                            </ul>
+            <% if (data.colleges.length > 0) { %>
+                <% for (const college of data.colleges) { %>
+                    <a type="button" class="collapse-btn" title="<%= college.name %>" data-mdb-toggle="collapse"
+                        data-mdb-target="#<%= college.id %>-departments" aria-expanded="false">
+                        <i class="fas fa-caret-down me-2"></i><text>
+                            <%= college.name %>
+                        </text>
+                    </a>
+                    <% if (college.departments.length> 0) { %>
+                        <div class="collapse" id="<%= college.id %>-departments">
+                            <div>
+                                <ul class="list-group panel-menu">
+                                    <% for (const department of college.departments) { %>
+                                        <button type="button" class="list-group-item list-group-item-action menu-item"
+                                            title="<%= department.name %>" id="<%= department.id %>">
+                                            <p class="text-truncate m-0">
+                                                <%= department.name %>
+                                            </p>
+                                        </button>
+                                        <% } %>
+                                </ul>
+                            </div>
                         </div>
-                    </div>
                     <% } else { %>
                         <div class="collapse" id="<%= college.id %>-departments">
                             <p>No Departments</p>
                         </div>
-                        <% } %>
-                            <% } %>
+                    <% } %>
+                <% } %>
+            <% } else { %>
+                <p class="text-muted text-center">No Departments</p>
+            <% } %>
         </div>
     </div>
     <div class="shadow-3 bg-white px-5 pt-4">
+        <% if (data.colleges.length > 0) { %>
         <h2 style="color: #8673b4;" id="table-title"></h2>
         <br>
         <button class="btn btn-primary btn-rounded" data-cts-toggle="table" data-cts-target="#faculty-table">
@@ -83,6 +88,7 @@
                 </tr>
             </tfoot>
         </table>
+        <% } %>
     </div>
 </div>
 <script src="/lib/responsive-table.js"></script>
