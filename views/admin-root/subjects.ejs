@@ -35,8 +35,10 @@
                 <tr>
                     <th table-cts-column="code text" style="width: 180px;">Code</th>
                     <th table-cts-column="title text">Title</th>
-                    <th table-cts-column="type text" style="width: 110px;">Type</th>
-                    <th table-cts-column="units text" style="width: 90px;">Units</th>
+                    <th table-cts-column="type text" style="width: 80px;">Type</th>
+                    <th table-cts-column="units text" style="width: 80px;">Units</th>
+                    <th table-cts-column="req_hours text" style="width: 100px;">Required<br>Hours</th>
+                    <th table-cts-column="pref_rooms text" style="width: 250px;">Specialized Rooms</th>
                     <td table-cts-column="edit">Action</td>
                 </tr>
             </thead>
@@ -62,6 +64,8 @@
                         </div>
                     </td>
                     <td><input type="number" class="form-control add-td-input"></td>
+                    <td><input type="number" class="form-control add-td-input reuse"></td>
+                    <td><input type="text" class="form-control add-td-input optional"></td>
                 </tr>
             </tfoot>
         </table>

@@ -108,16 +108,16 @@
             const newSemTable = new EditableTable(`#${term.year}-${term.term}-term`);
             newSemTable.initData(term.subjects, false, () => newSemTable.addBtn.click(async (event) => {
                 const lastRow = $(`${newSemTable.body}>tr:last-child`);
+                const newRow = await $(event.currentTarget).data("newRow");
+                newRow.year = term.year;
+                newRow.semester = term.term;
+                    
                 try {
-                    const newRow = await $(event.currentTarget).data("newRow");
-                    newRow.year = term.year;
-                    newRow.semester = term.term;
-
                     const newSubject = await addSubject(openCourse.id, newRow);
-                    const columns = lastRow.children().get();
-                    columns[0].textContent = newSubject.code;
-                    columns[1].textContent = newSubject.title;
-                    columns[2].textContent = newSubject.units;
+                    const [code, title, units] = lastRow.children().get();
+                    code.textContent = newSubject.code;
+                    title.textContent = newSubject.title;
+                    units.textContent = newSubject.units;
                 } catch (error) {
                     lastRow.remove();
                     console.log(error);
