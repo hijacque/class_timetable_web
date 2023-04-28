@@ -9,6 +9,7 @@
         </div>
         <hr>
         <div class="overflow-scroll mx-3">
+            <% if (data.colleges.length > 0) { %>
             <ul class="list-group panel-menu">
                 <% for (const college of data.colleges) { %>
                     <button type="button" class="list-group-item list-group-item-action menu-item"
@@ -19,9 +20,13 @@
                     </button>
                     <% } %>
             </ul>
+            <% } else { %>
+                <p class="text-muted text-center">No Colleges</p>
+            <% } %>
         </div>
     </div>
     <div class="shadow-3 bg-white px-5 pt-4">
+        <% if (data.colleges.length > 0) { %>
         <h2 style="color: #8673b4;" class="table-title">
             <%= data.colleges[0].name %>
         </h2>
@@ -69,6 +74,7 @@
                 </tr>
             </tfoot>
         </table>
+        <% } %>
     </div>
 </div>
 <script src="/lib/responsive-table.js"></script>
