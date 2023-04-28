@@ -1,5 +1,5 @@
 <% const {prevFaculty, nextFaculty, current} = schedule %>
-<% const {id, name, faculty_id, status, pref_status, teach_load, classes} = current %>
+<% const {id, name} = current %>
 <div class="modal fade" id="add-class" data-mdb-backdrop="static" data-mdb-keyboard="false"
     tabindex="-1" aria-labelledby="add-class-label" aria-hidden="true">
     <div class="modal-dialog">
@@ -171,7 +171,7 @@
                 <% } %>
             </ul>
         </nav>
-        
+        <% const {faculty_id, status, pref_status, pref_subjs, teach_load, classes} = current %>
         <div class="about">
             <div class="d-flex">
                 <h4 class="page-title" id="<%= id %>"><%= name %></h4>
