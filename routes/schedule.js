@@ -36,9 +36,9 @@ router.get("/faculty", getFacultySched, (req, res) => {
     });
 });
 
-router.get("/:blockID", getBlockSched, (req, res) => {
+router.get("/:courseID", getBlockSched, (req, res) => {
     res.render("schedule-root/base", {
-        category: req.params.blockID,
+        category: req.params.courseID,
         term: req.term,
         schedule: req.data
     });
