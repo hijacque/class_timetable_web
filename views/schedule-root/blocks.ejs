@@ -1,3 +1,4 @@
+<% const {classes, leftClasses, current, courseID, prevBlock, nextBlock, faculty} = data %>
 <div class="modal fade" id="add-class" data-mdb-backdrop="static" data-mdb-keyboard="false"
     tabindex="-1" aria-labelledby="add-class-label" aria-hidden="true">
     <div class="modal-dialog">
@@ -10,13 +11,24 @@
                 <label for="class-subject">Subject:</label><span id="class-subject"></span><br>
                 <label for="class-hours">Assigned hours:</label>
                 <span id="class-hours"></span><br>
-                <div class="input-group mb-2">
-                    <label for="class-faculty">Faculty:</label>
+                <div class="d-flex align-items-center my-3" >
+                    <label for="class-faculty" class="fw-bold me-2">Faculty:</label>
                     <div class="dropdown">
-                        <a class="text-primary dropdown-toggle input-group-text rounded-end-0" type="button"
-                            data-mdb-toggle="dropdown" aria-expanded="false" id="class-facutly">Pick Day</a>
-                        <ul class="dropdown-menu" aria-labelledby="class-day">
-                            <!-- faculty items { last_name, first_name middle_name (assigned_load / teach_load) } -->
+                        <span id="class-faculty"></span>
+                        <a class="btn btn-secondary dropdown-toggle" type="button"
+                            data-mdb-toggle="dropdown" aria-expanded="false" id="class-faculty">Pick Professor</a>
+                        <ul class="dropdown-menu" aria-labelledby="class-faculty">
+                            <% for (const prof of faculty) { %>
+                                <li><a class="dropdown-item" role="button" id="<%= prof.id %>">
+                                    <% if (prof.teach_load == "FULL") { %>
+                                        <span class="text-warning ms-2"><%= prof.name %></span>
+                                        ( <%= prof.teach_load %> )
+                                    <% } else { %>
+                                        <span class="ms-2"><%= prof.name %></span>
+                                        ( <%= prof.teach_load %> )
+                                    <% } %>
+                                </a></li>
+                            <% } %>
                             <li><hr class="dropdown-divider m-0"></li>
                             <li><a class="dropdown-item text-danger" role="button">Cancel</a></li>
                         </ul>
@@ -69,37 +81,44 @@
 </div>
 <div class="main-view">
     <div class="side-panel">
-        <div class="panel-header mx-4 mb-3">
+        <div class="panel-header mx-4">
             <h5>Unassigned Classes</h5>
         </div>
-        <div class="panel-body">
-            <% if (classes.length > 0) { %>
-            <ul class="list-group panel-menu" id="<%= block_id %>">
-                <% for (const {subj_id, subject, req_hours, assigned_time} of classes) { %>
-                    <button type="button" title="<%= subject %>" itemid="<%= subj_id %>"
+        <div class="panel-body px-3">
+            <hr>
+            <% if (leftClasses.length > 0) { %>
+                <ul class="list-group panel-menu">
+                <% for (const {subj_id, subject, req_hours, assigned_time, faculty_id, faculty_name} of leftClasses) { %>
+                    <button type="button" title="<%= subject %>" 
                         class="list-group-item list-group-item-action menu-item"
+                        <% if (faculty_id) { %>
+                            itemid="<%= faculty_id %>"
+                        <% } %>
                         aria-valuemax="<%= req_hours || 0 %>"
                         aria-valuenow="<%= assigned_time || 0 %>">
-                        <p class="text-truncate m-0"><%= subject %></p>
+                        <p class="text-truncate m-0">
+                            <%= subject %><br>
+                            <% if (faculty_id) { %>
+                                <small class="text-muted prof-name">Professor: <%= faculty_name %></small>
+                            <% } %>
+                        </p>
                     </button>
                 <% } %>
-            </ul>
+                </ul>
             <% } else { %>
-                <hr>
                 <p class="text-muted text-center">No more classes</p>
             <% } %>
         </div>
     </div>
     <div>
-        <nav aria-label="Schedule Navigation for Faculty">
-            <h6>{ Course Title }</h6>
+        <nav aria-label="Schedule Navigation for Blocks">   
             <ul class="pagination" id="schedule-nav">
                 <% if (prevBlock) { %>
-                    <% const {block_id, ordinal_year, block} = prevBlock %>
+                    <% const {year, ordinal_year, block_no} = prevBlock %>
                     <li class="page-item">
-                        <a href="/schedule/block?term=<%= term.code %>&id=<%= block_id %>" id="<%= block_id %>" 
+                        <a href="/schedule/<%= courseID %>?term=<%= term.code %>&year=<%= year %>&block=<%= block_no %>"
                             class="page-link me-2" type="button" ><i class="fas fa-chevron-left"></i></a>
-                        <p class="prev page-label"><%= ordinal_year %> year, Block <%= block %></p>
+                        <p class="prev page-label"><%- ordinal_year %> year, Block <%= block_no %></p>
                     </li>
                 <% } else { %>
                     <li class="page-item disabled">
@@ -107,12 +126,14 @@
                         <p class="prev page-label"></p>
                     </li>
                 <% } %>
-
+                    <li class="page-item"><h4 class="text-center mt-2" style="color:#b9aadc">
+                        <%= current.course %>
+                    </h4></li>
                 <% if (nextBlock) { %>
-                    <% const {block_id, ordinal_year, block} = nextBlock %>
-                    <li class="justify-content-end page-item" id="<%= block_id %>">
-                        <p class="next page-label"><%= ordinal_year %> year, Block <%= block %></p>
-                        <a href="/schedule/block?term=<%= term.code %>&id=<%= block_id %>" 
+                    <% const {year, ordinal_year, block_no} = nextBlock %>
+                    <li class="justify-content-end page-item">
+                        <p class="next page-label"><%- ordinal_year %> year, Block <%= block_no %></p>
+                        <a href="/schedule/<%= courseID %>?term=<%= term.code %>&year=<%= year %>&block=<%= block_no %>" 
                             class="page-link ms-2" type="button"><i class="fas fa-chevron-right"></i></a>
                     </li>
                 <% } else { %>
@@ -121,15 +142,14 @@
                         <a class="page-link ms-2" type="button"><i class="fas fa-chevron-right"></i></a>
                     </li>
                 <% } %>
-            </ul>
+            </ul>    
         </nav>
-        <div class="about">
-            <div class="d-flex">
-                <h4 class="page-title" id="<%= block.id %>"><%= ordinal_year %> year, Block <%= block %></h4>
-                <button type="button" class="ms-4 btn btn-secondary btn-floating" title="Export schedules">
-                    <i class="fas fa-cloud-arrow-down fa-lg"></i>
-                </button>
-            </div>
+        <% const {id, ordinal_year, block_no} = current %>
+        <div class="about d-flex mt-4">
+            <h4 class="page-title" id="<%= id %>"><%- ordinal_year %> year, Block <%= block_no %></h4>
+            <button type="button" class="ms-4 btn btn-secondary btn-floating" title="Export schedules">
+                <i class="fas fa-cloud-arrow-down fa-lg"></i>
+            </button>
         </div>
         <div class="scheduler">
             <div></div>
@@ -391,14 +411,14 @@
                     <% for (const schedule of classes) { %>
                         <div class="sched-block" data-mdb-toggle="tooltip" data-mdb-html="true"
                             <% if (schedule.room) { %>
-                            title="<b><%= schedule.subject %></b><br><small><%= schedule.faculty_name %><br><i><%= schedule.mode %> @ <%= schedule.room %></i></small>"
+                            title="<b><%= schedule.subject %></b><br><small>Prof. <%= schedule.faculty_name %><br><i><%= schedule.mode %> @ <%= schedule.room %></i></small>"
                             <% } else { %>
-                            title="<b><%= schedule.subject %></b><br><small><%= schedule.faculty_name %><br><i><%= schedule.mode %></i></small>"
+                            title="<b><%= schedule.subject %></b><br><small>Prof. <%= schedule.faculty_name %><br><i><%= schedule.mode %></i></small>"
                             <% } %>
                             style="grid-column: <%= schedule.day %> / span 1; grid-row: <%= schedule.start %> / <%= schedule.end %>;">
                             <h6 class="text-break"><%= schedule.subject %></h6>
                             <p class="text-truncate"><small>
-                                <%= schedule.faculty_name %><br>
+                                Prof. <%= schedule.faculty_name %><br>
                                 <% if (schedule.room) { %>
                                     <i><%= schedule.mode %> @ <%= schedule.room %></i>
                                 <% } else { %>
@@ -414,3 +434,113 @@
 </div>
 
 <script src="/lib/display-dropdown.js"></script>
+<script>
+    const startHeightSched = <%- JSON.stringify(Math.min(...classes.map(c => c.start) )) %>;
+    
+    if (startHeightSched > 9) {
+        $(document).ready(() => setTimeout(() => {
+            $(".main-view>div:last-child").stop().animate({scrollTop: startHeightSched * 43 + 235}, 1000, 'swing');
+        }, 300));
+    }
+    
+    const addClass = (blockID, schedule) => new Promise((resolve, reject) => {
+        $.post("/api/schedules/<%= term.id %>",
+            { faculty: facultyID, schedule: schedule},
+            () => location.reload(),
+            "json"
+        ).fail((error) => {
+            console.log(error);
+            reject(error);
+        });
+    });
+
+    displayDropMenu($("#class-day"), "Pick Day");
+    displayDropMenu($("#class-mode"), "Pick Mode");
+    displayDropMenu($("a#class-faculty"), "Pick Professor");
+
+    $(".menu-item").click((event) => {
+        const newClass = $(event.currentTarget);
+        $("#class-subject").text(newClass.attr("title")).attr("aria-valuenow", newClass.attr("id"));
+        $("#class-hours").text(`${newClass.attr("aria-valuenow")} / ${newClass.attr("aria-valuemax")}`);
+        
+        const facultyID = newClass.attr("itemid");
+        if (facultyID && facultyID != "") {
+            const facultyName = newClass.find(".prof-name").text().slice(11);
+            $("span#class-faculty").text(facultyName).attr("itemid", facultyID);
+            $("a#class-faculty").hide();
+        } else {
+            $("span#class-faculty").empty();
+            $("a#class-faculty").show();
+        }
+        newClassForm.show();
+    });
+
+    $("[aria-labelledby='class-day'] > li > a.dropdown-item").click((event) => {
+        const dayIndex = event.currentTarget.getAttribute("data-cts-enum");
+        if (!dayIndex) return $("#class-day").attr("aria-valuenow", null);
+
+        $("#class-day").attr("aria-valuenow", dayIndex);
+        $("#class-start").focus();
+    });
+
+    $("[aria-labelledby='class-mode'] > li > a.dropdown-item").click((event) => {
+        const modeIndex = event.currentTarget.getAttribute("data-cts-enum");
+        if (!modeIndex) return $("#class-room").attr("aria-valuenow", null);
+
+        $("#class-mode").attr("aria-valuenow", modeIndex);
+        if (modeIndex == 1) {
+            $("#class-room").prop("disabled", false).focus();
+        } else if (modeIndex <= 3) {
+            $("#class-room").prop("disabled", true);
+        }
+    })
+
+    $("#confirm-new-class").click(async (event) => {
+        const day = $("#class-day");
+        const start = $("#class-start");
+        const end = $("#class-end");
+        const reqMinutes = parseFloat($("#class-hours").text().slice(-1)) * 60;
+        if (day.text() == "Pick Day" || !start.val() || !end.val()) {
+            return console.log("Missing schedule input.");
+        } else if (start.val() > end.val()) {
+            return console.log("Start time must be earlier than end time");
+        }
+        let startTime = roundMinutes(start.val(), 30);
+        if (startTime < 7 * 60) {
+            return console.log("Class must start on or later than 7AM");
+        }
+        
+        let endTime = roundMinutes(end.val(), 30);
+
+        if (endTime > 22 * 60) {
+            return console.log("Class must end on or before 10PM");
+        } else if (end - start > reqMinutes) {
+            console.log("Assigned time exceeds required hours.");
+            endTime = Math.trunc(startTime + reqMinutes);
+        }
+        console.log(day.attr("aria-valuenow"), startTime, endTime);
+        try {
+            await addClass($(".page-title").attr("id"), {
+                subject: $("#class-subject").attr("aria-valuenow"),
+                mode: $("#class-mode").attr("aria-valuenow") || 1,
+                room: $("#class-room").val().toLowerCase(),
+                block: $("#class-block").attr("aria-valuenow"),
+                day: day.attr("aria-valuenow"),
+                start: startTime,
+                end: endTime,
+                partial: ($("#class-hours").text().split(" ")[0] != "0")
+            });
+        } catch (error) {
+            console.log(error);
+        }
+    });
+
+    function roundMinutes(time, nearestMinutes = 1) {
+        let [hours, mins] = time.split(":");
+        let toMins = parseInt(hours) * 60 + parseInt(mins);
+        const rounded = Math.round(toMins / nearestMinutes) * nearestMinutes;
+        const finalMins = rounded % 60;
+        const finalHours = (rounded - finalMins);
+        return finalHours + finalMins;
+    }
+</script>
