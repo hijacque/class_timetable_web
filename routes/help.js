@@ -29,8 +29,7 @@ router.get("/account/:helpID?", async (req, res) => {
 
 router.route("/open-account/admin")
     .get(getOTP, (req, res) => {
-        if (req.cookies.serverMessage || req.validHelpID) {
-            res.clearCookie("serverMessage");
+        if (req.validHelpID) {
             res.render("verify-otp", { serverAlert: req.cookies.serverMessage, subHelp: "open-account/admin" });
         } else {
             res.redirect("/help");
@@ -72,8 +71,7 @@ router.route("/open-account/chair")
 router.post("/resend-OTP", sendOTP, (req, res) => {
     if (req.body.resend) {
         const email = req.body.email || req.cookies.help.email;
-        console.log(email);
-        res.clearCookie("help");
+        res.clearCookie("help"); // remove old helpID
         res.cookie("serverMessage", {
             title: "New OTP sent to " + email,
             body: "Verify your account via the link we sent.",
