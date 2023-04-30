@@ -1,13 +1,21 @@
 div.card {
     height: 100%;
-    width:50%;
+    width: 50%;
     margin: 0 auto;
 }
 
+.dropdown-toggle:after {
+    display: none;
+}
+
 @media (max-width: 920px) {
-    div.card { width: 80%; }
+    div.card {
+        width: 80%;
+    }
 }
 
 @media (max-width: 430px) {
-    div.card { width: 100%; }
+    div.card {
+        width: 100%;
+    }
 }

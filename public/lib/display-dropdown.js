@@ -5,7 +5,7 @@ function displayDropMenu(dropMenuBtn, origLabel) {
     dropItems.click((event) => {
         const value = event.currentTarget.textContent;
         if (value.toLowerCase() == "cancel") {
-            dropMenuBtn.text(origLabel).val(null);
+            dropMenuBtn.html(origLabel).val(null);
         } else {
             dropMenuBtn.val(value).text(value);
         }
