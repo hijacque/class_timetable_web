@@ -277,7 +277,7 @@ DROP TABLE IF EXISTS `Schools`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `Schools` (
-  `id` varchar(12) DEFAULT NULL,
+  `id` varchar(12) DEFAULT NULL UNIQUE,
   `name` varchar(120) NOT NULL,
   `total_terms_yearly` int DEFAULT NULL,
   KEY `id` (`id`),
