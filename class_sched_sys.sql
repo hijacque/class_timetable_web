@@ -157,7 +157,7 @@ DROP TABLE IF EXISTS `OTPs`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `OTPs` (
-  `email` varchar(100) DEFAULT NULL UNIQUE,
+  `email` varchar(100) DEFAULT NULL,
   `pin` varchar(64) DEFAULT NULL,
   `pin_salt` varchar(32) DEFAULT NULL,
   `expires_on` datetime DEFAULT NULL,
@@ -277,10 +277,11 @@ DROP TABLE IF EXISTS `Schools`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `Schools` (
-  `id` varchar(12) DEFAULT NULL UNIQUE,
+  `id` varchar(12) DEFAULT NULL,
   `name` varchar(120) NOT NULL,
   `total_terms_yearly` int DEFAULT NULL,
-  KEY `id` (`id`),
+  UNIQUE KEY `id` (`id`),
+  UNIQUE KEY `id_2` (`id`),
   CONSTRAINT `schools_ibfk_1` FOREIGN KEY (`id`) REFERENCES `Users` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -355,4 +356,4 @@ CREATE TABLE `Users` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2023-04-30 11:49:22
+-- Dump completed on 2023-04-30 21:51:40
