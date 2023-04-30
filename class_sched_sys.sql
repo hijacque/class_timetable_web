@@ -16,13 +16,13 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Table structure for table `blocks`
+-- Table structure for table `Blocks`
 --
 
-DROP TABLE IF EXISTS `blocks`;
+DROP TABLE IF EXISTS `Blocks`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `blocks` (
+CREATE TABLE `Blocks` (
   `id` varchar(8) NOT NULL,
   `course_id` varchar(8) DEFAULT NULL,
   `term_id` varchar(8) DEFAULT NULL,
@@ -32,9 +32,9 @@ CREATE TABLE `blocks` (
   PRIMARY KEY (`id`),
   KEY `term_id` (`term_id`),
   KEY `course_id` (`course_id`),
-  CONSTRAINT `blocks_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`),
-  CONSTRAINT `blocks_ibfk_2` FOREIGN KEY (`term_id`) REFERENCES `terms` (`id`),
-  CONSTRAINT `blocks_ibfk_3` FOREIGN KEY (`course_id`) REFERENCES `Courses` (`id`)
+  CONSTRAINT `blocks_ibfk_2` FOREIGN KEY (`course_id`) REFERENCES `Courses` (`id`),
+  CONSTRAINT `blocks_ibfk_3` FOREIGN KEY (`term_id`) REFERENCES `Terms` (`id`),
+  CONSTRAINT `blocks_ibfk_4` FOREIGN KEY (`course_id`) REFERENCES `Courses` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -90,13 +90,13 @@ CREATE TABLE `Courses` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `curricula`
+-- Table structure for table `Curricula`
 --
 
-DROP TABLE IF EXISTS `curricula`;
+DROP TABLE IF EXISTS `Curricula`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `curricula` (
+CREATE TABLE `Curricula` (
   `course_id` varchar(8) DEFAULT NULL,
   `subj_id` varchar(8) DEFAULT NULL,
   `year` int unsigned DEFAULT NULL,
@@ -127,13 +127,13 @@ CREATE TABLE `Departments` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `faculty`
+-- Table structure for table `Faculty`
 --
 
-DROP TABLE IF EXISTS `faculty`;
+DROP TABLE IF EXISTS `Faculty`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `faculty` (
+CREATE TABLE `Faculty` (
   `id` varchar(12) DEFAULT NULL,
   `dept_id` varchar(8) DEFAULT NULL,
   `faculty_id` varchar(50) NOT NULL,
@@ -157,23 +157,22 @@ DROP TABLE IF EXISTS `OTPs`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `OTPs` (
-  `account_id` varchar(12) DEFAULT NULL,
+  `email` varchar(100) DEFAULT NULL UNIQUE,
   `pin` varchar(64) DEFAULT NULL,
-  `expires_on` datetime NOT NULL,
   `pin_salt` varchar(32) DEFAULT NULL,
-  KEY `account_id` (`account_id`),
-  CONSTRAINT `otps_ibfk_1` FOREIGN KEY (`account_id`) REFERENCES `Users` (`id`)
+  `expires_on` datetime DEFAULT NULL,
+  UNIQUE KEY `email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `preferences`
+-- Table structure for table `Preferences`
 --
 
-DROP TABLE IF EXISTS `preferences`;
+DROP TABLE IF EXISTS `Preferences`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `preferences` (
+CREATE TABLE `Preferences` (
   `term_id` varchar(8) DEFAULT NULL,
   `faculty_id` varchar(12) DEFAULT NULL,
   `assigned_load` int unsigned DEFAULT '0',
@@ -188,19 +187,19 @@ CREATE TABLE `preferences` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `prefSchedules`
+-- Table structure for table `PrefSchedules`
 --
 
-DROP TABLE IF EXISTS `prefSchedules`;
+DROP TABLE IF EXISTS `PrefSchedules`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `prefSchedules` (
+CREATE TABLE `PrefSchedules` (
   `pref_id` varchar(8) DEFAULT NULL,
   `day` int unsigned DEFAULT NULL,
   `start` int unsigned DEFAULT NULL,
   `end` int unsigned DEFAULT NULL,
   KEY `pref_id` (`pref_id`),
-  CONSTRAINT `prefschedules_ibfk_1` FOREIGN KEY (`pref_id`) REFERENCES `preferences` (`id`)
+  CONSTRAINT `prefschedules_ibfk_1` FOREIGN KEY (`pref_id`) REFERENCES `Preferences` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -216,19 +215,19 @@ CREATE TABLE `PrefSubjects` (
   `subj_id` varchar(8) DEFAULT NULL,
   KEY `pref_id` (`pref_id`),
   KEY `subj_id` (`subj_id`),
-  CONSTRAINT `prefsubjects_ibfk_1` FOREIGN KEY (`pref_id`) REFERENCES `preferences` (`id`),
-  CONSTRAINT `prefsubjects_ibfk_2` FOREIGN KEY (`subj_id`) REFERENCES `subjects` (`id`)
+  CONSTRAINT `prefsubjects_ibfk_1` FOREIGN KEY (`pref_id`) REFERENCES `Preferences` (`id`),
+  CONSTRAINT `prefsubjects_ibfk_2` FOREIGN KEY (`subj_id`) REFERENCES `Subjects` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `rooms`
+-- Table structure for table `Rooms`
 --
 
-DROP TABLE IF EXISTS `rooms`;
+DROP TABLE IF EXISTS `Rooms`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `rooms` (
+CREATE TABLE `Rooms` (
   `bldg_id` varchar(8) DEFAULT NULL,
   `id` varchar(8) NOT NULL,
   `name` varchar(100) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
@@ -241,13 +240,13 @@ CREATE TABLE `rooms` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `schedules`
+-- Table structure for table `Schedules`
 --
 
-DROP TABLE IF EXISTS `schedules`;
+DROP TABLE IF EXISTS `Schedules`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `schedules` (
+CREATE TABLE `Schedules` (
   `term_id` varchar(8) DEFAULT NULL,
   `subj_id` varchar(8) DEFAULT NULL,
   `block_id` varchar(8) DEFAULT NULL,
@@ -271,29 +270,29 @@ CREATE TABLE `schedules` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `schools`
+-- Table structure for table `Schools`
 --
 
-DROP TABLE IF EXISTS `schools`;
+DROP TABLE IF EXISTS `Schools`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `schools` (
+CREATE TABLE `Schools` (
   `id` varchar(12) DEFAULT NULL,
   `name` varchar(120) NOT NULL,
   `total_terms_yearly` int DEFAULT NULL,
   KEY `id` (`id`),
-  CONSTRAINT `schools_ibfk_1` FOREIGN KEY (`id`) REFERENCES `Users` (`id`)
+  CONSTRAINT `schools_ibfk_1` FOREIGN KEY (`id`) REFERENCES `Users` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `subjects`
+-- Table structure for table `Subjects`
 --
 
-DROP TABLE IF EXISTS `subjects`;
+DROP TABLE IF EXISTS `Subjects`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `subjects` (
+CREATE TABLE `Subjects` (
   `id` varchar(8) NOT NULL,
   `college_id` varchar(8) DEFAULT NULL,
   `code` varchar(30) NOT NULL,
@@ -309,13 +308,13 @@ CREATE TABLE `subjects` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `terms`
+-- Table structure for table `Terms`
 --
 
-DROP TABLE IF EXISTS `terms`;
+DROP TABLE IF EXISTS `Terms`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `terms` (
+CREATE TABLE `Terms` (
   `id` varchar(8) NOT NULL,
   `school_id` varchar(12) DEFAULT NULL,
   `year` int unsigned NOT NULL,
@@ -342,7 +341,8 @@ CREATE TABLE `Users` (
   `password` varchar(64) DEFAULT NULL,
   `pass_salt` varchar(32) DEFAULT NULL,
   `opened_on` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -355,4 +355,4 @@ CREATE TABLE `Users` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2023-04-27 20:16:47
+-- Dump completed on 2023-04-30 11:49:22
