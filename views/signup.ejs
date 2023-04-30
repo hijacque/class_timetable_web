@@ -33,33 +33,37 @@
             <p>Please fill out the following information.</p>
             <div class="mb-4">
                 <div class="form-outline">
-                    <input type="text" name="schoolName" class="form-control" required />
+                    <input type="text" name="schoolName" class="form-control" required>
                     <label class="form-label" for="lname">Complete School Name</label>
                 </div>
             </div>
-            <label>No. of terms in a year: </label>
-            <div class="form-check form-check-inline ms-2">
-                <input class="form-check-input" type="radio" name="termType" value="2" id="semester-radio"/>
-                <label class="form-check-label" for="semester-radio">2</label>
-            </div>
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="termType" value="3" id="trimester-radio"/>
-                <label class="form-check-label" for="trimester-radio">3</label>
-            </div>
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="termType" value="4" id="quarter-radio"/>
-                <label class="form-check-label" for="quarter-radio">4</label>
+            <!-- TODO: fix number of terms input -->
+            <div class="d-flex align-items-center">
+                <label>No. of terms in a year: </label>
+                <div class="dropdown ms-3">
+                    <button class="btn btn-secondary dropdown-toggle" type="button" id="total-terms" 
+                        data-mdb-toggle="dropdown" aria-expanded="false" required>
+                        semester type <i class="fas fa-caret-down"></i>
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="total-terms">
+                        <li><a class="dropdown-item" role="button" title="bisemestral">2</a></li>
+                        <li><a class="dropdown-item" role="button" title="trimester">3</a></li>
+                        <li><a class="dropdown-item" role="button" title="quarter">4</a></li>
+                        <li><hr class="dropdown-divider m-0"></li>
+                        <li><a class="dropdown-item text-danger" role="button">Cancel</a></li>
+                    </ul>
+                </div>
             </div>
             <!-- Email input -->
             <div class="form-outline my-4">
-                <input type="email" name="email" class="form-control" required />
+                <input type="email" name="email" class="form-control" required>
                 <label class="form-label" for="email">E-mail address</label>
             </div>
 
             <!-- Password input -->
             <div class="input-group mb-4">
                 <div class="form-outline rounded">
-                    <input type="password" class="form-control" name="password" required />
+                    <input type="password" class="form-control" name="password" required>
                     <label class="form-label" for="password">Password</label>
                 </div>
                 <a type="button" class="input-group-text border-0 toggle-pass"><i class="fas fa-eye fa-lg text-white"></i></a>
@@ -83,11 +87,23 @@
 
     <!-- MDB -->
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.0.0/mdb.min.js"></script>
+    <script src="/lib/display-dropdown.js"></script>
     <script>
         const alertModal = new mdb.Modal($("#alert-modal"));
         $.getScript("lib/password-validation.js", () => {
             initValidatePassword(alertModal);
         });
+
+        $("#submit").click((event) => {
+            const totalTerms = $("#total-terms").val();
+            if (totalTerms) {
+                $(event.currentTarget).closest("form").append(
+                    `<input type='hidden' name='termType' value='${totalTerms}'>`
+                );
+            }
+        })
+
+        displayDropMenu($("#total-terms"), "semester type <i class='fas fa-caret-down'></i>");
 
         <% if (serverAlert) { %>
             let message = <%- JSON.stringify(serverAlert) %>;
