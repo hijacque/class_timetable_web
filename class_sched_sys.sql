@@ -281,7 +281,6 @@ CREATE TABLE `Schools` (
   `name` varchar(120) NOT NULL,
   `total_terms_yearly` int DEFAULT NULL,
   UNIQUE KEY `id` (`id`),
-  UNIQUE KEY `id_2` (`id`),
   CONSTRAINT `schools_ibfk_1` FOREIGN KEY (`id`) REFERENCES `Users` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
