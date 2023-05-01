@@ -54,7 +54,7 @@ router.get("/logout", (req, res) => {
 
 router.get("/admin/:task?", verifySession, getAdminData, (req, res) => {
     if (req.taskData) {
-        const tasks = ["departments", "faculty", "subjects", "rooms", "schedule", "preference"];
+        const tasks = ["departments", "faculty", "subjects", "rooms"];
         res.render("admin-root/base", {
             section: (tasks.includes(req.params.task)) ? req.params.task : "profile" || "profile",
             taskData: req.taskData,

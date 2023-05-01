@@ -30,10 +30,6 @@
             <i class="fas fa-chalkboard fa-2x mt-1"></i><br>Subjects</a>
         <a role="button" class="task btn btn-light" id="rooms">
             <i class="fas fa-door-closed fa-2x mt-1"></i><br>Rooms</a>
-        <a role="button" class="task btn btn-light" id="schedule">
-            <i class="fas fa-calendar-day fa-2x mt-1"></i><br>Schedule</a>
-        <a role="button" class="task btn btn-light" id="preference">
-            <i class="fas fa-clipboard-check fa-2x mt-1"></i><br>Preference</a>
         <a role="button" class="task btn btn-light" id="profile">
             <i class="far fa-user-circle fa-2x mt-1"></i><br>Profile</a>
         <a role="button" class="task btn btn-light" id="logout">
@@ -45,10 +41,6 @@
         <%- include('faculty', { data: taskData }) %>
     <% } else if (section == "subjects") { %>
         <%- include('subjects', { data: taskData }) %>
-    <% } else if (section == "schedule") { %>
-        <%- include('../faculty-root/schedule', {data: taskData}) %>
-    <% } else if (section == "preference") { %>
-        <%- include('../faculty-root/preference', {data: taskData}) %>
     <% } else if (section == "rooms") { %>
         <%- include('rooms', { data: taskData }) %>
     <% } else { %>
