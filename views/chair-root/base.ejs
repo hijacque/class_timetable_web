@@ -28,6 +28,10 @@
             <i class="fas fa-chalkboard-teacher fa-2x mt-1"></i><br>faculty</a>
         <a role="button" class="task btn btn-light" id="courses">
             <i class="fas fa-graduation-cap fa-2x mt-1"></i><br>courses</a>
+        <a role="button" class="task btn btn-light" id="schedule">
+            <i class="fas fa-calendar-day fa-2x mt-1"></i><br>Schedule</a>
+        <a role="button" class="task btn btn-light" id="preference">
+            <i class="fas fa-clipboard-check fa-2x mt-1"></i><br>Preference</a>
         <a role="button" class="task btn btn-light" id="profile">
             <i class="far fa-user-circle fa-2x mt-1"></i><br>profile</a>
         <a role="button" class="task btn btn-light" id="logout">
@@ -36,9 +40,13 @@
     <% if (section == "schedules") { %>
         <%- include('schedules', { data: taskData }) %>
     <% } else if (section == "faculty") { %>
-        <%- include('faculty', { data: taskData }) %> 
+        <%- include('faculty', { data: taskData }) %>
     <% } else if (section == "courses") { %>
         <%- include('courses', { data: taskData }) %>
+    <% } else if (section == "schedule") { %>
+        <%- include('../faculty-root/schedule', {data: taskData}) %>
+    <% } else if (section == "preference") { %>
+        <%- include('../faculty-root/preference', {data: taskData}) %>
     <% } else { %>
         <% section = "profile"; %>
         <%- include('profile', taskData) %>
@@ -55,7 +63,7 @@
             (event) => $(`div#${event.currentTarget.id}-view>div.side-panel`).show(),
             (event) => $(`div#${event.currentTarget.id}-view>div.side-panel`).hide()
         );
-        
+
         $(`div#${openSection}-view>div.side-panel`).hover(
             (event) => $(event.currentTarget).show(),
             (event) => $(event.currentTarget).hide()
@@ -69,7 +77,7 @@
             } else {
                 window.location.replace("/chair/" + task);
             }
-            
+
         });
     </script>
 </body>
