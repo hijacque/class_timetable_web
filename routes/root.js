@@ -67,7 +67,7 @@ router.get("/admin/:task?", verifySession, getAdminData, (req, res) => {
 
 router.get("/chair/:task?", verifySession, getChairData, (req, res) => {
     if (req.taskData) {
-        const tasks = ["schedules", "faculty", "courses"];
+        const tasks = ["schedules", "faculty", "courses", "schedule", "preference"];
         res.render("chair-root/base", {
             section: (tasks.includes(req.params.task)) ? req.params.task : "profile" || "profile",
             taskData: req.taskData,
