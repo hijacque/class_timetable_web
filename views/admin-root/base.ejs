@@ -38,7 +38,7 @@
     <% if (section == "departments") { %>
         <%- include('departments', { data: taskData }) %>
     <% } else if (section == "faculty") { %>
-        <%- include('faculty', { data: taskData }) %> 
+        <%- include('faculty', { data: taskData }) %>
     <% } else if (section == "subjects") { %>
         <%- include('subjects', { data: taskData }) %>
     <% } else if (section == "rooms") { %>
@@ -62,7 +62,7 @@
             (event) => $(`div#${event.currentTarget.id}-view>div.side-panel`).show(),
             (event) => $(`div#${event.currentTarget.id}-view>div.side-panel`).hide()
         );
-       
+
         $(`a.task:not([id=${openSection}])`).click((event) => {
             const task = event.currentTarget.id;
             if (task == "profile") {
@@ -72,7 +72,7 @@
             } else {
                 window.location.replace("/admin/" + task);
             }
-            
+
         });
 
         $(`div#${openSection}-view>div.side-panel`).show().hover(
