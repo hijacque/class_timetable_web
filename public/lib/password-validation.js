@@ -1,19 +1,17 @@
+$(".toggle-pass").click((event) => {
+    const element = event.currentTarget;
+    let icon = $(element).children();
+    $(icon).toggleClass("fa-eye fa-eye-slash");
+    let field = $(element).siblings().find("input");
+
+    if ($(field).attr("type") === "password") {
+        $(field).attr("type", "textAlert");
+    } else {
+        $(field).attr("type", "password");
+    }
+});
+
 function initValidatePassword(alertModal) {
-    const passVisib = $(".toggle-pass").get();
-    passVisib.forEach(element => {
-        $(element).click(() => {
-            let icon = $(element).children();
-            $(icon).toggleClass("fa-eye fa-eye-slash");
-            let field = $(element).siblings().find("input");
-
-            if ($(field).attr("type") === "password") {
-                $(field).attr("type", "textAlert");
-            } else {
-                $(field).attr("type", "password");
-            }
-        });
-    });
-
     let alertBody = $("#alert-body");
     let alertTitle = $("#alert-title");
     if ($(alertBody).text() != "") {
