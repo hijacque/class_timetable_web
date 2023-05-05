@@ -45,8 +45,8 @@
                 <thead class="text-center">
                     <tr>
                         <th table-cts-column="department text" style="width: 300px;">Department</th>
-                        <th table-cts-column="chairperson text" style="width: 400px;">Chairperson</th>
-                        <th table-cts-column="activity text">Recent Activity</th>
+                        <th table-cts-column="chairperson" style="width: 400px;">Chairperson</th>
+                        <th table-cts-column="activity">Recent Activity</th>
                         <td table-cts-column="edit">Action</td>
                     </tr>
                 </thead>
@@ -75,7 +75,7 @@
             }
             let deptID = departmentsTable.data[$(event.currentTarget).index()]["id"];
             let faculty = await getFaculty(deptID, ["faculty_id", "last_name", "first_name", "middle_name"]);
-            if (faculty.length < 2) {
+            if (faculty.length <= 1) {
                 return;
             }
             
@@ -102,6 +102,10 @@
                 await updateChair(deptID, $(chairColumn).text());
                 $(event.currentTarget).removeData("prevChair");
             }
+        }).on("row:cancel-change", async (event) => {
+            const chairColumn = $(event.currentTarget).children().get(1);
+            let prevChair = $(event.currentTarget).data("prevChair");
+            chairColumn.textContent = prevChair;
         });
     }
 

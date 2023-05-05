@@ -53,33 +53,36 @@ router.post("/chairperson/:deptID?", async (req, res) => {
     }
 
     const DB = req.app.locals.database;
-    let chair = req.body.chair.split("(");
-    let lastName = chair[0].split(",")[0];
-    chair = chair[1].slice(0, -1);
+    let [lastName, chairID] = req.body.chair.split("(");
+    lastName = lastName.split(",")[0];
+    chairID = chairID.slice(0, -1);
 
-    let newChairID = await DB.executeQuery(
-        `SELECT id FROM Faculty WHERE faculty_id = '${chair}' AND last_name = '${lastName}' LIMIT 1;`
+    console.log(lastName, chairID, req.params.deptID);
+    let [{ newChairID }] = await DB.executeQuery(
+        `SELECT id AS newChairID FROM Faculty WHERE faculty_id = '${chairID}' AND last_name = '${lastName}' ` +
+        `AND dept_id = '${req.params.deptID}' LIMIT 1;`
     );
-    newChairID = newChairID[0]["id"];
 
-    if (newChairID.length < 1) {
+    if (!newChairID) {
         return res.status(402).end();
     }
 
-    let prevChairID = await DB.executeQuery(
-        `SELECT chair_id FROM Departments WHERE id = '${req.params.deptID}' LIMIT 1;`
-    );
-    prevChairID = prevChairID[0]["id"];
-
     try {
         await DB.executeQuery(
+            // change old chairperson to faculty account type
+            `UPDATE Users u LEFT JOIN Departments d ON u.id = d.chair_id SET type = 3 WHERE u.id = d.chair_id AND ` +
+            `d.id = '${req.params.deptID}' LIMIT 1;` +
+
+            // change account type of new chair
             `UPDATE Users SET type = 2 WHERE id = "${newChairID}" LIMIT 1;` +
-            `UPDATE Users SET type = 3 WHERE id = "${prevChairID}" LIMIT 1;` +
+
+            // replace old chairperson in departments table
             `UPDATE Departments d INNER JOIN Colleges col ON d.college_id = col.id ` +
             `SET d.chair_id = "${newChairID}" WHERE d.id = "${req.params.deptID}" AND ` +
             `col.school_id = "${req.account.id}" LIMIT 1;`
         );
     } catch (error) {
+        console.log(error);
         return res.status(200).json({
             message: {
                 mode: 0,
@@ -376,8 +379,8 @@ router.post("/curriculum/:courseID", async (req, res) => { // adding a subject i
     }
 
     const DB = req.app.locals.database;
-    const {code, title} = req.body;
-    const {courseID} = req.params;
+    const { code, title } = req.body;
+    const { courseID } = req.params;
     let subjID;
     if (code && title) {
         [subjID] = await DB.executeQuery(
@@ -401,7 +404,7 @@ router.post("/curriculum/:courseID", async (req, res) => { // adding a subject i
         return res.status(404).end();
     }
 
-    const {year, semester} = req.body;
+    const { year, semester } = req.body;
     const semesterContent = await DB.executeQuery(
         `SELECT subj_id FROM Curricula WHERE course_id = '${req.params.courseID}' AND year = ${year} ` +
         `AND term = '${semester}'`
@@ -527,22 +530,25 @@ router.route("/schedules/:termID")
         const { subject, mode, room, block, partial } = req.body.schedule;
         let { day, start, end } = req.body.schedule;
         const facultyID = req.body.faculty;
-        // (rs.start < start && rs.end > start) || (rs.start < end && rs.end > end)
+
         const conflicts = await DB.executeQuery(
             `SELECT sc.faculty_id, sc.block_id, sc.day, sc.start, sc.end FROM Schedules sc LEFT JOIN Rooms r ON ` +
             `sc.room_id = r.id WHERE sc.term_id = '${termID}' AND (sc.faculty_id = '${facultyID}' OR ` +
             `sc.block_id = '${block}') AND sc.day = ${day} AND ((sc.start < ${start} AND sc.end > ${start}) OR ` +
             `(sc.start < ${end} AND sc.end > ${end})) ORDER BY sc.start`
         );
-        console.log(conflicts);
 
         if (conflicts.length > 0) {
+            console.log("Class schedule conflicts with existing class/es...");
+            console.table(conflicts);
             let classHours = end - start;
             const lastConflict = conflicts.at(-1);
             if (lastConflict.end + classHours <= 22 * 60) {
                 start = lastConflict.end;
                 end = lastConflict.end + classHours;
+                console.log(`Auto-resolved schedule conflict to ${start} - ${end} (mins.)`);
             } else {
+                console.log(`Unable to resolve schedule conflict.`);
                 return res.status(409).end();
             }
         }
@@ -585,7 +591,7 @@ router.route("/schedules/:termID")
         };
 
         await DB.executeQuery(query);
-        return res.status(200).json({
+        res.status(200).json({
             message: {
                 mode: 1,
                 title: "New Class Assigned",

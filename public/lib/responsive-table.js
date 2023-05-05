@@ -459,7 +459,7 @@ class EditableTable extends ResponsiveTable {
                 updateData[aboutCol[0]] = newValue;
             }
             if (validEdit) {
-                this.data[$(updateRow).index()] = updateData;
+                Object.assign(this.data[$(updateRow).index()], updateData);
                 for (let i = 0; i < rowInputs.length; i++) {
                     const aboutCol = $(this.headers[i]).attr("table-cts-column").split(" ", 3);
                     let newValue = updateData[aboutCol[0]];

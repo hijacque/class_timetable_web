@@ -133,19 +133,18 @@
                 $(".side-panel").hide();
                 $("button.menu-item.active").removeClass("active");
                 $(activeItem).addClass("active");
+                $("#chair-note").remove();
                 facultyTable.initData(getFaculty(activeItem.id), true, () => {
                     if (facultyTable.data.length < 1) {
                         $("#table-title").after(
                             "<small class='text-muted d-block' id='chair-note'>* The first faculty entry will be " +
                             "automatically assigned as the chairperson *</small>"
                         );
-                    } else {
-                        $("#chair-note").remove();
                     }
                 });
                 $(deptTitle).text("Faculty in " + activeItem.title + " Department");
             }
-            departmentsTable.saveBtn.trigger("click");
+            facultyTable.saveBtn.trigger("click");
         });
 
         $(facultyTable.addBtn).click(async (event) => {
