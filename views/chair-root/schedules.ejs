@@ -302,16 +302,18 @@
     displayDropMenu($("#new-term-sem"), "Semester");
 
     $("#add-term").click(async (event) => {
-        const semester = $("#new-term-sem");
-        const year = $("#new-term-year");
+        const semester = $("#new-term-sem").text();
+        const year = $("#new-term-year").val();
 
-        if (semester.text() == "Semester" || !year.val()) {
-            return;
+        if (semester === "Semester" || !year) {
+            return console.error("Missing new year or semester input.");
+        } else if ($(".menu-item").is(`[title=${year + semester[0]}]`)) {
+            return console.error("Academic term already exists.");
         }
         
-        const termID = await addTerm(year.val(), semester.text()[0]);
-        if (termID) {
-            location.reload();
+        const newTermID = await addTerm(year, semester[0]);
+        if (newTermID) {
+            location.replace("http://localhost:3000/chair/schedules?term=" + year + semester[0]);
         }
     });
 </script>
