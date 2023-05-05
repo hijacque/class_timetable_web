@@ -56,8 +56,7 @@ router.post("/chairperson/:deptID?", async (req, res) => {
     let [lastName, chairID] = req.body.chair.split("(");
     lastName = lastName.split(",")[0];
     chairID = chairID.slice(0, -1);
-
-    console.log(lastName, chairID, req.params.deptID);
+    
     let [{ newChairID }] = await DB.executeQuery(
         `SELECT id AS newChairID FROM Faculty WHERE faculty_id = '${chairID}' AND last_name = '${lastName}' ` +
         `AND dept_id = '${req.params.deptID}' LIMIT 1;`
