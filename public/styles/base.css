@@ -197,7 +197,9 @@ a#profile.task { margin-top: 54px; }
     display: none;
 }
 
-.side-panel>.panel-body {
+.side-panel > div.panel-body {
+    display: grid;
+    grid-template-columns: auto;
     overflow-y: scroll;
     align-items: start;
 }
@@ -207,6 +209,7 @@ a#profile.task { margin-top: 54px; }
 }
 
 a.collapse-btn {
+    position: relative;
     align-items: center;
     padding: 2px 20px;
     width: 100%;

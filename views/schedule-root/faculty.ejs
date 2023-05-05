@@ -92,7 +92,7 @@
                                     title="<%= deptClasses[i].course %> <%= deptClasses[i].year %> - <%= deptClasses[i].block_no %>">
                             <% } %>
                                 <button type="button" title="<%= deptClasses[i].subject %>" 
-                                    itemid="<%= deptClasses[i].id %>"
+                                    itemid="<%= deptClasses[i].subj_id %>"
                                     class="list-group-item list-group-item-action menu-item"
                                     aria-valuemax="<%= deptClasses[i].req_hours || 0 %>"
                                     aria-valuenow="<%= deptClasses[i].assigned_time || 0 %>">
@@ -124,10 +124,14 @@
                                 <h6 class="block-title"><small><%= otherClasses[i].course %></small><br>
                                     Year <%= otherClasses[i].year %> - Block <%= otherClasses[i].block_no %>
                                 </h6>
-                                <ul class="list-group panel-menu">
+                                <ul class="list-group panel-menu" id="<%= otherClasses[i].block_id %>"
+                                    title="<%= otherClasses[i].course %> <%= otherClasses[i].year %> - <%= otherClasses[i].block_no %>">
                             <% } %>
                             <button type="button" class="list-group-item list-group-item-action menu-item"
-                                title="<%= otherClasses[i].subject %>" id="<%= otherClasses[i].id %>">
+                                itemid="<%= otherClasses[i].id %>"
+                                title="<%= otherClasses[i].subject %>" id="<%= otherClasses[i].id %>"
+                                aria-valuemax="<%= otherClasses[i].req_hours || 0 %>"
+                                aria-valuenow="<%= otherClasses[i].assigned_time || 0 %>">
                                 <p class="text-truncate m-0"><%= otherClasses[i].subject %></p>
                             </button>
                         <% } %>
@@ -531,24 +535,27 @@
         const start = $("#class-start");
         const end = $("#class-end");
         const reqMinutes = parseFloat($("#class-hours").text().slice(-1)) * 60;
+
         if (day.text() == "Pick Day" || !start.val() || !end.val()) {
-            return console.log("Missing schedule input.");
+            return console.error("Missing schedule input.");
         } else if (start.val() > end.val()) {
-            return console.log("Start time must be earlier than end time");
+            return console.error("Start time must be earlier than end time");
         }
+
         let startTime = roundMinutes(start.val(), 30);
         if (startTime < 7 * 60) {
-            return console.log("Class must start on or later than 7AM");
+            return console.error("Class must start on or later than 7AM");
         }
         
+        
         let endTime = roundMinutes(end.val(), 30);
-
         if (endTime > 22 * 60) {
-            return console.log("Class must end on or before 10PM");
+            return console.error("Class must end on or before 10PM");
         } else if (end - start > reqMinutes) {
-            console.log("Assigned time exceeds required hours.");
+            console.error("Assigned time exceeds required hours.");
             endTime = Math.trunc(startTime + reqMinutes);
         }
+
         console.log(day.attr("aria-valuenow"), startTime, endTime);
         try {
             await addClass($(".page-title").attr("id"), {
@@ -562,7 +569,7 @@
                 partial: ($("#class-hours").text().split(" ")[0] != "0")
             });
         } catch (error) {
-            console.log(error);
+            console.error(error);
         }
     });
 
