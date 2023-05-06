@@ -1,7 +1,7 @@
 // required packages
 const router = require("express").Router();
 const { createAdmin, loginAccount, getAdminData, getChairData, getFacultyData } = require("../lib/account");
-const { sendOTP, verifySession, createSession } = require("./../lib/verification");
+const { sendOTP, verifySession, createSession, changePassword } = require("./../lib/verification");
 require("./../lib/verification");
 require("./../lib/account");
 
@@ -18,6 +18,12 @@ router.route("/login")
         res.render("login", { serverAlert: req.cookies.serverMessage, root: process.env.API_DOMAIN });
 
     }).post(loginAccount, createSession, (req, res) => {
+
+        if (res.locals.change_pass == true) {
+            // send id to change password
+            return res.cookie("id", res.locals.id).status(200).json({ root: "/help/change-password" });
+        }
+
         if (req.account) {
             return res.status(200).json({ root: "/" + req.account.type, });
         }
