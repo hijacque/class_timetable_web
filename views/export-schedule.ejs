@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exporting schedule...</title>
+    <style>
+        table, th, td {
+            border: 1px solid black;
+        }
+        td:first-child {
+            white-space: nowrap;
+        }
+    </style>
+
+    <!-- Must Include SheetJS and FileSaver.js libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+</head>
+<body>
+    <% for (let i = 0; i < workbooks.length; i++) { %>
+        <div class="workbook " id="<%= workbooks[i].id %>">
+        <% for (const {id, body} of workbooks[i].tables) { %>
+            <h3><%= id %></h3>
+            <table id="<%= id %>">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Monday</th>
+                        <th>Tuesday</th>
+                        <th>Wednesday</th>
+                        <th>Thursday</th>
+                        <th>Friday</th>
+                        <th>Saturday</th>
+                        <th>Sunday</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% for (let i = 0; i < body.length; i++) { %>
+                        <% const row = body[i] %>
+                        <tr>
+                            <% const time = i * 30 + 420 %>
+                            <td>
+                                <% if (time >= 780) { %>
+                                    <%- ('00' + Math.trunc((time - 720)/60)).slice(-2) %>:<%- ('00' + ((time - 720) % 60)).slice(-2) %> <%- (time >= 720) ? 'PM' : 'AM' %> 
+                                <% } else { %>
+                                    <%- ('00' + Math.trunc(time/60)).slice(-2) %>:<%- ('00' + (time % 60)).slice(-2) %> <%- (time >= 720) ? 'PM' : 'AM' %> 
+                                <% } %>
+                                - 
+                                <% if (time + 30 >= 780) { %>
+                                    <%- ('00' + Math.trunc((time + 30 - 720)/60)).slice(-2) %>:<%- ('00' + ((time + 30 - 720) % 60)).slice(-2) %> <%- (time >= 720) ? 'PM' : 'AM' %> 
+                                <% } else { %>
+                                    <%- ('00' + Math.trunc((time + 30)/60)).slice(-2) %>:<%- ('00' + (time + 30) % 60).slice(-2) %> <%- (time + 30 >= 720) ? 'PM' : 'AM' %> 
+                                <% } %>
+                            </td>
+                            <% for (const col of row) { %>
+                                <% if (col != null) { %>
+                                    <td rowspan="<%= col.rowspan %>"><%- col.content %></td>
+                                <% } else { %>
+                                    <td></td>
+                                <% } %>
+                            <% } %>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+            <hr>
+        <% } %>
+        </div>
+    <% } %>
+
+    <script src="/lib/export-excel.js"></script>
+    <script>
+        const workbooks = document.getElementsByClassName("workbook");
+        for (const wb of workbooks) {
+            exportToExcel(wb, wb.id);
+        }
+    </script>
+</body>
+</html>

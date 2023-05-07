@@ -1,15 +1,8 @@
 const router = require("express").Router();
-const { getFacultySched, getBlockSched, generateSchedule } = require("./../lib/schedule");
+const { getFacultySched, getBlockSched, generateSchedule, getBlockSchedTable, getFacultySchedTable } = require("./../lib/schedule");
 const { verifySession } = require("./../lib/verification");
 
 router.use(verifySession);
-
-router.get("/new", (req, res) => {
-    if (!req.account) {
-        res.status(401).redirect("/login");
-    }
-    res.status(200).render("schedule/new");
-});
 
 router.post("/generate", generateSchedule, (req, res) => {
     res.status(200).redirect('/schedule/success/' + req.body.term);
@@ -42,6 +35,20 @@ router.get("/:courseID", getBlockSched, (req, res) => {
         term: req.term,
         schedule: req.data
     });
+});
+
+router.post("/download/:term/department", getBlockSchedTable, getFacultySchedTable, (req, res) => {
+    res.status(200).render('export-schedule', {
+        workbooks: req.workbooks
+    });
+});
+
+router.post("/download/:term/faculty", (req, res) => {
+    res.status(200).json(req.body);
+});
+
+router.post("/download/:term/block", (req, res) => {
+    res.status(200).json(req.body);
 });
 
 module.exports = router;
