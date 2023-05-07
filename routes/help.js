@@ -82,14 +82,16 @@ router.post("/resend-OTP", sendOTP, (req, res) => {
 
 router.route("/change-password")
     .get((req, res) => {
-        res.render("change-password");
+        res.render("change-password", {
+            serverAlert: req.cookies.serverMessage
+        });
     })
     .post(changePassword, (req, res) => {
         res.cookie("serverMessage", {
             title: res.locals.msg_title,
             body: res.locals.msg_body,
             mode: res.locals.msg_mode
-        }).status(200).redirect("/help/change-password");
+        }).status(200).redirect("/login");
     });
 
 module.exports = router;
