@@ -144,13 +144,18 @@
                 <% } %>
             </ul>    
         </nav>
-        <% const {id, ordinal_year, block_no} = current %>
-        <div class="about d-flex mt-4">
-            <h4 class="page-title" id="<%= id %>"><%- ordinal_year %> year, Block <%= block_no %></h4>
-            <button type="button" class="ms-4 btn btn-secondary btn-floating" title="Export schedules">
+        <% const {id, year, ordinal_year, block_no, course} = current %>
+        <form method="post" target="export_schedule" action="/schedule/download/<%= term.code %>/block" 
+            class="about d-flex mt-4" onsubmit="window.open('_blank','export_schedule');">
+            <h4 class="page-title"><%- ordinal_year %> year, Block <%= block_no %></h4>
+            <input type="hidden" name="year" value="<%= year %>">
+            <input type="hidden" name="block_no" value="<%= block_no %>">
+            <input type="hidden" name="courseID" value="<%= courseID %>">
+            <input type="hidden" name="course" value="<%= course %>">
+            <button type="submit" class="ms-4 btn btn-secondary btn-floating" title="Export schedules">
                 <i class="fas fa-cloud-arrow-down fa-lg"></i>
             </button>
-        </div>
+        </form>
         <div class="scheduler">
             <div></div>
             <div class="days">

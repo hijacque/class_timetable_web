@@ -43,12 +43,16 @@ router.post("/download/:term/department", getBlockSchedTable, getFacultySchedTab
     });
 });
 
-router.post("/download/:term/faculty", (req, res) => {
-    res.status(200).json(req.body);
+router.post("/download/:term/faculty", getFacultySchedTable, (req, res) => {
+    res.status(200).render('export-schedule', {
+        workbooks: req.workbooks
+    });
 });
 
-router.post("/download/:term/block", (req, res) => {
-    res.status(200).json(req.body);
+router.post("/download/:term/block", getBlockSchedTable, (req, res) => {
+    res.status(200).render('export-schedule', {
+        workbooks: req.workbooks
+    });
 });
 
 module.exports = router;

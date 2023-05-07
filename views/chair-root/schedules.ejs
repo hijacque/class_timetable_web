@@ -87,7 +87,7 @@
     <% const {prev, current, next} = data %>
     <div class="shadow-3 bg-white px-5 pt-4">
         <% if (openTerms.length > 0 || closedTerms.length > 0) { %>
-            <% currentTerm = currentTerm || openTerms[0].year + openTerms[0].term || closedTerms[0].year + closedTerms[0].term %>
+            <% currentTerm = (!currentTerm || currentTerm == "") ? (openTerms[0].year + openTerms[0].term) || (closedTerms[0].year + closedTerms[0].term) : currentTerm %>
             <% if (openTerms.some(t => t.year + t.term == currentTerm)) { %>
                 <form method="post" target="auto_schedule" action="/schedule/generate" 
                     onsubmit="window.open('_blank','auto_schedule');">
@@ -98,9 +98,12 @@
                 </form>
                 <div class="d-flex">
                     <h3 id="term-title"></h3>
-                    <button type="button" class="ms-4 btn btn-secondary btn-floating" title="Export schedules">
-                        <i class="fas fa-cloud-arrow-down fa-lg"></i>
-                    </button>
+                    <form method="post" target="export_schedule" action="/schedule/download/<%= currentTerm %>/department" 
+                        onsubmit="window.open('_blank','export_schedule');">
+                        <button type="submit" class="ms-4 btn btn-secondary btn-floating" title="Export schedules">
+                            <i class="fas fa-cloud-arrow-down fa-lg"></i>
+                        </button>
+                    </form>
                 </div>
                 <label for="term-title">Status: <span id="term-status"></span></label>
                 <hr>
