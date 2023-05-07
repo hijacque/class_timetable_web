@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const jwt = require("jsonwebtoken");
-const { verifyOTP, getOTP, sendOTP } = require("./../lib/verification");
+const { verifyOTP, getOTP, sendOTP, changePassword, verifySession } = require("./../lib/verification");
 const { openAccount, openAdminAccount } = require("../lib/account");
 require("./../lib/verification");
 
@@ -80,8 +80,16 @@ router.post("/resend-OTP", sendOTP, (req, res) => {
     }
 });
 
-router.route("/change-password").get((req, res) => {
-    // TODO: make middleware for updating password in database
-}).post((req, res) => { });
+router.route("/change-password")
+    .get((req, res) => {
+        res.render("change-password");
+    })
+    .post(changePassword, (req, res) => {
+        res.cookie("serverMessage", {
+            title: res.locals.msg_title,
+            body: res.locals.msg_body,
+            mode: res.locals.msg_mode
+        }).status(200).redirect("/help/change-password");
+    });
 
 module.exports = router;
