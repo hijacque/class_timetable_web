@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon">
     <title>Exporting schedule...</title>
     <style>
         table, th, td {
@@ -17,11 +18,13 @@
     <!-- Must Include SheetJS and FileSaver.js libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 </head>
 <body>
     <% for (let i = 0; i < workbooks.length; i++) { %>
-        <div class="workbook " id="<%= workbooks[i].id %>">
-        <% for (const {id, body} of workbooks[i].tables) { %>
+        <div class="workbook" id="<%= workbooks[i].id %>">
+        <% for (const {id} of workbooks[i].tables) { %>
             <h3><%= id %></h3>
             <table id="<%= id %>">
                 <thead>
@@ -37,8 +40,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <% for (let i = 0; i < body.length; i++) { %>
-                        <% const row = body[i] %>
+                    <% for (let i = 0; i < 15*2; i++) { %>
                         <tr>
                             <% const time = i * 30 + 420 %>
                             <td>
@@ -54,13 +56,6 @@
                                     <%- ('00' + Math.trunc((time + 30)/60)).slice(-2) %>:<%- ('00' + (time + 30) % 60).slice(-2) %> <%- (time + 30 >= 720) ? 'PM' : 'AM' %> 
                                 <% } %>
                             </td>
-                            <% for (const col of row) { %>
-                                <% if (col != null) { %>
-                                    <td rowspan="<%= col.rowspan %>"><%- col.content %></td>
-                                <% } else { %>
-                                    <td></td>
-                                <% } %>
-                            <% } %>
                         </tr>
                     <% } %>
                 </tbody>
@@ -72,12 +67,46 @@
 
     <script src="/lib/export-excel.js"></script>
     <script>
-        const workbooks = document.getElementsByClassName("workbook");
-        for (const wb of workbooks) {
-            exportToExcel(wb, wb.id);
+        function toTimeTable(id, schedules, classHours, classDays) {
+            console.table(schedules);
+            // current row
+            let current = new Array(classDays);
+            current.fill(null, 0);
+
+            let time = 1;
+            let excessSpan = new Array(classDays);
+            excessSpan.fill(0, 0);
+
+            const table = document.getElementById(id);
+            const rows = $(table).find("tbody>tr").get();
+
+            while (time <= classHours * 2) {
+                if (schedules.length <= 0 || schedules[0].start != time) {
+                    // console.table(current);
+                    current = current.map((col, i) => (excessSpan[i] > 0) ? col : "<td></td>");
+                    // console.log(current.join(""));
+                    $(rows[time - 1]).append(current.join(""));
+                    excessSpan = excessSpan.map(row => (row > 0) ? row - 1 : row);
+                    current.fill(null, 0);
+                    time++;
+                    continue;
+                }
+
+                const { day, start, end, subject, occupant, mode, room } = schedules[0];
+                excessSpan[day - 1] += end - start;
+                current.splice(day - 1, 1,`<td rowspan="${end - start}"><b>${subject}</b><br><span>${occupant}</span><br><i>${mode} ${room ? '@ ' + room : ''}</i></td>`);
+                schedules.shift();
+            }
         }
-        alert("Press ok to confirm download.");
-        window.close();
+
+        let workbooks = <%- JSON.stringify(workbooks) %>;
+        for(const wb of workbooks) {
+            for (const {id, body} of wb.tables) {
+                console.log(id, body);
+                toTimeTable(id, body, 15, 7);
+            }
+            exportToExcel(document.getElementById(wb.id), wb.id);
+        }
     </script>
 </body>
 </html>

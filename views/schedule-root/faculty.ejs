@@ -177,12 +177,15 @@
         </nav>
         <% const {faculty_id, status, pref_status, pref_subjs, teach_load, classes} = current %>
         <div class="about">
-            <div class="d-flex">
-                <h4 class="page-title" id="<%= id %>"><%= name %></h4>
-                <button type="button" class="ms-4 btn btn-secondary btn-floating" title="Export schedules">
+            <form method="post" target="export_schedule" action="/schedule/download/<%= term.code %>/faculty" 
+                class="d-flex" onsubmit="window.open('_blank','export_schedule');">
+                <h4 class="page-title"><%= name %></h4>
+                <input type="hidden" name="id" value="<%= faculty_id %>">
+                <input type="hidden" name="name" value="<%= name %>">
+                <button type="submit" class="ms-4 btn btn-secondary btn-floating" title="Export schedules">
                     <i class="fas fa-cloud-arrow-down fa-lg"></i>
                 </button>
-            </div>
+            </form>
             <h6 class="text-muted"><%= faculty_id %></h6>
             <p>
                 <b>Employment Status:</b> <%= status %><br>

@@ -1,6 +1,6 @@
 function exportToExcel(master = document, filename) {
     /* Get tables element */
-    const tables = master.getElementsByTagName("table");
+    const tables = master.querySelectorAll("table");
 
     let workbook = XLSX.utils.book_new();
     for (let i = 0; i < tables.length; i++) {
