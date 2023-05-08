@@ -24,7 +24,7 @@
 <body>
     <% for (let i = 0; i < workbooks.length; i++) { %>
         <div class="workbook" id="<%= workbooks[i].id %>">
-        <% for (const {id} of workbooks[i].tables) { %>
+        <% for (const {id, body} of workbooks[i].tables) { %>
             <h3><%= id %></h3>
             <table id="<%= id %>">
                 <thead>
@@ -40,25 +40,40 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <% for (let i = 0; i < 15*2; i++) { %>
-                        <tr>
-                            <% const time = i * 30 + 420 %>
-                            <td>
-                                <% if (time >= 780) { %>
-                                    <%- ('00' + Math.trunc((time - 720)/60)).slice(-2) %>:<%- ('00' + ((time - 720) % 60)).slice(-2) %> <%- (time >= 720) ? 'PM' : 'AM' %> 
-                                <% } else { %>
-                                    <%- ('00' + Math.trunc(time/60)).slice(-2) %>:<%- ('00' + (time % 60)).slice(-2) %> <%- (time >= 720) ? 'PM' : 'AM' %> 
-                                <% } %>
-                                - 
-                                <% if (time + 30 >= 780) { %>
-                                    <%- ('00' + Math.trunc((time + 30 - 720)/60)).slice(-2) %>:<%- ('00' + ((time + 30 - 720) % 60)).slice(-2) %> <%- (time >= 720) ? 'PM' : 'AM' %> 
-                                <% } else { %>
-                                    <%- ('00' + Math.trunc((time + 30)/60)).slice(-2) %>:<%- ('00' + (time + 30) % 60).slice(-2) %> <%- (time + 30 >= 720) ? 'PM' : 'AM' %> 
-                                <% } %>
-                            </td>
-                        </tr>
+                    <% let current = new Array(7).fill(null, 0) %>
+                    <% let excessSpan = new Array(7).fill(0, 0) %>
+                    <% let time = 1 %>
+                    <% let clock = 0 %>
+                    <% while (time <= 15*2) { %>
+                        <% clock = (time - 1) * 30 + 420 %>
+                        <% if (body.length <= 0 || body[0].start != time) { %>
+                            <tr>
+                                <td>
+                                    <% if (clock >= 780) { %>
+                                        <%- ('00' + Math.trunc((clock - 720)/60)).slice(-2) %>:<%- ('00' + ((clock - 720) % 60)).slice(-2) %> <%- (clock >= 720) ? 'PM' : 'AM' %> 
+                                    <% } else { %>
+                                        <%- ('00' + Math.trunc(clock/60)).slice(-2) %>:<%- ('00' + (clock % 60)).slice(-2) %> <%- (clock >= 720) ? 'PM' : 'AM' %> 
+                                    <% } %>
+                                    - 
+                                    <% if (clock + 30 >= 780) { %>
+                                        <%- ('00' + Math.trunc((clock + 30 - 720)/60)).slice(-2) %>:<%- ('00' + ((clock + 30 - 720) % 60)).slice(-2) %> <%- (clock >= 720) ? 'PM' : 'AM' %> 
+                                    <% } else { %>
+                                        <%- ('00' + Math.trunc((clock + 30)/60)).slice(-2) %>:<%- ('00' + (clock + 30) % 60).slice(-2) %> <%- (clock + 30 >= 720) ? 'PM' : 'AM' %> 
+                                    <% } %>
+                                </td>
+                                <% current = current.map((col, i) => (excessSpan[i] > 0) ? col : '<td></td>') %>
+                                <%- current.join('') %>
+                            </tr>
+                            <% excessSpan = excessSpan.map(row => (row > 0) ? row - 1 : row) %>
+                            <% current.fill(null, 0) %>
+                            <% time++ %>
+                            <% continue %>
+                        <% } %>
+                        <% const { day, start, end, subject, occupant, mode, room } = body[0] %>
+                        <% excessSpan[day - 1] += end - start %>
+                        <% current[day - 1] = `<td rowspan="${end - start}"><b>${subject}</b><br><span>${occupant}</span><br><i>${mode} ${room ? '@ ' + room : ''}</i></td>` %>
+                        <% body.shift() %>
                     <% } %>
-                </tbody>
             </table>
             <hr>
         <% } %>
@@ -67,45 +82,13 @@
 
     <script src="/lib/export-excel.js"></script>
     <script>
-        function toTimeTable(id, schedules, classHours, classDays) {
-            console.table(schedules);
-            // current row
-            let current = new Array(classDays);
-            current.fill(null, 0);
-
-            let time = 1;
-            let excessSpan = new Array(classDays);
-            excessSpan.fill(0, 0);
-
-            const table = document.getElementById(id);
-            const rows = $(table).find("tbody>tr").get();
-
-            while (time <= classHours * 2) {
-                if (schedules.length <= 0 || schedules[0].start != time) {
-                    // console.table(current);
-                    current = current.map((col, i) => (excessSpan[i] > 0) ? col : "<td></td>");
-                    // console.log(current.join(""));
-                    $(rows[time - 1]).append(current.join(""));
-                    excessSpan = excessSpan.map(row => (row > 0) ? row - 1 : row);
-                    current.fill(null, 0);
-                    time++;
-                    continue;
-                }
-
-                const { day, start, end, subject, occupant, mode, room } = schedules[0];
-                excessSpan[day - 1] += end - start;
-                current.splice(day - 1, 1,`<td rowspan="${end - start}"><b>${subject}</b><br><span>${occupant}</span><br><i>${mode} ${room ? '@ ' + room : ''}</i></td>`);
-                schedules.shift();
-            }
-        }
-
-        let workbooks = <%- JSON.stringify(workbooks) %>;
+        alert("Click 'OK' to download schedule.");
+        const workbooks = document.getElementsByClassName("workbook");
         for(const wb of workbooks) {
-            for (const {id, body} of wb.tables) {
-                console.log(id, body);
-                toTimeTable(id, body, 15, 7);
-            }
             exportToExcel(document.getElementById(wb.id), wb.id);
+        }
+        if (workbooks.length <= 1) {
+            window.close();
         }
     </script>
 </body>
