@@ -8,62 +8,107 @@ router.use(verifySession);
 
 // for admin control
 router.route("/departments/:collegeID?")
-    .get(async (req, res) => {
-        if (!req.account) {
-            return res.status(401).end();
+    .get(async (req, res) => { // gets departments per college
+        // check user credentials
+        const user = req.account;
+        if (!user && user.type == "admin") {
+            res.cookie("serverMessage", {
+                message: {
+                    mode: 0,
+                    title: "Unauthorized request",
+                    body: "Please login before creating new department."
+                }
+            })
+            return res.status(401).json({ redirect: "/logout" });
         }
 
         const DB = req.app.locals.database;
-        let query =
-            `SELECT d.id, d.name AS department, CASE WHEN d.chair_id IS NULL THEN "NULL" ELSE ` +
-            `CONCAT(f.last_name, ", ", f.first_name, " ", f.middle_name, " (", f.faculty_id, ")") END AS chairperson, ` +
-            `d.chair_id, "Logged in" as activity FROM Schools s INNER JOIN Colleges col ON ` +
-            `s.id = col.school_id INNER JOIN Departments d ON col.id = d.college_id ` +
-            `LEFT JOIN Faculty f ON d.chair_id = f.id WHERE s.id = "${req.account.id}"`;
+        let query = `SELECT d.id, d.name AS department, CASE WHEN d.chair_id IS NULL THEN "NULL" ELSE ` +
+            `CONCAT(f.last_name, ", ", f.first_name, " ", f.middle_name, " (", f.faculty_id, ")") END AS ` +
+            `chairperson, d.chair_id, "Logged in" as activity FROM Schools s INNER JOIN Colleges col ON ` +
+            `s.id = col.school_id INNER JOIN Departments d ON col.id = d.college_id LEFT JOIN Faculty f ON ` +
+            `d.chair_id = f.id WHERE s.id = "${user.id}"`;
+
         if (req.params.collegeID) {
+            // get departments in specific college
             query += ` AND col.id = "${req.params.collegeID}"`;
         }
         query += " ORDER BY d.name";
 
         res.status(200).json({ departments: await DB.executeQuery(query) });
 
-    }).post(async (req, res) => {
-        if (req.account && req.params.collegeID) {
-            const DB = req.app.locals.database;
-            let deptID = crypto.randomBytes(6).toString("base64url");
-            await DB.executeQuery(
-                `INSERT INTO Departments (id, college_id, name) VALUES ('${deptID}', ` +
-                `'${req.params.collegeID}', '${req.body.department}')`
-            );
-            res.status(200).json({
+    }).post(async (req, res) => { // creates new department
+        // check user credentials
+        const user = req.account;
+        if (!user && user.type == "admin") {
+            res.cookie("serverMessage", {
                 message: {
-                    mode: 1,
-                    title: "New Department created",
-                    body: "You can now add faculty members in the department and assign a chairperson."
+                    mode: 0,
+                    title: "Unauthorized request",
+                    body: "Please login before creating new department."
+                }
+            })
+            return res.status(401).json({ redirect: "/logout" });
+        }
+
+        const deptName = req.body.department;
+        if (!req.params.collegeID || !deptName) {
+            return res.status(400).json({
+                message: {
+                    mode: 2,
+                    title: "Missing requirement/s",
+                    body: "A name is needed to create new department.",
                 }
             });
-        } else {
-            res.status(401).end();
         }
+
+        const DB = req.app.locals.database;
+        const deptID = crypto.randomBytes(6).toString("base64url");
+        await DB.executeQuery(
+            `INSERT INTO Departments (id, college_id, name) VALUES ('${deptID}', ` +
+            `'${req.params.collegeID}', '${req.body.department}')`
+        );
+        console.log("creating new department ID: " + deptID);
+        res.status(200).json({
+            message: {
+                mode: 1,
+                title: "New Department created",
+                body: "You can now add faculty members in the department and assign a chairperson."
+            }
+        });
     });
 
-router.post("/chairperson/:deptID?", async (req, res) => {
-    if (!req.account || !req.params.deptID) {
-        return res.status(401).end();
+router.post("/department/:deptID?", async (req, res) => { // updates department info (name and/or chairperson)
+    const user = req.account;
+    if (!user) {
+        res.cookie("serverMessage", {
+            message: {
+                mode: 0,
+                title: "Unauthorized request",
+                body: "Please login before creating new department."
+            }
+        })
+        return res.status(401).json({ redirect: "/logout" });
     }
 
     const DB = req.app.locals.database;
     let [lastName, chairID] = req.body.chair.split("(");
     lastName = lastName.split(",")[0];
     chairID = chairID.slice(0, -1);
-    
+
     let [{ newChairID }] = await DB.executeQuery(
         `SELECT id AS newChairID FROM Faculty WHERE faculty_id = '${chairID}' AND last_name = '${lastName}' ` +
         `AND dept_id = '${req.params.deptID}' LIMIT 1;`
     );
 
     if (!newChairID) {
-        return res.status(402).end();
+        return res.status(404).json({
+            message: {
+                mode: 2,
+                title: "Faculty not found",
+                body: "Unable to change chairperson because candidate faculty was not found."
+            }
+        });
     }
 
     try {
@@ -77,12 +122,12 @@ router.post("/chairperson/:deptID?", async (req, res) => {
 
             // replace old chairperson in departments table
             `UPDATE Departments d INNER JOIN Colleges col ON d.college_id = col.id ` +
-            `SET d.chair_id = "${newChairID}" WHERE d.id = "${req.params.deptID}" AND ` +
-            `col.school_id = "${req.account.id}" LIMIT 1;`
+            `SET d.chair_id = "${newChairID}" ${req.body.deptName ? `d.name = '${req.body.deptName}' ` : ''}` +
+            `WHERE d.id = "${req.params.deptID}" AND col.school_id = "${user.id}" LIMIT 1;`
         );
     } catch (error) {
         console.log(error);
-        return res.status(200).json({
+        return res.status(500).json({
             message: {
                 mode: 0,
                 title: "Chairperson not changed",
@@ -95,24 +140,40 @@ router.post("/chairperson/:deptID?", async (req, res) => {
         message: {
             mode: 1,
             title: "Chairperson changed",
-            body: "All chairperson privileges and data have been transferred to the new chairperson."
+            body: "All privileges have been transferred to the new chairperson."
         }
     });
 });
 
-router.post("/colleges", async (req, res) => {
-    if (!req.account || !req.body.name) {
-        return res.status(401).end();
+router.post("/colleges", async (req, res) => { // creates new college
+    // check user credentials
+    const user = req.account;
+    if (!user && user.type == "admin") {
+        res.cookie("serverMessage", {
+            message: {
+                mode: 0,
+                title: "Unauthorized request",
+                body: "Please login before creating new department."
+            }
+        })
+        return res.status(401).json({ redirect: "/logout" });
     }
 
     const DB = req.app.locals.database;
-    let sameCollege = await DB.executeQuery(
-        `SELECT COUNT(*) FROM Colleges WHERE school_id = '${req.account.id}' AND name = '${req.body.name}'`
+    const [{ totalDuplicates }] = await DB.executeQuery(
+        `SELECT COUNT(*) AS totalDuplicates FROM Colleges WHERE school_id = '${req.account.id}' AND name = '${req.body.name}'`
     );
-    if (sameCollege[0]["COUNT(*)"] > 0) {
-        return res.status(409).end();
+    if (totalDuplicates > 0) {
+        return res.status(409).json({
+            message: {
+                mode: 0,
+                title: "Duplicate college name",
+                body: "Could not add college with same name"
+            }
+        });
     }
-    let collegeID = crypto.randomBytes(6).toString("base64url");
+
+    const collegeID = crypto.randomBytes(6).toString("base64url");
     await DB.executeQuery(
         `INSERT INTO Colleges VALUES ('${collegeID}', '${req.account.id}', '${req.body.name}')`
     );
@@ -126,28 +187,50 @@ router.post("/colleges", async (req, res) => {
 });
 
 router.route("/faculty/:deptID?")
-    .get(async (req, res) => {
-        if (req.account) {
-            const DB = req.app.locals.database;
-            let query;
-            if (req.query.columns) {
-                query = `SELECT f.${req.query.columns.join(", f.")}, `;
-            } else {
-                query = `SELECT f.faculty_id, f.teach_load, f.status, f.first_name, f.middle_name, f.last_name, `;
-            }
-
-            query += `u.email, "My Schedule" AS schedule FROM Colleges col INNER JOIN Departments d ` +
-                `ON col.id = d.college_id INNER JOIN Faculty f ON d.id = f.dept_id INNER JOIN Users u ` +
-                `ON f.id = u.id WHERE (col.school_id = "${req.account.id}" OR d.chair_id = "${req.account.id}")`;
-            if (req.params.deptID) {
-                query += ` AND d.id = "${req.params.deptID}"`
-            }
-            query += " ORDER BY f.status, f.last_name";
-            res.status(200).json({ faculty: await DB.executeQuery(query) });
-        } else {
-            res.status(401).end();
+    .get(async (req, res) => { // gets faculty per department
+        // check user credentials
+        const user = req.account;
+        if (!user && (user.type == "admin" || user.type == "chair")) {
+            res.cookie("serverMessage", {
+                message: {
+                    mode: 0,
+                    title: "Unauthorized request",
+                    body: "Please login before creating new department."
+                }
+            })
+            return res.status(401).json({ redirect: "/logout" });
         }
-    }).post(createFaculty, (req, res) => {
+
+        const DB = req.app.locals.database;
+        let {columns} = req.query;
+        const validColumns = ['faculty_id', 'teach_load', 'status', 'first_name', 'middle_name', 'last_name'];
+        let query;
+        
+        if (!columns) {
+            query = `SELECT f.${validColumns.join(", f.")}, `;
+        }
+        if (columns.every(col => validColumns.some(validCol => col == validCol))) {
+            // specifies what columns to get
+            query = `SELECT f.${columns.join(", f.")}, `;
+        } else {
+            return res.status(400).json({
+                message: {
+                    mode: 0,
+                    title: "Invalid faculty column data",
+                    body: "You requested invalid column/s for faculty data."
+                }
+            });
+        }
+
+        query += `u.email, "My Schedule" AS schedule FROM Colleges col INNER JOIN Departments d ` +
+            `ON col.id = d.college_id INNER JOIN Faculty f ON d.id = f.dept_id INNER JOIN Users u ` +
+            `ON f.id = u.id WHERE (col.school_id = "${req.account.id}" OR d.chair_id = "${req.account.id}")`;
+        if (req.params.deptID) {
+            query += ` AND d.id = "${req.params.deptID}"`
+        }
+        query += " ORDER BY f.status, f.last_name";
+        res.status(200).json({ faculty: await DB.executeQuery(query) });
+    }).post(createFaculty, (req, res) => { // creates new faculty in 
         res.status(200).json({
             message: {
                 mode: 1,
@@ -180,8 +263,18 @@ router.route("/subjects/:collegeID?")
         const DB = req.app.locals.database;
         let { code, title, type, units, req_hours, pref_rooms } = req.body;
 
-        const subjID = crypto.randomBytes(6).toString("base64url");
         type = (type == "LEC") ? 1 : (type == "LAB") ? 2 : "NULL";
+        const [{ totalDuplicates }] = await DB.executeQuery(
+            `SELECT COUNT(*) AS totalDuplicates FROM Subjects s INNER JOIN Colleges col ON s.college_id = col.id ` +
+            `WHERE col.school_id = '${req.account.id}' AND s.title = '${title}' AND s.code = '${code}' AND ` +
+            `s.type = '${type}'`
+        );
+
+        if (totalDuplicates > 0) {
+            return res.status(409).end();
+        }
+
+        const subjID = crypto.randomBytes(6).toString("base64url");
         await DB.executeQuery(
             `INSERT INTO Subjects VALUES ('${subjID}', '${req.params.collegeID}', '${code}', '${title}', ` +
             `${type}, ${units || 0}, ${req_hours || 0}, '${pref_rooms}')`
