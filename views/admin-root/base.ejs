@@ -5,18 +5,22 @@
     <%- include('../base') %>
     <title>Admin Dashboard</title>
     <link rel="stylesheet" href="/styles/admin-root.css">
+    <script src="/lib/api/admin-root.js"></script>
 </head>
 
 <body class="dashboard">
-    <div class="modal fade" id="alert-modal" tabindex="-1" aria-labelledby="alert-title" aria-hidden="true">
+    <div class="modal fade" id="alert-modal" tabindex="-1" aria-labelledby="alert-title" aria-hidden="true" 
+        data-mdb-backdrop="static" data-mdb-keyboard="false">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="alert-title"><%= (serverAlert) ? serverAlert.title : "" %></h5>
+                    <h5 class="modal-title" id="alert-title"></h5>
                 </div>
-                <div class="modal-body" id="alert-body"><%= (serverAlert) ? serverAlert.body : "" %></div>
+                <div class="modal-body" id="alert-body"></div>
                 <div class="modal-footer text-center">
-                    <button type="button" class="btn btn-secondary" data-mdb-dismiss="modal">OK</button>
+                    <button type="button" class="btn btn-secondary" data-mdb-dismiss="modal" id="confirm-alert">
+                        OK
+                    </button>
                 </div>
             </div>
         </div>
@@ -49,10 +53,16 @@
 
     <!-- MDB -->
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.0.0/mdb.min.js"></script>
+    <script src="/lib/themed-alert.js"></script>
     <script>
+        const alertModal = new ThemedAlert(new mdb.Modal($("#alert-modal")), "alert-modal");
+        <% if (serverAlert && Object.keys(serverAlert).length == 3) { %>
+            <% const {mode, title, body} = serverAlert %>
+            alertModal.show(<%- JSON.stringify(mode) %>, "<%= title %>", "<%= body %>");
+        <% } %>
+
         $("div.nav-bar>a>i").addClass("fa-2x mt-1");
         let openSection = "<%- section %>";
-        // $("div.nav-bar>a").addClass("btn btn-light rounded-0 px-1 w-100");
 
         //task side panel stuffss
         $(`a.task[id=${openSection}]:not(#logout)`)
