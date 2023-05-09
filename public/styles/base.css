@@ -199,7 +199,7 @@ a#profile.task { margin-top: 54px; }
 
 .side-panel > div.panel-body {
     display: grid;
-    grid-template-columns: auto;
+    grid-template-columns: 100%;
     overflow-y: scroll;
     align-items: start;
 }
@@ -208,7 +208,7 @@ a#profile.task { margin-top: 54px; }
     padding-bottom: 50vh;
 }
 
-a.collapse-btn {
+.collapse-btn {
     position: relative;
     align-items: center;
     padding: 2px 20px;
@@ -216,6 +216,9 @@ a.collapse-btn {
     text-align: start;
     color: #b9aadc;
     font-size: small;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     border-top: 0.5px solid #b9aadc;
 }
 

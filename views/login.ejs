@@ -12,15 +12,13 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="alert-title">
-                        <%= (serverAlert) ? serverAlert.title : "" %>
-                    </h5>
+                    <h5 class="modal-title" id="alert-title"></h5>
                 </div>
-                <div class="modal-body" id="alert-body">
-                    <%= (serverAlert) ? serverAlert.body : "" %>
-                </div>
+                <div class="modal-body" id="alert-body"></div>
                 <div class="modal-footer text-center">
-                    <button type="button" class="btn btn-secondary" data-mdb-dismiss="modal">OK</button>
+                    <button type="button" class="btn btn-secondary" data-mdb-dismiss="modal"id="confirm-alert">
+                        OK
+                    </button>
                 </div>
             </div>
         </div>
@@ -86,39 +84,24 @@
     <!-- MDB -->
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.0.0/mdb.min.js"></script>
     <script src="/lib/password-validation.js"></script>
+    <script src="/lib/themed-alert.js"></script>
     <script>
-        const alertModal = new mdb.Modal($("#alert-modal"));
+        const alertModal = new ThemedAlert(new mdb.Modal($("#alert-modal")), "alert-modal");
 
         // don't mind the lint warnings, it can't recognize ejs syntax
-        <% if (serverAlert) { %>
-            let message = <%- JSON.stringify(serverAlert) %>;
-            if (message) {
-                switch (message.mode) {
-                    case 0:
-                        $("#alert-title").addClass("text-danger");
-                        break;
-                    case 1:
-                        $("#alert-title").addClass("text-success");
-                        break;
-                    case 2:
-                        $("#alert-title").addClass("text-warning");
-                        break;
-                    case 3:
-                        $("#alert-title").addClass("text-info");
-                        break;
-                }
-                alertModal.show();
-            }
+        <% if (serverAlert && Object.keys(serverAlert).length == 3) { %>
+        <% const {mode, title, body} = serverAlert %>
+        alertModal.show(<%- JSON.stringify(mode) %>, "<%= title %>", "<%= body %>");
         <% } %>
 
-            $("#submit").click(() => {
-                $.post("/login", {
-                    email: $("#email").val(),
-                    password: $("#password").val()
-                }, (data, status) => {
-                    window.location.replace(data.root);
-                });
+        $("#submit").click(() => {
+            $.post("/login", {
+                email: $("#email").val(),
+                password: $("#password").val()
+            }, (data, status) => {
+                window.location.replace(data.root);
             });
+        });
     </script>
 </body>
 
