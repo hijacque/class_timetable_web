@@ -31,3 +31,10 @@ const updateDepartment = (deptID, newDeptData) => new Promise((resolve, reject) 
     "http://localhost:3000/api/department/" + deptID, newDeptData,
     (data) => resolve(data.message), "text json"
 ).fail(error => reject(error)));
+
+const addFaculty = (departmentID, facultyData) => $.post(
+    "http://localhost:3000/api/faculty/" + departmentID, facultyData,
+    (data, status) => {
+        console.log(data.message);
+    }, "json"
+);

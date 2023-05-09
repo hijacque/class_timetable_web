@@ -1,24 +1,24 @@
 <div class="bg-light task-view" id="faculty-view">
     <div class="side-panel">
-        <div class="d-flex mx-4 justify-content-between mb-2">
+        <div class="d-flex mx-4 justify-content-between mb-3">
             <h4>Departments</h4>
             <div>
                 <a type="button"><i class="fas fa-sort-alpha-up-alt"></i></a>
                 <a type="button"><i class="fas fa-search ms-2"></i></a>
             </div>
         </div>
-        <hr>
         <div class="panel-body">
             <% if (data.colleges.length > 0) { %>
                 <% for (const college of data.colleges) { %>
                     <a type="button" class="collapse-btn" title="<%= college.name %>" data-mdb-toggle="collapse"
-                        data-mdb-target="#<%= college.id %>-departments" aria-expanded="false">
+                        data-mdb-target="#col-<%= college.id %>" aria-expanded="false"
+                        aria-controls="col-<%= college.id %>">
                         <i class="fas fa-caret-down me-2"></i><text>
                             <%= college.name %>
                         </text>
                     </a>
                     <% if (college.departments.length> 0) { %>
-                        <div class="collapse" id="<%= college.id %>-departments">
+                        <div class="collapse show" id="col-<%= college.id %>">
                             <div>
                                 <ul class="list-group panel-menu">
                                     <% for (const department of college.departments) { %>
@@ -33,7 +33,7 @@
                             </div>
                         </div>
                     <% } else { %>
-                        <div class="collapse" id="<%= college.id %>-departments">
+                        <div class="collapse" id="col-<%= college.id %>">
                             <p>No Departments</p>
                         </div>
                     <% } %>
@@ -92,29 +92,15 @@
     </div>
 </div>
 <script src="/lib/responsive-table.js"></script>
+<script src="/lib/api/admin-root.js"></script>
 <script>
-    const getFaculty = (departmentID) => new Promise((resolve, reject) => {
-        $.get("http://localhost:3000/api/faculty/" + departmentID,
-            (data, status) => {
-                resolve(data.faculty);
-            }, "json"
-        ).fail((data) => reject(data));
-    });
-
-
-    const addFaculty = (departmentID, facultyData) => $.post(
-        "http://localhost:3000/api/faculty/" + departmentID, facultyData,
-        (data, status) => {
-            console.log(data);
-        }, "json"
-    );
-
     const departments = $(".panel-menu > .menu-item").get();
     const facultyTable = new EditableTable("#faculty-table");
     let deptTitle = $("#table-title");
+    // let openDepartment;
     if (departments.length > 0) {
         let openDepartment = departments[0];
-        $(openDepartment).closest(".collapse").addClass("show");
+        // $(openDepartment).closest(".collapse").addClass("show");
         $(openDepartment).addClass("active");
         $(deptTitle).text("Faculty in " + $(openDepartment).attr("title") + " Department");
         facultyTable.initData(getFaculty(openDepartment.id), true, () => {
@@ -126,12 +112,12 @@
             }
         });
 
-        $("button.menu-item").click((event) => {
+        $(".menu-item").click((event) => {
             let activeItem = event.currentTarget;
             if (!$(activeItem).hasClass("active")) {
                 openDepartment = activeItem;
                 $(".side-panel").hide();
-                $("button.menu-item.active").removeClass("active");
+                $(".menu-item.active").removeClass("active");
                 $(activeItem).addClass("active");
                 $("#chair-note").remove();
                 facultyTable.initData(getFaculty(activeItem.id), true, () => {
@@ -151,7 +137,8 @@
             try {
                 let addedData = await $(event.currentTarget).data("newRow");
                 if (addedData) {
-                    addFaculty(openDepartment.id, addedData); 
+                    const deptID = openDepartment.id.slice(5);
+                    await addFaculty(deptID, addedData); 
                 }
             } catch (error) {
                 $(`${facultyTable.body}:last-child`).remove();
