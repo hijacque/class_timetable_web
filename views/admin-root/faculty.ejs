@@ -1,3 +1,4 @@
+<% const {colleges, currentDept} = data %>
 <div class="bg-light task-view" id="faculty-view">
     <div class="side-panel">
         <div class="d-flex mx-4 justify-content-between mb-3">
@@ -8,142 +9,146 @@
             </div>
         </div>
         <div class="panel-body">
-            <% if (data.colleges.length > 0) { %>
-                <% for (const college of data.colleges) { %>
-                    <a type="button" class="collapse-btn" title="<%= college.name %>" data-mdb-toggle="collapse"
-                        data-mdb-target="#col-<%= college.id %>" aria-expanded="false"
-                        aria-controls="col-<%= college.id %>">
+            <% if (colleges.length > 0) { %>
+                <% for (const {id, name, departments} of colleges) { %>
+                    <a type="button" class="collapse-btn" title="<%= name %>" data-mdb-toggle="collapse"
+                        data-mdb-target="#college-<%= id %>" aria-expanded="false"
+                        aria-controls="college-<%= id %>">
                         <i class="fas fa-caret-down me-2"></i><text>
-                            <%= college.name %>
+                            <%= name %>
                         </text>
                     </a>
-                    <% if (college.departments.length> 0) { %>
-                        <div class="collapse show" id="col-<%= college.id %>">
+                    <% if (departments.length> 0) { %>
+                        <div class="collapse show" id="college-<%= id %>">
                             <div>
                                 <ul class="list-group panel-menu">
-                                    <% for (const department of college.departments) { %>
-                                        <button type="button" class="list-group-item list-group-item-action menu-item"
-                                            title="<%= department.name %>" id="<%= department.id %>">
+                                    <% for (const dept of departments) { %>
+                                        <a type="button" class="list-group-item list-group-item-action menu-item"
+                                            <% if (dept.name != currentDept.name) { %>
+                                                href="/admin/faculty/<%= dept.name.split(' ').join('_') %>"
+                                            <% } %>
+                                            title="<%= dept.name %>" id="<%= dept.name %>">
                                             <p class="text-truncate m-0">
-                                                <%= department.name %>
+                                                <%= dept.name %>
                                             </p>
-                                        </button>
-                                        <% } %>
+                                        </a>   
+                                    <% } %>
                                 </ul>
                             </div>
                         </div>
                     <% } else { %>
-                        <div class="collapse" id="col-<%= college.id %>">
+                        <div class="collapse" id="college-<%= id %>">
                             <p>No Departments</p>
                         </div>
                     <% } %>
                 <% } %>
             <% } else { %>
-                <p class="text-muted text-center">No Departments</p>
+                <p class="text-muted text-center">No Colleges</p>
             <% } %>
         </div>
     </div>
     <div class="shadow-3 bg-white px-5 pt-4">
-        <% if (data.colleges.length > 0) { %>
-        <h2 style="color: #8673b4;" id="table-title"></h2>
-        <br>
-        <button class="btn btn-primary btn-rounded" data-cts-toggle="table" data-cts-target="#faculty-table">
-            <i class="fas fa-edit fa-lg me-2"></i>edit table</button>
-        <button class="btn btn-success btn-rounded" data-cts-dismiss="table" data-cts-target="#faculty-table"
-            aria-hidden="true">save changes</button>
-        <table class="table table-bordered table-sm my-4" id="faculty-table">
-            <thead class="text-center">
-                <tr>
-                    <th table-cts-column="faculty_id text" style="width: 130px;">ID</th>
-                    <th table-cts-column="status text" style="width: 140px;">Employment Status</th>
-                    <th table-cts-column="teach_load number">Teach<br>Load</th>
-                    <th table-cts-column="last_name text">Surname</th>
-                    <th table-cts-column="first_name text">First Name</th>
-                    <th table-cts-column="middle_name text">Middle Name</th>
-                    <th table-cts-column="email text">E-mail</th>
-                    <th table-cts-column="schedule text" style="width: 150px;">Current Schedule</th>
-                    <td table-cts-column="edit">Action</td>
-                </tr>
-            </thead>
-            <tbody></tbody>
-            <tfoot>
-                <tr class="add-data">
-                    <td><input type="text" class="form-control add-td-input unique"></td>
-                    <td>
-                        <div class="dropdown">
-                            <button class="btn btn-secondary dropdown-toggle add-td-input" type="button"
-                                data-mdb-toggle="dropdown" aria-expanded="false">Status</button>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" role="button">full-time</a></li>
-                                <li><a class="dropdown-item" role="button">part-time</a></li>
-                            </ul>
-                        </div>
-                    </td>
-                    <td><input type="number" class="form-control add-td-input"></td>
-                    <td><input type="text" class="form-control add-td-input" placeholder="Dela Cruz"></td>
-                    <td><input type="text" class="form-control add-td-input" placeholder="Juan"></td>
-                    <td><input type="text" class="form-control add-td-input" placeholder="Antonio"></td>
-                    <td><input type="email" class="form-control add-td-input unique" placeholder="jadelacruz@school.edu.ph"></td>
-                    <td><label class="add-td-input optional"></label></td>
-                </tr>
-            </tfoot>
-        </table>
+        <% if (colleges.length > 0 && currentDept) { %>
+            <h2 style="color: #8673b4;" id="table-title">Faculty in <%= currentDept.name %> Department</h2>
+            <br>
+            <button class="btn btn-primary btn-rounded" data-cts-toggle="table" data-cts-target="#faculty-table">
+                <i class="fas fa-edit fa-lg me-2"></i>edit table</button>
+            <button class="btn btn-success btn-rounded" data-cts-dismiss="table" data-cts-target="#faculty-table"
+                aria-hidden="true">save changes</button>
+            <table class="table table-bordered table-sm my-4" id="faculty-table">
+                <thead class="text-center">
+                    <tr>
+                        <th table-cts-column="faculty_id text" style="width: 140px;">ID</th>
+                        <th table-cts-column="status text" style="width: 140px;">Employment Status</th>
+                        <th table-cts-column="teach_load number" style="width: 100px;">Teach<br>Load</th>
+                        <th table-cts-column="last_name text">Surname</th>
+                        <th table-cts-column="first_name text">First Name</th>
+                        <th table-cts-column="middle_name text">Middle Name</th>
+                        <th table-cts-column="email text">E-mail</th>
+                        <!-- <th table-cts-column="schedule text" style="width: 150px;">Current Schedule</th> -->
+                        <td table-cts-column="edit">Action</td>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+                <tfoot>
+                    <tr class="add-data">
+                        <td><input type="text" class="form-control add-td-input unique"></td>
+                        <td>
+                            <div class="dropdown">
+                                <button class="btn btn-secondary dropdown-toggle add-td-input" type="button"
+                                    data-mdb-toggle="dropdown" aria-expanded="false">Status</button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" role="button">full-time</a></li>
+                                    <li><a class="dropdown-item" role="button">part-time</a></li>
+                                </ul>
+                            </div>
+                        </td>
+                        <td><input type="number" class="form-control add-td-input"></td>
+                        <td><input type="text" class="form-control add-td-input" placeholder="Dela Cruz"></td>
+                        <td><input type="text" class="form-control add-td-input" placeholder="Juan"></td>
+                        <td><input type="text" class="form-control add-td-input" placeholder="Antonio"></td>
+                        <td><input type="email" class="form-control add-td-input unique" placeholder="jadelacruz@school.edu.ph"></td>
+                        <!-- <td><label class="add-td-input optional"></label></td> -->
+                    </tr>
+                </tfoot>
+            </table>
+        <% } else if (colleges.length > 0) { %>
+            <h4>No Departments selected yet.</h4>
+        <% } else { %>
+            <h4>No Colleges found...</h4>
         <% } %>
     </div>
 </div>
 <script src="/lib/responsive-table.js"></script>
-<script src="/lib/api/admin-root.js"></script>
 <script>
+    function confirmFacultyEdit(event) {
+        const action = $(event.currentTarget).data("action-edit");
+        try {
+            const newData = $(event.currentTarget).data("updatedData");
+            console.log(newData);
+        } catch (error) {
+            console.log(error);
+        }
+    }
     const departments = $(".panel-menu > .menu-item").get();
     const facultyTable = new EditableTable("#faculty-table");
-    let deptTitle = $("#table-title");
-    // let openDepartment;
+    
     if (departments.length > 0) {
-        let openDepartment = departments[0];
-        // $(openDepartment).closest(".collapse").addClass("show");
+        let openDepartment = departments.find(dept => dept.title == "<%= currentDept.name %>");
         $(openDepartment).addClass("active");
-        $(deptTitle).text("Faculty in " + $(openDepartment).attr("title") + " Department");
-        facultyTable.initData(getFaculty(openDepartment.id), true, () => {
-            if (facultyTable.data.length < 1) {
-                $("#table-title").after(
+        facultyTable.initData(getFaculty("<%= currentDept.id %>"), true, () => {
+            if (facultyTable.data.length <= 0) {
+                return $("#table-title").after(
                     "<small class='text-muted d-block' id='chair-note'>* The first faculty entry will be " +
                     "automatically assigned as the chairperson *</small>"
                 );
             }
-        });
-
-        $(".menu-item").click((event) => {
-            let activeItem = event.currentTarget;
-            if (!$(activeItem).hasClass("active")) {
-                openDepartment = activeItem;
-                $(".side-panel").hide();
-                $(".menu-item.active").removeClass("active");
-                $(activeItem).addClass("active");
-                $("#chair-note").remove();
-                facultyTable.initData(getFaculty(activeItem.id), true, () => {
-                    if (facultyTable.data.length < 1) {
-                        $("#table-title").after(
-                            "<small class='text-muted d-block' id='chair-note'>* The first faculty entry will be " +
-                            "automatically assigned as the chairperson *</small>"
-                        );
-                    }
-                });
-                $(deptTitle).text("Faculty in " + activeItem.title + " Department");
-            }
-            facultyTable.saveBtn.trigger("click");
+            $(`${facultyTable.body}>tr`).on("row:confirm-change", confirmFacultyEdit)
         });
 
         $(facultyTable.addBtn).click(async (event) => {
+            let newFaculty;
             try {
-                let addedData = await $(event.currentTarget).data("newRow");
-                if (addedData) {
-                    const deptID = openDepartment.id.slice(5);
-                    await addFaculty(deptID, addedData); 
-                }
+                newFaculty = await $(event.currentTarget).data("newRow");
             } catch (error) {
+                return console.log(error);
+            }
+            console.log(newFaculty);
+            
+            try {
+                const message = await addFaculty("<%= currentDept.id %>", newFaculty);
+                alertModal.show(...Object.values(message));
+            } catch (error) {
+                const { message, redirect } = await error;
+                if (redirect) {
+                    location.replace(redirect);
+                }
+                alertModal.show(...Object.values(message));
                 $(`${facultyTable.body}:last-child`).remove();
                 facultyTable.data.pop();
+                return;
             }
+
             if (facultyTable.data.length > 0) {
                 $("#chair-note").remove();
             }
