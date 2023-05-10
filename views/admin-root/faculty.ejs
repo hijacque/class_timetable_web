@@ -133,24 +133,19 @@
             } catch (error) {
                 return console.log(error);
             }
-            console.log(newFaculty);
             
             try {
                 const message = await addFaculty("<%= currentDept.id %>", newFaculty);
                 alertModal.show(...Object.values(message));
             } catch (error) {
-                const { message, redirect } = await error;
+                console.log(error);
+                const { message, redirect } = error.responseJSON;
                 if (redirect) {
                     location.replace(redirect);
                 }
-                alertModal.show(...Object.values(message));
-                $(`${facultyTable.body}:last-child`).remove();
+                $(`${facultyTable.body} > tr:last-child`).remove();
                 facultyTable.data.pop();
-                return;
-            }
-
-            if (facultyTable.data.length > 0) {
-                $("#chair-note").remove();
+                alertModal.show(...Object.values(message));
             }
             $(event.currentTarget).removeData("newRow");
         });
