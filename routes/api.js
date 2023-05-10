@@ -190,7 +190,7 @@ router.route("/faculty/:deptID?")
     .get(async (req, res) => { // gets faculty per department
         // check user credentials
         const user = req.account;
-        if (!user && (user.type == "admin" || user.type == "chair")) {
+        if (!user || (user.type != "admin" && user.type != "chair")) {
             res.cookie("serverMessage", {
                 message: {
                     mode: 0,
@@ -208,8 +208,7 @@ router.route("/faculty/:deptID?")
         
         if (!columns) {
             query = `SELECT f.${validColumns.join(", f.")}, `;
-        }
-        if (columns.every(col => validColumns.some(validCol => col == validCol))) {
+        } else if (columns.every(col => validColumns.includes(col))) {
             // specifies what columns to get
             query = `SELECT f.${columns.join(", f.")}, `;
         } else {
@@ -222,13 +221,14 @@ router.route("/faculty/:deptID?")
             });
         }
 
-        query += `u.email, "My Schedule" AS schedule FROM Colleges col INNER JOIN Departments d ` +
+        query += `u.email, "My Schedule" AS schedule, col.school_id, d.chair_id, d.id FROM Colleges col INNER JOIN Departments d ` +
             `ON col.id = d.college_id INNER JOIN Faculty f ON d.id = f.dept_id INNER JOIN Users u ` +
-            `ON f.id = u.id WHERE (col.school_id = "${req.account.id}" OR d.chair_id = "${req.account.id}")`;
+            `ON f.id = u.id WHERE (col.school_id = "${user.id}" OR d.chair_id = "${user.id}")`;
         if (req.params.deptID) {
             query += ` AND d.id = "${req.params.deptID}"`
         }
-        query += " ORDER BY f.status, f.last_name";
+        query += " ORDER BY f.status, f.last_name, f.first_name, f.middle_name";
+
         res.status(200).json({ faculty: await DB.executeQuery(query) });
     }).post(createFaculty, (req, res) => { // creates new faculty in 
         res.status(200).json({

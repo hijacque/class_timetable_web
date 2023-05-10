@@ -29,12 +29,22 @@ const getFaculty = (departmentID, columns) => new Promise((resolve, reject) => {
 
 const updateDepartment = (deptID, newDeptData) => new Promise((resolve, reject) => $.post(
     "http://localhost:3000/api/department/" + deptID, newDeptData,
-    (data) => resolve(data.message), "text json"
+    (data) => resolve(data.message), "json"
 ).fail(error => reject(error)));
 
-const addFaculty = (departmentID, facultyData) => $.post(
-    "http://localhost:3000/api/faculty/" + departmentID, facultyData,
-    (data, status) => {
-        console.log(data.message);
-    }, "json"
-);
+// const addFaculty = (deptID, facultyData) => $.posnew Promise((resolve, reject) => $.post(
+//     "http://localhost:3000/api/faculty/" + deptID, facultyData
+// ).done(data => resolve(data.message)).fail(error => reject(error)));
+
+const addFaculty = (deptID, facultyData) => $.post(
+    "http://localhost:3000/api/faculty/" + deptID, facultyData
+).done((data) => {
+    return data.message;
+}).fail((error) => {
+    return error;
+});
+
+// const updateFaculty = (deptID, facultyData) => new Promise((resolve, reject) => $.post(
+//     "http://localhost:3000/api/faculty-data/" + deptID, facultyData,
+//     (data) => resolve(data.message), "json"
+// ).fail(error => reject(error)));
