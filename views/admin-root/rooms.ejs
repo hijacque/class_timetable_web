@@ -70,38 +70,40 @@
 </div>
 <script src="/lib/responsive-table.js"></script>
 <script>
-    const buildings = $(".panel-menu > .menu-item").get();
-    // initialize responsive Rooms table
-    const roomsTable = new EditableTable("#rooms-table");
-    if (buildings.length > 0) {
-        let openBuilding = buildings.find(bldg => bldg.title == "<%= currentBldg.name %>");
-        $(openBuilding).addClass("active");
-        roomsTable.initData(getRooms("<%= currentBldg.id %>"), true);
-        
-        $(roomsTable.addBtn).click(async (event) => {
-            let newRoom;
-            try {
-                newRoom = await $(event.currentTarget).data("newRow");
-            } catch (error) {
-                return console.error(error);
-            }
-            try {
-                await addRoom("<%= currentBldg.id %>", newRoom);
-            } catch (error) {
-                console.error(error);
-                const {redirect, message} = error.responseJSON || error.responseText;
-                if (redirect) {
-                    return location.replace(redirect);
+    <% if (currentBldg) { %>
+        const buildings = $(".panel-menu > .menu-item").get();
+        // initialize responsive Rooms table
+        const roomsTable = new EditableTable("#rooms-table");
+        if (buildings.length > 0) {
+            let openBuilding = buildings.find(bldg => bldg.title == "<%= currentBldg.name || buildings[0].name %>");
+            $(openBuilding).addClass("active");
+            roomsTable.initData(getRooms("<%= currentBldg.id || buildings[0].name %>"), true);
+            
+            $(roomsTable.addBtn).click(async (event) => {
+                let newRoom;
+                try {
+                    newRoom = await $(event.currentTarget).data("newRow");
+                } catch (error) {
+                    return console.error(error);
                 }
-                alertModal.show(...Object.values(message));
-                $(`${roomsTable.body} > tr:last-child`).remove();
-                roomsTable.data.pop();
-            }
+                try {
+                    await addRoom("<%= currentBldg.id %>", newRoom);
+                } catch (error) {
+                    console.error(error);
+                    const {redirect, message} = error.responseJSON || error.responseText;
+                    if (redirect) {
+                        return location.replace(redirect);
+                    }
+                    alertModal.show(...Object.values(message));
+                    $(`${roomsTable.body} > tr:last-child`).remove();
+                    roomsTable.data.pop();
+                }
 
-            $(event.currentTarget).removeData("newRow");
-        });
-    }
-
+                $(event.currentTarget).removeData("newRow");
+            });
+        }
+    <% } %>
+    
     $("#add-building").click(async (event) => {
         const newBldg = $(event.currentTarget).siblings("input").get(0).value;
         if (buildings.some(bldg => bldg.title == newBldg)) {
