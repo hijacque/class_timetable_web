@@ -1,3 +1,4 @@
+<% const {courses, currentCourse} = data %>
 <div class="bg-light task-view" id="courses-view">
     <div class="side-panel">
         <div class="panel-header mx-4">
@@ -17,24 +18,27 @@
         </div>
         <hr>
         <div class="mx-3 panel-body">
-            <% if (data.courses.length> 0) { %>
+            <% if (courses.length> 0) { %>
                 <ul class="list-group panel-menu">
-                    <% for (const course of data.courses) { %>
+                    <% for (const {id, title} of courses) { %>
                         <button type="button" class="list-group-item list-group-item-action menu-item"
-                            title="<%= course.title %>" id="<%= course.id %>">
+                            <% if (currentCourse.id != id) { %>
+                                href="/chair/courses/<%= title.split(' ').join("_") %>"
+                            <% } %>
+                            title="<%= title %>">
                             <p class="text-truncate m-0">
-                                <%= course.title %>
+                                <%= title %>
                             </p>
                         </button>
-                        <% } %>
-                </ul>
-                <% } else { %>
-                    <p class="text-muted text-center">No Courses</p>
                     <% } %>
+                </ul>
+            <% } else { %>
+                <p class="text-muted text-center">No Courses</p>
+            <% } %>
         </div>
     </div>
     <div class="bg-white px-5 pt-4">
-        <% if (data.courses.length> 0) { %>
+        <% if (courses.length > 0 && currentCourse) { %>
             <div class="dropdown">
                 <a class="btn btn-primary btn-lg btn-rounded btn-top dropdown-toggle" data-mdb-toggle="dropdown" title="Add semester" id="add-semester">
                     add semester
@@ -47,38 +51,20 @@
                 </ul>
             </div>
             <h3 style="color: #8673b4;" id="curriculum-title">
-                <%= data.courses[0]["title"] %> Curriculum
+                <%= courses[0]["title"] %> Curriculum
             </h3>
             <label for="curriculum-title">Total No. of Units: 0</label>
             <hr>
-            <% } %>
+        <% } else if (courses.length > 0) { %>
+            <h4>No courses chosen yet..</h4>
+        <% } else { %>
+            <h4>No courses found</h4>
+        <% } %>
     </div>
 </div>
-<% let subjects = JSON.stringify(data.subjects) %>
+
 <script src="/lib/responsive-table.js"></script>
 <script>
-    const addCourse = (title) => new Promise((resolve, reject) => $.post(
-        "/api/courses/", {name: title},
-        (data) => resolve(data.courseID)
-    ).fail((data) => reject(data)));
-
-    const getCurriculum = (courseID) => new Promise((resolve, reject) => {
-        $.get("/api/curriculums/" + courseID,
-            (data, status) => { resolve(data) }, "json"
-        ).fail((data) => console.log(data))
-    });
-
-    const addSemester = (courseID, semData) => $.post(
-        "/api/curriculums/" + courseID, semData,
-        (data, status) => console.log(data)
-    ).fail((data) => console.log(data));
-
-    const addSubject = (courseID, subjData) => new Promise((resolve, reject) => {
-        $.post("/api/curriculum/" + courseID, subjData,
-            (data) => resolve(data.newSubject)
-        ).fail(data => reject(data))
-    });
-
     function addTermTables(data = []) {
         const tableContent = 
             `<thead><th table-cts-column="code text" style="width: 150px;">COURSE CODE</th>` +

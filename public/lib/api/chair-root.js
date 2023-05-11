@@ -18,3 +18,25 @@ const getSchedules = (termID, category) => new Promise(
         (data, status) => resolve(data.schedules)
     ).fail((data) => location.load())
 );
+
+const addCourse = (title) => new Promise((resolve, reject) => $.post(
+    "/api/courses/", {name: title},
+    (data) => resolve(courseID)
+).fail((data) => reject(data)));
+
+const getCurriculum = (courseID) => new Promise((resolve, reject) => {
+    $.get("/api/curriculums/" + courseID,
+        (data, status) => { resolve(data) }, "json"
+    ).fail((data) => console.log(data))
+});
+
+const addSemester = (courseID, semData) => $.post(
+    "/api/curriculums/" + courseID, semData,
+    (data, status) => console.log(data)
+).fail((data) => console.log(data));
+
+const addSubject = (courseID, subjData) => new Promise((resolve, reject) => {
+    $.post("/api/curriculum/" + courseID, subjData,
+        (data) => resolve(data.newSubject)
+    ).fail(data => reject(data))
+});
