@@ -41,12 +41,15 @@
                 <i class="fas fa-caret-down me-2"></i><text>Open Schedules</text>
             </a>
             <% if (openTerms.length> 0) { %>
-                <div class="collapse" id="open-terms" title="OPEN">
+                <div class="collapse show" id="open-terms" title="OPEN">
                     <div>
                         <ul class="list-group panel-menu">
                             <% for (const term of openTerms) { %>
-                                <a href="http://localhost:3000/chair/schedules?term=<%= term.year %><%= term.term %>" type="button" class="list-group-item list-group-item-action menu-item"
-                                    title="<%= term.year %><%= term.term %>" id="<%= term.id %>">
+                                <a type="button" class="list-group-item list-group-item-action menu-item"
+                                    <% if (term.id != currentTerm.id) { %>
+                                        href="/chair/schedules/<%= term.year %><%= term.term %>" 
+                                    <% } %>
+                                    title="<%= term.year %><%= term.term %>">
                                     <p class="text-truncate m-0">
                                         <%- term.term_ordinal %>, <%= term.year %>-<%= term.year + 1 %>
                                     </p>
@@ -63,13 +66,15 @@
                     <a type="button" class="collapse-btn" data-mdb-toggle="collapse" data-mdb-target="#closed-terms" aria-expanded="false">
                         <i class="fas fa-caret-down me-2"></i><text>Closed Schedules</text>
                     </a>
-                        
                 <% if (closedTerms.length> 0) { %>
-                    <div class="collapse" id="closed-terms" title="CLOSED">
+                    <div class="collapse show" id="closed-terms" title="CLOSED">
                         <div><ul class="list-group panel-menu">
                             <% for (const term of closedTerms) { %>
-                                <a href="http://localhost:3000/chair/schedules?term=<%= term.year %><%= term.term %>" type="button"class="list-group-item list-group-item-action menu-item"
-                                    title="<%= term.year %><%= term.term %>" id="<%= term.id %>">
+                                <a type="button" class="list-group-item list-group-item-action menu-item"
+                                    <% if (term.id != currentTerm.id) { %>
+                                        href="/chair/schedules/<%= term.year %><%= term.term %>" 
+                                    <% } %>
+                                    title="<%= term.year %><%= term.term %>">
                                     <p class="text-truncate m-0">
                                         <%- term.term_ordinal %>, <%= term.year %>-<%= term.year + 1 %>
                                     </p>
@@ -84,96 +89,76 @@
                 <% } %>
         </div>
     </div>
-    <% const {prev, current, next} = data %>
     <div class="shadow-3 bg-white px-5 pt-4">
-        <% if (openTerms.length > 0 || closedTerms.length > 0) { %>
-            <% currentTerm = (!currentTerm || currentTerm == "") ? (openTerms[0].year + openTerms[0].term) || (closedTerms[0].year + closedTerms[0].term) : currentTerm %>
-            <% if (openTerms.some(t => t.year + t.term == currentTerm)) { %>
-                <form method="post" target="auto_schedule" action="/schedule/generate" 
+        <% if ((openTerms.length > 0 || closedTerms.length > 0) && currentTerm) { %>
+            <% const {year, term, term_ordinal} = currentTerm %>
+            <% if (currentTerm.status == 'open') { %>
+                <form method="post" target="auto_schedule" action="/schedule/generate"
                     onsubmit="window.open('_blank','auto_schedule');">
                     <button name="term" type="submit" title="Autogenerate Schedule" id="generate-sched"
-                        class="btn btn-primary btn-lg btn-rounded btn-top" value="<%= currentTerm %>">
+                        class="btn btn-primary btn-lg btn-rounded btn-top" value="<%= year + term %>">
                         generate schedule<i class="fas fa-star fa-lg ms-3"></i>
                     </button>
                 </form>
                 <div class="d-flex">
-                    <h3 id="term-title"></h3>
-                    <form method="post" target="export_schedule" action="/schedule/download/<%= currentTerm %>/department" 
+                    <h3 id="term-title"><%- term_ordinal %> Semester, <%= year %>-<%= year+1 %></h3>
+                    <form method="post" target="export_schedule" action="/schedule/download/<%= year + term %>/department"
                         onsubmit="window.open('_blank','export_schedule');">
                         <button type="submit" class="ms-4 btn btn-secondary btn-floating" title="Export schedules">
                             <i class="fas fa-cloud-arrow-down fa-lg"></i>
                         </button>
                     </form>
                 </div>
-                <label for="term-title">Status: <span id="term-status"></span></label>
+                <label for="term-title">Status: <span id="term-status" class="text-success">OPEN</span></label>
                 <hr>
-                <nav aria-label="Schedule Navigation for Department">
-                    <ul class="pagination" id="schedule-nav">
-                        <% if (prev) { %>
+            <% } else { %>
+                <div class="d-flex">
+                    <h3 id="term-title"><%- term_ordinal %> Semester, <%= year %>-<%= year+1 %></h3>
+                    <form method="post" target="export_schedule" action="/schedule/download/<%= year + term %>/department"
+                        onsubmit="window.open('_blank','export_schedule');">
+                        <button type="submit" class="ms-4 btn btn-secondary btn-floating" title="Export schedules">
+                            <i class="fas fa-cloud-arrow-down fa-lg"></i>
+                        </button>
+                    </form>
+                </div>
+                <label for="term-title">Status: <span id="term-status" class="text-muted">CLOSED</span></label>
+                <hr>
+            <% } %>
+            <% const {prev, current, next} = data %>
+            <nav aria-label="Schedule Navigation for Department">
+                <ul class="pagination" id="schedule-nav">
+                    <% if (prev) { %>
                         <li class="page-item">
                             <a class="page-link me-2" type="button" 
-                                href="/chair/schedules?term=<%= currentTerm %><%= prev.id != 'faculty' ? '&course=' + prev.id : '' %>">
+                                href="/chair/schedules/<%= year + term %><%= (prev.id != 'faculty') ? '?course=' + prev.id : '' %>">
                                 <i class="fas fa-chevron-left"></i>
                             </a>
                             <p class="prev page-label"><%= prev.title %></p>
                         </li>
-                        <% } else { %>
-                            <li class="page-item disabled"></li>
-                        <% } %>
-                        <li class="page-title"><%= current.title %></li>
-                        <% if (next) { %>
+                    <% } else { %>
+                        <li class="page-item disabled"></li>
+                    <% } %>
+
+                    <li class="page-title"><%= current.title %></li>
+
+                    <% if (next) { %>
                         <li class="justify-content-end page-item">
                             <p class="next page-label"><%= next.title %></p>
                             <a class="page-link ms-2" type="button" 
-                                href="/chair/schedules?term=<%= currentTerm %><%= next.id != 'faculty' ? '&course=' + next.id : '' %>">
+                                href="/chair/schedules/<%= year + term %><%= next.id != 'faculty' ? '?course=' + next.id : '' %>">
                                 <i class="fas fa-chevron-right"></i>
                             </a>
                         </li>
-                        <% } else { %>
-                            <li class="justify-content-end page-item disabled"></li>
-                        <% } %>
-                    </ul>
-                </nav>
-                <table class="table table-bordered table-sm my-4"></table>
-            <% } else if (closedTerms.some(t => t.year + t.term == currentTerm)) { %>
-                <h3 id="term-title"></h3>
-                <label for="term-title">Status: <span id="term-status"></span></label>
-                <hr>
-                <nav aria-label="Schedule Navigation for Department">
-                    <ul class="pagination" id="schedule-nav">
-                        <% if (prev) { %>
-                            <% const {id, title} = prev %>
-                            <li class="page-item">
-                                <a class="page-link me-2" type="button" 
-                                    href="/chair/schedules?term=<%= currentTerm %><%= id == 'faculty' ? '' : '&course=' + id %>">
-                                    <i class="fas fa-chevron-left"></i>
-                                </a>
-                                <p class="prev page-label"><%= title %></p>
-                            </li>
-                        <% } else { %>
-                            <li class="page-item disabled"></li>
-                        <% } %>
-                        <li class="page-title"><%= current.title %></li>
-                        <% if (next) { %>
-                            <% const {id, title} = next %>
-                            <li class="justify-content-end page-item">
-                                <p class="next page-label"><%= title %></p>
-                                <a class="page-link ms-2" type="button" 
-                                    href="/chair/schedules?term=<%= currentTerm %><%= id == 'faculty' ? '' : '&course=' %>">
-                                    <i class="fas fa-chevron-right"></i>
-                                </a>
-                            </li>
-                        <% } else { %>
-                            <li class="justify-content-end page-item disabled"></li>
-                        <% } %>
-                    </ul>
-                </nav>
-                <table class="table table-bordered table-sm my-4"></table>
-            <% } else { %>
-                <h3 id="term-title">No terms chosen to view yet...</h3>
-            <% } %>
+                    <% } else { %>
+                        <li class="justify-content-end page-item disabled"></li>
+                    <% } %>
+                </ul>
+            </nav>
+            <table class="table table-bordered table-sm my-4"></table>
+        <% } else if (openTerms.length > 0 || closedTerms.length > 0) { %>
+            <h3>No chosen term yet...</h3>
         <% } else { %>
-            <h3 id="term-title">Woops! No terms found yet, create new schedule now.</h3>
+            <h3>Woops! No terms found yet, create new schedule now.</h3>
         <% } %>
     </div>
 </div>
@@ -181,30 +166,9 @@
 <script src="/lib/responsive-table.js"></script>
 <script src="/lib/display-dropdown.js"></script>
 <script>
-    const addTerm = (year, semester) => new Promise((resolve, reject) => $.post(
-        "/api/terms", { year: year, term: semester },
-        (data, status) => {
-            resolve(data.termID);
-        }).fail((data) => location.reload())
-    );
-
-    const addBlock = (courseID, year, totalStudents, termID) => new Promise((resolve, reject) => {
-        $.post("/api/blocks/" + courseID, 
-            { year: year, totalStudents: totalStudents, termID: termID },
-            (data) => resolve(data.newBlock)
-        ).fail((data) => location.reload())
-    });
-
-    const getSchedules = (termID, category) => new Promise(
-        (resolve, reject) => $.get(
-            "/api/schedules/" + termID, {category: category}, 
-            (data, status) => resolve(data.schedules)
-        ).fail((data) => location.load())
-    );
-
     function initScheduleTable(table) {
         const {id} = table;
-        const termID = openTerm.attr("id");
+        const termID = "<%= currentTerm.id %>";
 
         if (id == "faculty") {
             scheduleTable.attr("id", "faculty-schedule").append(
@@ -216,7 +180,10 @@
                 `</tr></thead><tbody></tbody>`
             );
             const facultyTable = new DisplayTable("#faculty-schedule");
-            facultyTable.initData(getSchedules(termID, id), true, () => $(`${facultyTable.body}>tr`).click(event => openSchedule(id, event)));
+            facultyTable.initData(
+                getSchedules(termID, id), true, 
+                () => $(`${facultyTable.body}>tr`).click(event => openSchedule(id, event))
+            );
         } else {
             scheduleTable.attr("id", "blocks-schedule").append(
                 `<thead clas='text-center'><tr><th table-cts-column="year" style="width: 120px;">Year</th>` +
@@ -251,46 +218,36 @@
         const row = rowEvent.currentTarget;
 
         if (tableID == "faculty") {
-            window.location.href = `/schedule/faculty?term=${openTerm.attr("title")}&` +
+            window.location.href = `/schedule/faculty?term=${openTerm.title}&` +
                 `id=${row.firstChild.textContent}`;    
         } else {
             const [year, block] = row.children;
-            window.location.href = `/schedule/${tableID}?term=${openTerm.attr("title")}&` +
+            window.location.href = `/schedule/${tableID}?term=${openTerm.title}&` +
                 `year=${year.textContent}&block=${block.textContent}`;
         }
     }
 
     const updateLoad = (rowEvent) => {
-        if (!rowEvent.currentTarget.isConnected) {
-            return;
+        if (rowEvent.currentTarget.isConnected) {
+            const columns =  $(event.currentTarget).closest("td").siblings().get();
+            $.post("/api/preferences/" + openTerm.attr("id"),
+                { load: columns[2].textContent, facultyID: columns[0].textContent }
+            ).fail((data) => console.log(data));
         }
-        
-        const columns =  $(event.currentTarget).closest("td").siblings().get();
-        $.post("/api/preferences/" + openTerm.attr("id"),
-            { load: columns[2].textContent, facultyID: columns[0].textContent }
-        ).fail((data) => console.log(data));
     };
 
     /* 
     * main proces start here
     */
-    let openTerm = $(".menu-item[title='<%= currentTerm %>']"); // current academic term opened
-    
+   let openTerm;
     const scheduleTable = $("#schedules-view>div:last-child>table"); // faculty or blocks schedule table of open term
     const termTitle = $("#term-title");
     const termStatus = $("span#term-status");
-    const currentTable = <%- JSON.stringify(current) %>;
-    
-    if (openTerm.length > 0) {
-        $("#create-schedule").val(openTerm.attr("id"));
-        termStatus.text(openTerm.closest(".collapse").addClass("show").attr("title"));
-        termTitle.text(openTerm.text());
-        openTerm.addClass("active");
-        if (termStatus.text() == "OPEN") {
-            termStatus.addClass("text-success");
-        } else {
-            termStatus.addClass("text-muted");
-        }
+    const currentTable = <%- JSON.stringify(data.current) %>;
+    const terms = $(".menu-item").get();
+    if (terms.length > 0) {
+        openTerm = terms.find(t => t.title == "<%= currentTerm.year + currentTerm.term %>"); // current academic term opened
+        $(openTerm).addClass("active");
 
         $("#open-terms").find(".menu-item").click((event) => termStatus.addClass("text-success").removeClass("text-muted"));
 
@@ -298,12 +255,10 @@
 
         initScheduleTable(currentTable);
     } else {
-        $("#open-terms").addClass("show");
+        $("#open-terms, #closed-terms").addClass("show");
     }
-
-
+    
     displayDropMenu($("#new-term-sem"), "Semester");
-
     $("#add-term").click(async (event) => {
         const semester = $("#new-term-sem").text();
         const year = $("#new-term-year").val();
@@ -316,7 +271,7 @@
         
         const newTermID = await addTerm(year, semester[0]);
         if (newTermID) {
-            location.replace("http://localhost:3000/chair/schedules?term=" + year + semester[0]);
+            location.replace("http://localhost:3000/chair/schedules/" + year + semester[0]);
         }
     });
 </script>
