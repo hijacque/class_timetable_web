@@ -105,6 +105,12 @@
     }
 
     async function confirmDeptEdit(event) {
+        const action = $(event.currentTarget).data("edit-action");
+        if (!action) {
+            console.log($(event.currentTarget).data("deletedData"));
+            console.log("Deleting from db...");
+            return;
+        }
         const [deptColumn, chairColumn] = $(event.currentTarget).children().get();
         let newChair = $(chairColumn).text();
         const deptID = departmentsTable.data[$(event.currentTarget).index()]["id"];
@@ -128,9 +134,11 @@
     }
 
     async function cancelDeptEdit(event) {
-        const chairColumn = $(event.currentTarget).children().get(1);
-        let prevChair = $(event.currentTarget).data("prevChair");
-        chairColumn.textContent = prevChair;
+        if ($(event.currentTarget).data("edit-action") == 1) {
+            const chairColumn = $(event.currentTarget).children().get(1);
+            let prevChair = $(event.currentTarget).data("prevChair");
+            chairColumn.textContent = prevChair;
+        }
     }
 
     $("#add-college").click(async (event) => {

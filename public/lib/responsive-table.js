@@ -24,12 +24,6 @@ class ResponsiveTable {
 
         this.headers = $(`${table}>thead>tr>[table-cts-column]:not([table-cts-column='edit'])`).get();
         $(this.headers).attr("aria-sort", "ascending").click((event) => this.#sortTable(event.currentTarget));
-        // for (let i = 0; i < this.headers.length; i++) {
-        //     if (!this.headers[i].ariaColIndex) {
-        //         this.headers[i].ariaColIndex = i;
-        //     }
-        // // }
-        // this.headers.sort((a, b) => a.ariaColIndex - b.ariaColIndex);
     }
 
     async initData(data = []) {
@@ -129,7 +123,7 @@ class EditableTable extends ResponsiveTable {
     constructor(id, data = [], asyncData = false) {
         super(id);
 
-        const footer = $(`${id}>tfoot>tr.add-data:not(.disabled)`);
+        const footer = $(`${id}>*>tr.add-data:not(.disabled)`);
         if (footer.length > 0) {
             this.addBtn = $(
                 `<td class="add-row text-primary"><a role="button"><i class="fas fa-plus-circle fa-2x"></i></a></td>`
@@ -399,6 +393,7 @@ class EditableTable extends ResponsiveTable {
         
         $(".td-input:first").focus();
         $(inputs).prop("disabled", true);
+        $(row).data("edit-action", 1);
         this.initMenuInputs($(row).data("prev-data", oldData));
     }
 
@@ -410,16 +405,18 @@ class EditableTable extends ResponsiveTable {
         $(row).addClass("text-danger table-active").find("div.confirm-options").show();
         $(this.#footer).find("td.add-row>a").prop("disabled", true).hide();
         $(`${this.body}>tr>td>a`).hide();
+        $(row).data("edit-action", 0);
 
         $(this.#footer).find(".add-td-input").prop("disabled", true);
     }
 
     #confirmRowChange(updateRow) {
-        const action = $(`${this.table}>thead>tr> [table-cts-column="edit"]`);
+        const actionTitle = $(`${this.table}>thead>tr> [table-cts-column="edit"]`);
+        const action = $(updateRow).data("edit-action");
         $(`${this.body}>tr>td>a`).show();
         $(this.table).addClass("table-hover");
 
-        if (action.text() == "Edit") {
+        if (action == 1) {
             const rowInputs = $(updateRow).find(".td-input").get();
             let updateData = {};
             let validEdit = true;
@@ -459,7 +456,8 @@ class EditableTable extends ResponsiveTable {
                 updateData[aboutCol[0]] = newValue;
             }
             if (validEdit) {
-                Object.assign(this.data[$(updateRow).index()], updateData);
+                const rowIndex = $(updateRow).index();
+                Object.assign(this.data[rowIndex], updateData);
                 for (let i = 0; i < rowInputs.length; i++) {
                     const aboutCol = $(this.headers[i]).attr("table-cts-column").split(" ", 3);
                     let newValue = updateData[aboutCol[0]];
@@ -481,25 +479,27 @@ class EditableTable extends ResponsiveTable {
                 $(this.#footer).find(".add-td-input, td.add-row>a").prop("disabled", false).show();
 
                 $(updateRow).removeClass("table-active").removeData("prev-data").find("div.confirm-options").hide();
-                action.text("Action");
+                actionTitle.text("Action");
+                $(updateRow).data("updatedData", ...this.data.splice(rowIndex, 1));
             }
-        } else if (action.text() == "Delete") {
+        } else if (action == 0) {
             $(`${this.table}>tbody>tr`).not(updateRow).removeClass("text-muted").css("background-color", "unset");
             $(this.table).find("div.edit-options").show();
             $(this.#footer).find(".add-td-input, td.add-row>a").prop("disabled", false).show();
-
-            this.data.splice($(updateRow).index(), 1);
-            $(updateRow).remove();
-            action.text("Action");
+            
+            
+            $(updateRow).data("updatedData", ...this.data.splice(rowIndex, 1)).hide();
+            actionTitle.text("Action");
         }
     }
 
     #cancelRowChange(row) {
-        const action = $(`${this.table}>thead>tr> [table-cts-column="edit"]`);
+        const actionTitle = $(`${this.table}>thead>tr> [table-cts-column="edit"]`);
+        const action = $(row).data("edit-action");
         $(`${this.body}>tr>td>a`).show();
         $(this.table).addClass("table-hover");
 
-        if (action.text() == "Edit") {
+        if (action == 1) {
             let rowInputs = $(row).find(".td-input").get();
             const oldData = $(row).data("prev-data");
             for (let i = 0; i < rowInputs.length; i++) {
@@ -521,13 +521,13 @@ class EditableTable extends ResponsiveTable {
             $(row).removeClass("table-active").find("div.confirm-options").hide();
             $(this.body).find("div.edit-options").show();
             $(this.#footer).find(".add-td-input, td.add-row>a").prop("disabled", false).show();
-            action.text("Action");
+            actionTitle.text("Action");
             $(row).removeData("prev-data");
-        } else if (action.text() == "Delete") {
+        } else if (action == 0) {
             $(`${this.body}>tr`).not(row).removeClass("text-muted").css("background-color", "unset");
             $(this.table).find("div.edit-options").show();
             $(this.#footer).find(".add-td-input, td.add-row>a").prop("disabled", false).show();
-            action.text("Action");
+            actionTitle.text("Action");
             $(row).removeClass("text-danger table-active").find("div.confirm-options").hide();
         }
     }

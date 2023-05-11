@@ -71,7 +71,7 @@ router.get("/admin/:task?/:current?", verifySession, getAdminData, (req, res) =>
     }
 });
 
-router.get("/chair/:task?", verifySession, getChairData, getFacultyData, (req, res) => {
+router.get("/chair/:task?/:current?", verifySession, getChairData, getFacultyData, (req, res) => {
     if (req.taskData) {
         const tasks = ["schedules", "faculty", "courses", "schedule", "preference"];
         res.render("chair-root/base", {

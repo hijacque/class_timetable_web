@@ -1,3 +1,4 @@
+<% const {colleges, currentCollege} = data %>
 <div class="bg-light task-view" id="subjects-view">
     <div class="side-panel">
         <div class="d-flex mx-4 justify-content-between">
@@ -9,15 +10,18 @@
         </div>
         <hr>
         <div class="overflow-scroll mx-3">
-            <% if (data.colleges.length > 0) { %>
+            <% if (colleges.length > 0) { %>
             <ul class="list-group panel-menu">
-                <% for (const college of data.colleges) { %>
-                    <button type="button" class="list-group-item list-group-item-action menu-item"
-                        title="<%= college.name %>" id="<%= college.id %>">
+                <% for (const college of colleges) { %>
+                    <a type="button" class="list-group-item list-group-item-action menu-item"
+                        <% if (college.id != currentCollege.id) { %>
+                            href="/admin/subjects/<%= college.name.split(" ").join("_") %>"
+                        <% } %>
+                        title="<%= college.name %>">
                         <p class="text-truncate m-0">
                             <%= college.name %>
                         </p>
-                    </button>
+                    </a>
                     <% } %>
             </ul>
             <% } else { %>
@@ -26,104 +30,95 @@
         </div>
     </div>
     <div class="shadow-3 bg-white px-5 pt-4">
-        <% if (data.colleges.length > 0) { %>
-        <h2 style="color: #8673b4;" class="table-title">
-            <%= data.colleges[0].name %>
-        </h2>
-        <br>
-        <a class="btn btn-primary btn-rounded" data-cts-toggle="table" data-cts-target="#subjects-table" href="#table-footer">
-            <i class="fas fa-edit fa-lg me-2"></i>edit table</a>
-        <button class="btn btn-success btn-rounded" data-cts-dismiss="table" data-cts-target="#subjects-table"
-            aria-hidden="true">save changes</button>
-        <table class="table table-bordered table-sm fw-bold my-4" id="subjects-table">
-            <thead class="text-center">
-                <tr>
-                    <th table-cts-column="code text" style="width: 180px;">Code</th>
-                    <th table-cts-column="title text">Title</th>
-                    <th table-cts-column="type text" style="width: 80px;">Type</th>
-                    <th table-cts-column="units text" style="width: 80px;">Units</th>
-                    <th table-cts-column="req_hours text" style="width: 100px;">Required<br>Hours</th>
-                    <th table-cts-column="pref_rooms text" style="width: 250px;">Specialized Rooms</th>
-                    <td table-cts-column="edit">Action</td>
-                </tr>
-            </thead>
-            <tbody></tbody>
-            <tfoot id="table-footer">
-                <tr class="add-data">
-                    <td><input type="text" class="form-control add-td-input unique reuse"></td>
-                    <td><input type="text" class="form-control add-td-input reuse"></td>
-                    <td>
-                        <div class="dropdown">
-                            <button class="btn btn-secondary dropdown-toggle add-td-input optional" type="button"
-                                data-mdb-toggle="dropdown" aria-expanded="false">Type</button>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" role="button">LEC</a></li>
-                                <li><a class="dropdown-item" role="button">LAB</a></li>
-                                <li><hr class="dropdown-divider m-0"></li>
-                                <li>
-                                    <a class="dropdown-item text-danger" role="button" data-cts-reset="dropdown">
-                                        Cancel
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </td>
-                    <td><input type="number" class="form-control add-td-input"></td>
-                    <td><input type="number" class="form-control add-td-input reuse"></td>
-                    <td><input type="text" class="form-control add-td-input optional"></td>
-                </tr>
-            </tfoot>
-        </table>
+        <% if (colleges.length > 0 && currentCollege) { %>
+            <h2 style="color: #8673b4;" class="table-title">
+                Subjects offered in <%= currentCollege.name %>
+            </h2>
+            <br>
+            <a class="btn btn-primary btn-rounded" data-cts-toggle="table" data-cts-target="#subjects-table" href="#table-footer">
+                <i class="fas fa-edit fa-lg me-2"></i>edit table</a>
+            <button class="btn btn-success btn-rounded" data-cts-dismiss="table" data-cts-target="#subjects-table"
+                aria-hidden="true">save changes</button>
+            <table class="table table-bordered table-sm fw-bold my-4" id="subjects-table">
+                <thead class="text-center">
+                    <tr>
+                        <th table-cts-column="code text" style="width: 180px;">Code</th>
+                        <th table-cts-column="title text">Title</th>
+                        <th table-cts-column="type text" style="width: 90px;">Type</th>
+                        <th table-cts-column="units text" style="width: 90px;">Units</th>
+                        <th table-cts-column="req_hours text" style="width: 90px;">Required<br>Hours</th>
+                        <th table-cts-column="pref_rooms text" style="width: 250px;">Specialized Rooms</th>
+                        <td table-cts-column="edit">Action</td>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+                <tfoot id="table-footer">
+                    <tr class="add-data">
+                        <td><input type="text" class="form-control add-td-input unique reuse"></td>
+                        <td><input type="text" class="form-control add-td-input reuse"></td>
+                        <td>
+                            <div class="dropdown">
+                                <button class="btn btn-secondary dropdown-toggle add-td-input optional" type="button"
+                                    data-mdb-toggle="dropdown" aria-expanded="false">Type</button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" role="button">LEC</a></li>
+                                    <li><a class="dropdown-item" role="button">LAB</a></li>
+                                    <li><hr class="dropdown-divider m-0"></li>
+                                    <li>
+                                        <a class="dropdown-item text-danger" role="button" data-cts-reset="dropdown">
+                                            Cancel
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                        <td><input type="number" class="form-control add-td-input text-center"></td>
+                        <td><input type="number" class="form-control add-td-input reuse text-center"></td>
+                        <td><input type="text" class="form-control add-td-input optional"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        <% } else if (colleges.length > 0) { %>
+            <h4 style="color: #8673b4;">Choose college to view subjects...</h4>
+        <% } else { %>
+            <h4 style="color: #8673b4;">No Colleges found</h4>
         <% } %>
     </div>
 </div>
 <script src="/lib/responsive-table.js"></script>
 <script>
-    const getSubjects = (collegeID) => new Promise((resolve, reject) => {
-        $.get("http://localhost:3000/api/subjects/" + collegeID,
-            (data, status) => {
-                resolve(data.subjects);
-            }, "json"
-        ).fail((data) => reject(data));
-    });
-
-    const addSubject = (collegeID, subjData) => {
-        $.post("http://localhost:3000/api/Subjects/" + collegeID, subjData, "json"
-        ).fail((data) => console.error(data));
-    }
-
     const subjectsTable = new EditableTable("#subjects-table");
-    const colleges = $(".panel-menu>button.menu-item");
-    let collegeTitle = $(".table-title");
-    let openCollege = colleges.get(0);
+    const colleges = $(".panel-menu > .menu-item").get();
     if (colleges.length > 0) {
+        let openCollege = colleges.find(col => col.title == "<%= currentCollege.name %>");
         $(openCollege).addClass("active");
-        $(collegeTitle).text("Subjects offered in " + openCollege.title);
 
-        // initialize responsive Departments table
-        subjectsTable.initData(getSubjects(openCollege.id), true, 
-            () => $(subjectsTable.addBtn).click(async (event) => {
-                try {
-                    const newSubject = await $(event.currentTarget).data("newRow");
-                    addSubject(openCollege.id, newSubject);
-                } catch (error) {
-                    console.log(error);
+        // initialize responsive Subjects table
+        subjectsTable.initData(getSubjects("<%= currentCollege.id %>"), true);
+        
+        $(subjectsTable.addBtn).click(async (event) => {
+            let newSubject;
+            try {
+                newSubject = await $(event.currentTarget).data("newRow");
+            } catch (error) {
+                return console.error(error);
+            }
+            
+            try {
+                await addSubject("<%= currentCollege.id %>", newSubject);
+            } catch (error) {
+                console.error(error);
+                const {message, redirect} = error.responseJSON || error.responseText;
+                if (redirect) {
+                    return location.replace(redirect);
                 }
-                $(event.currentTarget).removeData("newRow");
+                alertModal.show(...Object.values(message));
+                $(`${subjectsTable.body} > tr:last-child`).remove();
+                subjectsTable.data.pop();
             }
-        ));
-
-        // retrieves the rooms from the chosen building
-        $("button.menu-item").click((event) => {
-            let activeItem = event.currentTarget;
-            if (!$(activeItem).hasClass("active")) {
-                openCollege = activeItem;
-                $(".side-panel").hide();
-                $("button.menu-item.active").removeClass("active");
-                $(activeItem).addClass("active");
-                subjectsTable.initData(getSubjects(activeItem.id), true);
-                $(collegeTitle).text("Subjects offered in " + activeItem.title);
-            }
+            
+            $(event.currentTarget).removeData("newRow");
         });
     }
+    
 </script>

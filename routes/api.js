@@ -16,7 +16,7 @@ router.route("/departments/:collegeID?")
                 message: {
                     mode: 0,
                     title: "Unauthorized request",
-                    body: "Please login before creating new department."
+                    body: "Please login before accessing admin dashboard."
                 }
             })
             return res.status(401).json({ redirect: "/logout" });
@@ -45,7 +45,7 @@ router.route("/departments/:collegeID?")
                 message: {
                     mode: 0,
                     title: "Unauthorized request",
-                    body: "Please login before creating new department."
+                    body: "Please login before updating a department."
                 }
             })
             return res.status(401).json({ redirect: "/logout" });
@@ -153,7 +153,7 @@ router.post("/colleges", async (req, res) => { // creates new college
             message: {
                 mode: 0,
                 title: "Unauthorized request",
-                body: "Please login before creating new department."
+                body: "Please login before creating new college."
             }
         })
         return res.status(401).json({ redirect: "/logout" });
@@ -190,26 +190,25 @@ router.route("/faculty/:deptID?")
     .get(async (req, res) => { // gets faculty per department
         // check user credentials
         const user = req.account;
-        if (!user && (user.type == "admin" || user.type == "chair")) {
+        if (!user || (user.type != "admin" && user.type != "chair")) {
             res.cookie("serverMessage", {
                 message: {
                     mode: 0,
                     title: "Unauthorized request",
-                    body: "Please login before creating new department."
+                    body: "Please login before accessing admin dashboard."
                 }
             })
             return res.status(401).json({ redirect: "/logout" });
         }
 
         const DB = req.app.locals.database;
-        let {columns} = req.query;
+        let { columns } = req.query;
         const validColumns = ['faculty_id', 'teach_load', 'status', 'first_name', 'middle_name', 'last_name'];
         let query;
-        
+
         if (!columns) {
             query = `SELECT f.${validColumns.join(", f.")}, `;
-        }
-        if (columns.every(col => validColumns.some(validCol => col == validCol))) {
+        } else if (columns.every(col => validColumns.includes(col))) {
             // specifies what columns to get
             query = `SELECT f.${columns.join(", f.")}, `;
         } else {
@@ -222,42 +221,61 @@ router.route("/faculty/:deptID?")
             });
         }
 
-        query += `u.email, "My Schedule" AS schedule FROM Colleges col INNER JOIN Departments d ` +
+        query += `u.email, "My Schedule" AS schedule, col.school_id, d.chair_id, d.id FROM Colleges col INNER JOIN Departments d ` +
             `ON col.id = d.college_id INNER JOIN Faculty f ON d.id = f.dept_id INNER JOIN Users u ` +
-            `ON f.id = u.id WHERE (col.school_id = "${req.account.id}" OR d.chair_id = "${req.account.id}")`;
+            `ON f.id = u.id WHERE (col.school_id = "${user.id}" OR d.chair_id = "${user.id}")`;
         if (req.params.deptID) {
             query += ` AND d.id = "${req.params.deptID}"`
         }
-        query += " ORDER BY f.status, f.last_name";
+        query += " ORDER BY f.status, f.last_name, f.first_name, f.middle_name";
+
         res.status(200).json({ faculty: await DB.executeQuery(query) });
     }).post(createFaculty, (req, res) => { // creates new faculty in 
         res.status(200).json({
             message: {
                 mode: 1,
                 title: "Faculty Signed Up",
-                body: `A temporary password was sent to their e-mail address.`
+                body: "A temporary password was sent to their e-mail address."
             }
         });
     });
 
 router.route("/subjects/:collegeID?")
-    .get(async (req, res) => {
-        if (!req.account) {
-            return res.status(401).end();
+    .get(async (req, res) => { // gets subjects offered per college
+        // check user credentials
+        const user = req.account;
+        if (!user || user.type != "admin") {
+            res.cookie("serverMessage", {
+                message: {
+                    mode: 0,
+                    title: "Unauthorized request",
+                    body: "Please login before accessing admin dashboard."
+                }
+            })
+            return res.status(401).json({ redirect: "/logout" });
         }
 
         const DB = req.app.locals.database;
         let query = `SELECT sub.code, sub.title, sub.units, sub.req_hours, sub.type, sub.pref_rooms FROM Subjects sub ` +
-            `INNER JOIN Colleges col ON sub.college_id = col.id AND col.school_id = '${req.account.id}'`
+            `INNER JOIN Colleges col ON sub.college_id = col.id AND col.school_id = '${user.id}'`
         if (req.params.collegeID) {
             query += ` AND col.id = "${req.params.collegeID}"`
         }
         query += " ORDER BY sub.title, sub.type"
         res.status(200).json({ subjects: await DB.executeQuery(query) });
     })
-    .post(async (req, res) => {
-        if (!req.account) {
-            return res.status(401).end();
+    .post(async (req, res) => { // adds new subject in a college
+        // check user credentials
+        const user = req.account;
+        if (!user || user.type != "admin") {
+            res.cookie("serverMessage", {
+                message: {
+                    mode: 0,
+                    title: "Unauthorized request",
+                    body: "Please login before adding new subject."
+                }
+            })
+            return res.status(401).json({ redirect: "/logout" });
         }
 
         const DB = req.app.locals.database;
@@ -266,12 +284,17 @@ router.route("/subjects/:collegeID?")
         type = (type == "LEC") ? 1 : (type == "LAB") ? 2 : "NULL";
         const [{ totalDuplicates }] = await DB.executeQuery(
             `SELECT COUNT(*) AS totalDuplicates FROM Subjects s INNER JOIN Colleges col ON s.college_id = col.id ` +
-            `WHERE col.school_id = '${req.account.id}' AND s.title = '${title}' AND s.code = '${code}' AND ` +
-            `s.type = '${type}'`
+            `WHERE col.school_id = '${user.id}' AND s.code = '${code}' OR (s.title = '${title}' AND s.type = '${type}')`
         );
 
         if (totalDuplicates > 0) {
-            return res.status(409).end();
+            return res.status(409).json({
+                message: {
+                    mode: 2,
+                    title: "Duplicate subject",
+                    body: "Subject with same title, type, and/or code already exists."
+                }
+            });
         }
 
         const subjID = crypto.randomBytes(6).toString("base64url");
@@ -279,19 +302,22 @@ router.route("/subjects/:collegeID?")
             `INSERT INTO Subjects VALUES ('${subjID}', '${req.params.collegeID}', '${code}', '${title}', ` +
             `${type}, ${units || 0}, ${req_hours || 0}, '${pref_rooms}')`
         );
-        res.status(200).json({
-            message: {
-                mode: 1,
-                title: "New Subject Added",
-                body: `${title} (${type}) is available for the college curriculum.`
-            }
-        });
+        res.status(200).end();
     });
 
 router.route("/rooms/:bldgID?")
-    .get(async (req, res) => {
-        if (!req.account) {
-            return res.status(401).end();
+    .get(async (req, res) => { // gets rooms in chosen building
+        // check user credentials
+        const user = req.account;
+        if (!user || user.type != "admin") {
+            res.cookie("serverMessage", {
+                message: {
+                    mode: 0,
+                    title: "Unauthorized request",
+                    body: "Please login before accessing admin dashboard."
+                }
+            })
+            return res.status(401).json({ redirect: "/logout" });
         }
 
         const DB = req.app.locals.database;
@@ -303,59 +329,60 @@ router.route("/rooms/:bldgID?")
         query += ` ORDER BY r.level, r.name`;
         res.status(200).json({ rooms: await DB.executeQuery(query) });
     })
-    .post(async (req, res) => {
-        if (!req.account) {
-            return res.status(401).end();
+    .post(async (req, res) => { // adds a room building
+        // check user credentials
+        const user = req.account;
+        if (!user || user.type != "admin") {
+            res.cookie("serverMessage", {
+                message: {
+                    mode: 0,
+                    title: "Unauthorized request",
+                    body: "Please login as admin before adding a class"
+                }
+            })
+            return res.status(401).json({ redirect: "/logout" });
         }
 
         const DB = req.app.locals.database;
-        let room = req.body;
-        let sameRooms = await DB.executeQuery(
-            `SELECT COUNT(*) FROM Rooms r INNER JOIN Buildings b ON r.bldg_id = b.id WHERE ` +
-            `b.school_id = '${req.account.id}' AND b.id = '${req.params.bldgID}' AND r.name = '${room.name}'`
-        );
-
-        if (sameRooms[0]["COUNT(*)"] > 0) {
-            return res.status(409).end();
-        }
+        let { name, level, capacity } = req.body;
 
         const roomID = crypto.randomBytes(6).toString("base64url");
-        await DB.executeQuery(
-            `INSERT INTO Rooms VALUES ('${req.params.bldgID}', '${roomID}', '${room.name}', ` +
-            `${room.level}, ${room.capacity || "NULL"})`
-        );
+        if (name && level) {
+            await DB.executeQuery(
+                `INSERT INTO Rooms VALUES ('${req.params.bldgID}', '${roomID}', '${name}', ` +
+                `${level}, ${capacity || "NULL"})`
+            );
+        }
+
         res.status(200).json({
             message: {
                 mode: 1,
                 title: "New Room Created",
-                body: `${room.name} is open for new class schedules.`
+                body: `${name} is open for new class schedules.`
             }
         });
     });
 
-router.post("/buildings", async (req, res) => {
-    if (!req.account || !req.body.name) {
-        return res.status(401).end();
+router.post("/buildings", async (req, res) => { // adds school building
+    // check user credentials
+    const user = req.account;
+    if (!user || user.type != "admin") {
+        res.cookie("serverMessage", {
+            message: {
+                mode: 0,
+                title: "Unauthorized request",
+                body: "Please login as before adding a school building"
+            }
+        })
+        return res.status(401).json({ redirect: "/logout" });
     }
 
     const DB = req.app.locals.database;
-    let sameCollege = await DB.executeQuery(
-        `SELECT COUNT(*) FROM Buildings WHERE school_id = '${req.account.id}' AND name = '${req.body.name}'`
-    );
-    if (sameCollege[0]["COUNT(*)"] > 0) {
-        return res.status(409).end();
-    }
     const bldgID = crypto.randomBytes(6).toString("base64url");
     await DB.executeQuery(
-        `INSERT INTO Buildings VALUES ('${bldgID}', '${req.account.id}', '${req.body.name}')`
+        `INSERT INTO Buildings VALUES ('${bldgID}', '${user.id}', '${req.body.name}')`
     );
-    res.status(200).json({
-        message: {
-            mode: 1,
-            title: "New Building Created",
-            body: `${req.body.name} is ready for new rooms.`
-        }
-    });
+    res.status(200).send("Successfully added building.");
 });
 
 // for chairperson control
@@ -524,21 +551,35 @@ router.post("/curriculum/:courseID", async (req, res) => { // adding a subject i
 });
 
 router.post("/terms", async (req, res) => {
-    const user = req.account
-    if (!user) {
-        return res.status(401).end();
+    // check user credentials
+    const user = req.account;
+    if (!user && user.type == "admin") {
+        res.cookie("serverMessage", {
+            message: {
+                mode: 0,
+                title: "Unauthorized request",
+                body: "Please login before accessing admin dashboard."
+            }
+        })
+        return res.status(401).json({ redirect: "/logout" });
     }
 
     const DB = req.app.locals.database;
     const { year, term } = req.body;
-    let sameTerms = await DB.executeQuery(
-        `SELECT t.id FROM Departments d INNER JOIN Colleges col ON d.college_id = col.id INNER JOIN ` +
+    const [{ totalDuplicates }] = await DB.executeQuery(
+        `SELECT COUNT(*) AS totalDuplicates FROM Departments d INNER JOIN Colleges col ON d.college_id = col.id INNER JOIN ` +
         `Terms t ON col.school_id = t.school_id WHERE d.chair_id = "${user.id}" AND ` +
         `t.year = ${year} AND t.term = "${term}"`
     );
 
-    if (sameTerms.length > 0) {
-        return res.status(409).end();
+    if (totalDuplicates > 0) {
+        return res.status(409).json({
+            message: {
+                mode: 2,
+                title: "Duplicate academic term",
+                body: "An academic term with the same year and semester already exists"
+            }
+        });
     }
 
     const [{ schoolID }] = await DB.executeQuery(
@@ -568,7 +609,6 @@ router.post("/terms", async (req, res) => {
         }
     }
 
-    console.log(faculty);
     let query = `INSERT INTO Terms VALUES ('${termID}', '${schoolID}', ${year}, '${term}', 1, current_timestamp); ` +
         `INSERT INTO Blocks (id, course_id, term_id, year) VALUES ${blocks.join(",")}; ` +
         `INSERT INTO Preferences (id, term_id, faculty_id) VALUES ${faculty.join(",")};` +
@@ -578,14 +618,7 @@ router.post("/terms", async (req, res) => {
         `ORDER BY b.year, b.block_no`
 
     await DB.executeQuery(query);
-    res.status(200).json({
-        termID: termID,
-        message: {
-            mode: 1,
-            title: "New Term Created",
-            body: `You can now enter the teaching load of the professors for this semester.`
-        }
-    });
+    res.status(200).json({ termID: termID });
 });
 
 router.route("/schedules/:termID")
@@ -656,11 +689,11 @@ router.route("/schedules/:termID")
             );
             roomID = id;
         } else if (mode == 1) {
-            const regexRoom = room.split(" ");
+            const regexRoom = split(" ");
             const [{ id }] = await DB.executeQuery(
                 `SELECT CONCAT("'", r.id, "'") AS id FROM ROOMS r INNER JOIN Buildings b ON r.bldg_id = b.id ` +
                 `INNER JOIN Terms t ON  b.school_id = t.school_id LEFT JOIN Schedules sc ON r.id = sc.room_id ` +
-                `WHERE r.name LIKE '%${regexRoom.join("%")}%' AND (sc.day != ${day} OR ((sc.start > ${start} AND ` +
+                `WHERE r.name LIKE '%${regexjoin("%")}%' AND (sc.day != ${day} OR ((sc.start > ${start} AND ` +
                 `sc.start >= ${end}) OR (sc.end <= ${start} AND sc.end < ${end})) OR (sc.faculty_id IS NULL AND ` +
                 `sc.day IS NULL AND sc.start IS NULL AND sc.end IS NULL)) LIMIT 1`
             );
@@ -773,8 +806,8 @@ router.post("/preferences/:prefID", async (req, res) => {
     res.status(200).json({
         message: {
             mode: 1,
-            title: "Teaching load updated",
-            body: `We suggest modifying the schedule again to take account new load`
+            title: "Preference recorded",
+            body: `Schedule for this term will be posted by chairperson.`
         }
     });
 });
