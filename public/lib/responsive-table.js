@@ -170,6 +170,7 @@ class EditableTable extends ResponsiveTable {
             );
         }
 
+        $(this.body).empty();
         const headers = this.headers;
         for (const row of data) {
             let newRow = "<tr>";

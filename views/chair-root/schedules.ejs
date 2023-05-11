@@ -34,7 +34,6 @@
                 </a>
             </div>
         </div>
-        <!-- <hr class="mb-0"> -->
         <div class="panel-body">
             <a type="button" class="collapse-btn" data-mdb-toggle="collapse" data-mdb-target="#open-terms"
                 aria-expanded="false">
@@ -166,6 +165,7 @@
 <script src="/lib/responsive-table.js"></script>
 <script src="/lib/display-dropdown.js"></script>
 <script>
+    <% if (currentTerm) { %>
     function initScheduleTable(table) {
         const {id} = table;
         const termID = "<%= currentTerm.id %>";
@@ -241,7 +241,6 @@
     */
    let openTerm;
     const scheduleTable = $("#schedules-view>div:last-child>table"); // faculty or blocks schedule table of open term
-    const termTitle = $("#term-title");
     const termStatus = $("span#term-status");
     const currentTable = <%- JSON.stringify(data.current) %>;
     const terms = $(".menu-item").get();
@@ -257,6 +256,7 @@
     } else {
         $("#open-terms, #closed-terms").addClass("show");
     }
+    <% } %>
     
     displayDropMenu($("#new-term-sem"), "Semester");
     $("#add-term").click(async (event) => {

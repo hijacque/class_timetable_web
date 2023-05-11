@@ -610,9 +610,12 @@ router.post("/terms", async (req, res) => {
     }
 
     let query = `INSERT INTO Terms VALUES ('${termID}', '${schoolID}', ${year}, '${term}', 1, current_timestamp); ` +
-        `INSERT INTO Blocks (id, course_id, term_id, year) VALUES ${blocks.join(",")}; ` +
-        `INSERT INTO Preferences (id, term_id, faculty_id) VALUES ${faculty.join(",")};` +
-        `INSERT INTO Schedules (term_id, subj_id, block_id) ` +
+        `INSERT INTO Preferences (id, term_id, faculty_id) VALUES ${faculty.join(",")};`;
+
+    if (blocks.length > 0) {
+        query += `INSERT INTO Blocks (id, course_id, term_id, year) VALUES ${blocks.join(",")}; `;
+    }
+    query += `INSERT INTO Schedules (term_id, subj_id, block_id) ` +
         `SELECT b.term_id, cu.subj_id, b.id FROM Blocks b INNER JOIN Curricula cu ON b.course_id = cu.course_id ` +
         `AND b.year = cu.year WHERE b.term_id = '${termID}' AND cu.term = '${term}' AND cu.subj_id IS NOT NULL ` +
         `ORDER BY b.year, b.block_no`
