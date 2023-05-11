@@ -235,20 +235,29 @@ router.route("/faculty/:deptID?")
             message: {
                 mode: 1,
                 title: "Faculty Signed Up",
-                body: `A temporary password was sent to their e-mail address.`
+                body: "A temporary password was sent to their e-mail address."
             }
         });
     });
 
 router.route("/subjects/:collegeID?")
     .get(async (req, res) => {
-        if (!req.account) {
-            return res.status(401).end();
+        // check user credentials
+        const user = req.account;
+        if (!user || user.type != "admin") {
+            res.cookie("serverMessage", {
+                message: {
+                    mode: 0,
+                    title: "Unauthorized request",
+                    body: "Please login before adding new subject."
+                }
+            })
+            return res.status(401).json({ redirect: "/logout" });
         }
 
         const DB = req.app.locals.database;
         let query = `SELECT sub.code, sub.title, sub.units, sub.req_hours, sub.type, sub.pref_rooms FROM Subjects sub ` +
-            `INNER JOIN Colleges col ON sub.college_id = col.id AND col.school_id = '${req.account.id}'`
+            `INNER JOIN Colleges col ON sub.college_id = col.id AND col.school_id = '${user.id}'`
         if (req.params.collegeID) {
             query += ` AND col.id = "${req.params.collegeID}"`
         }
@@ -256,8 +265,17 @@ router.route("/subjects/:collegeID?")
         res.status(200).json({ subjects: await DB.executeQuery(query) });
     })
     .post(async (req, res) => {
-        if (!req.account) {
-            return res.status(401).end();
+        // check user credentials
+        const user = req.account;
+        if (!user || user.type != "admin") {
+            res.cookie("serverMessage", {
+                message: {
+                    mode: 0,
+                    title: "Unauthorized request",
+                    body: "Please login before adding new subject."
+                }
+            })
+            return res.status(401).json({ redirect: "/logout" });
         }
 
         const DB = req.app.locals.database;
@@ -266,12 +284,17 @@ router.route("/subjects/:collegeID?")
         type = (type == "LEC") ? 1 : (type == "LAB") ? 2 : "NULL";
         const [{ totalDuplicates }] = await DB.executeQuery(
             `SELECT COUNT(*) AS totalDuplicates FROM Subjects s INNER JOIN Colleges col ON s.college_id = col.id ` +
-            `WHERE col.school_id = '${req.account.id}' AND s.title = '${title}' AND s.code = '${code}' AND ` +
-            `s.type = '${type}'`
+            `WHERE col.school_id = '${user.id}' AND s.code = '${code}' OR (s.title = '${title}' AND s.type = '${type}')`
         );
 
         if (totalDuplicates > 0) {
-            return res.status(409).end();
+            return res.status(409).json({
+                message: {
+                    mode: 2,
+                    title: "Duplicate subject",
+                    body: "Subject with same title, type, and/or code already exists."
+                }
+            });
         }
 
         const subjID = crypto.randomBytes(6).toString("base64url");
@@ -279,13 +302,7 @@ router.route("/subjects/:collegeID?")
             `INSERT INTO Subjects VALUES ('${subjID}', '${req.params.collegeID}', '${code}', '${title}', ` +
             `${type}, ${units || 0}, ${req_hours || 0}, '${pref_rooms}')`
         );
-        res.status(200).json({
-            message: {
-                mode: 1,
-                title: "New Subject Added",
-                body: `${title} (${type}) is available for the college curriculum.`
-            }
-        });
+        res.status(200).end();
     });
 
 router.route("/rooms/:bldgID?")
@@ -773,8 +790,8 @@ router.post("/preferences/:prefID", async (req, res) => {
     res.status(200).json({
         message: {
             mode: 1,
-            title: "Teaching load updated",
-            body: `We suggest modifying the schedule again to take account new load`
+            title: "Preference recorded",
+            body: `Schedule for this term will be posted by chairperson.`
         }
     });
 });
