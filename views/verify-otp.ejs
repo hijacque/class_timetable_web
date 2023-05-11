@@ -3,7 +3,8 @@
 
 <head>
     <%- include('base') %>
-        <title>OTP Verification</title>
+    <title>OTP Verification</title>
+    <script src="/lib/themed-alert.js"></script>
 </head>
 
 <body>
@@ -16,7 +17,7 @@
                 </div>
                 <div class="modal-body" id="alert-body">message here...</div>
                 <div class="modal-footer text-center">
-                    <button type="button" class="btn btn-secondary" data-mdb-dismiss="modal">OK</button>
+                    <button type="button" class="btn btn-secondary" data-mdb-dismiss="modal" id="confirm-alert">OK</button>
                 </div>
             </div>
         </div>
@@ -39,11 +40,9 @@
                 if (data.mode == 0) {
                     $("#alert-title").addClass("text-danger");
                     $("#alert-title").removeClass("text-warning");
-                    let footer = $(`${eAlert}>div>div>div.modal-footer`);
-                    let cancelBtn = $(footer).first();
-                    cancelBtn.textContent = "No";
-                    $(cancelBtn).toggleClass("btn-secondary btn-danger");
-                    $(footer).append(
+                    let cancelBtn = $("#confirm-alert");
+                    cancelBtn.text("No").toggleClass("btn-secondary btn-danger").click(() => location.replace("/login"));
+                    $(".modal-footer").append(
                         '<form action="/help/resend-otp" method="POST">' +
                         '<button type="submit" class="btn btn-secondary" name="resend" value="1">Yes</button>' +
                         '</form>'
@@ -55,9 +54,8 @@
                 }
             });
         });
-
-        const eAlert = "#alert-modal";
-        const alertModal = new mdb.Modal(eAlert);
+        
+        const alertModal = new mdb.Modal("#alert-modal");
     </script>
 </body>
 
