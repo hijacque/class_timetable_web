@@ -83,7 +83,7 @@
                                 </ul>
                             </div>
                         </td>
-                        <td><input type="number" class="form-control add-td-input"></td>
+                        <td><input type="number" class="form-control add-td-input text-center"></td>
                         <td><input type="text" class="form-control add-td-input" placeholder="Dela Cruz"></td>
                         <td><input type="text" class="form-control add-td-input" placeholder="Juan"></td>
                         <td><input type="text" class="form-control add-td-input" placeholder="Antonio"></td>
@@ -137,6 +137,7 @@
             try {
                 const message = await addFaculty("<%= currentDept.id %>", newFaculty);
                 alertModal.show(...Object.values(message));
+                $("#chair-note").remove();
             } catch (error) {
                 console.log(error);
                 const { message, redirect } = error.responseJSON;

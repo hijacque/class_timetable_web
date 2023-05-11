@@ -37,6 +37,16 @@ const addFaculty = (deptID, facultyData) => new Promise((resolve, reject) => $.p
     (data) => resolve(data.message)
 ).fail(error => reject(error)));
 
+const getSubjects = (collegeID) => new Promise((resolve, reject) => $.get(
+    "http://localhost:3000/api/subjects/" + collegeID,
+    (data) => resolve(data.subjects)
+).fail((data) => reject(data)));
+
+const addSubject = (collegeID, subjData) => new Promise((resolve, reject) => $.post(
+    "http://localhost:3000/api/Subjects/" + collegeID, subjData,
+    (_, status) => resolve(status)
+).fail((data) => reject(data)));
+
 // const updateFaculty = (deptID, facultyData) => new Promise((resolve, reject) => $.post(
 //     "http://localhost:3000/api/faculty-data/" + deptID, facultyData,
 //     (data) => resolve(data.message), "json"
