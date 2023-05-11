@@ -202,10 +202,10 @@ router.route("/faculty/:deptID?")
         }
 
         const DB = req.app.locals.database;
-        let {columns} = req.query;
+        let { columns } = req.query;
         const validColumns = ['faculty_id', 'teach_load', 'status', 'first_name', 'middle_name', 'last_name'];
         let query;
-        
+
         if (!columns) {
             query = `SELECT f.${validColumns.join(", f.")}, `;
         } else if (columns.every(col => validColumns.includes(col))) {
@@ -344,7 +344,7 @@ router.route("/rooms/:bldgID?")
         }
 
         const DB = req.app.locals.database;
-        let {name, level, capacity} = req.body;
+        let { name, level, capacity } = req.body;
 
         const roomID = crypto.randomBytes(6).toString("base64url");
         if (name && level) {
@@ -353,7 +353,7 @@ router.route("/rooms/:bldgID?")
                 `${level}, ${capacity || "NULL"})`
             );
         }
-        
+
         res.status(200).json({
             message: {
                 mode: 1,
@@ -551,21 +551,35 @@ router.post("/curriculum/:courseID", async (req, res) => { // adding a subject i
 });
 
 router.post("/terms", async (req, res) => {
-    const user = req.account
-    if (!user) {
-        return res.status(401).end();
+    // check user credentials
+    const user = req.account;
+    if (!user && user.type == "admin") {
+        res.cookie("serverMessage", {
+            message: {
+                mode: 0,
+                title: "Unauthorized request",
+                body: "Please login before accessing admin dashboard."
+            }
+        })
+        return res.status(401).json({ redirect: "/logout" });
     }
 
     const DB = req.app.locals.database;
     const { year, term } = req.body;
-    let sameTerms = await DB.executeQuery(
-        `SELECT t.id FROM Departments d INNER JOIN Colleges col ON d.college_id = col.id INNER JOIN ` +
+    const [{ totalDuplicates }] = await DB.executeQuery(
+        `SELECT COUNT(*) AS totalDuplicates FROM Departments d INNER JOIN Colleges col ON d.college_id = col.id INNER JOIN ` +
         `Terms t ON col.school_id = t.school_id WHERE d.chair_id = "${user.id}" AND ` +
         `t.year = ${year} AND t.term = "${term}"`
     );
 
-    if (sameTerms.length > 0) {
-        return res.status(409).end();
+    if (totalDuplicates > 0) {
+        return res.status(409).json({
+            message: {
+                mode: 2,
+                title: "Duplicate academic term",
+                body: "An academic term with the same year and semester already exists"
+            }
+        });
     }
 
     const [{ schoolID }] = await DB.executeQuery(
@@ -595,7 +609,6 @@ router.post("/terms", async (req, res) => {
         }
     }
 
-    console.log(faculty);
     let query = `INSERT INTO Terms VALUES ('${termID}', '${schoolID}', ${year}, '${term}', 1, current_timestamp); ` +
         `INSERT INTO Blocks (id, course_id, term_id, year) VALUES ${blocks.join(",")}; ` +
         `INSERT INTO Preferences (id, term_id, faculty_id) VALUES ${faculty.join(",")};` +
@@ -605,14 +618,7 @@ router.post("/terms", async (req, res) => {
         `ORDER BY b.year, b.block_no`
 
     await DB.executeQuery(query);
-    res.status(200).json({
-        termID: termID,
-        message: {
-            mode: 1,
-            title: "New Term Created",
-            body: `You can now enter the teaching load of the professors for this semester.`
-        }
-    });
+    res.status(200).json({ termID: termID });
 });
 
 router.route("/schedules/:termID")
