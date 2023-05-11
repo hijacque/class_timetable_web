@@ -85,40 +85,42 @@
         <% } %>
     </div>
 </div>
-<script src="/lib/responsive-table.js"></script>
-<script>
-    const subjectsTable = new EditableTable("#subjects-table");
-    const colleges = $(".panel-menu > .menu-item").get();
-    if (colleges.length > 0) {
-        let openCollege = colleges.find(col => col.title == "<%= currentCollege.name %>");
-        $(openCollege).addClass("active");
 
-        // initialize responsive Subjects table
-        subjectsTable.initData(getSubjects("<%= currentCollege.id %>"), true);
-        
-        $(subjectsTable.addBtn).click(async (event) => {
-            let newSubject;
-            try {
-                newSubject = await $(event.currentTarget).data("newRow");
-            } catch (error) {
-                return console.error(error);
-            }
-            
-            try {
-                await addSubject("<%= currentCollege.id %>", newSubject);
-            } catch (error) {
-                console.error(error);
-                const {message, redirect} = error.responseJSON || error.responseText;
-                if (redirect) {
-                    return location.replace(redirect);
-                }
-                alertModal.show(...Object.values(message));
-                $(`${subjectsTable.body} > tr:last-child`).remove();
-                subjectsTable.data.pop();
-            }
-            
-            $(event.currentTarget).removeData("newRow");
-        });
-    }
+<script src="/lib/responsive-table.js"></script>
+<% if (colleges.length > 0 && currentCollege) { %>
+    <script>
+        const subjectsTable = new EditableTable("#subjects-table");
+        const colleges = $(".panel-menu > .menu-item").get();
+        if (colleges.length > 0) {
+            let openCollege = colleges.find(col => col.title == "<%= currentCollege.name %>");
+            $(openCollege).addClass("active");
     
-</script>
+            // initialize responsive Subjects table
+            subjectsTable.initData(getSubjects("<%= currentCollege.id %>"), true);
+            
+            $(subjectsTable.addBtn).click(async (event) => {
+                let newSubject;
+                try {
+                    newSubject = await $(event.currentTarget).data("newRow");
+                } catch (error) {
+                    return console.error(error);
+                }
+                
+                try {
+                    await addSubject("<%= currentCollege.id %>", newSubject);
+                } catch (error) {
+                    console.error(error);
+                    const {message, redirect} = error.responseJSON || error.responseText;
+                    if (redirect) {
+                        return location.replace(redirect);
+                    }
+                    alertModal.show(...Object.values(message));
+                    $(`${subjectsTable.body} > tr:last-child`).remove();
+                    subjectsTable.data.pop();
+                }
+                
+                $(event.currentTarget).removeData("newRow");
+            });
+        }
+    </script>
+<% } %>

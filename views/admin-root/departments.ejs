@@ -140,29 +140,11 @@
             chairColumn.textContent = prevChair;
         }
     }
-
-    $("#add-college").click(async (event) => {
-        let collegeName = $(event.currentTarget).siblings("input:first").val();
-        if (!collegeName || collegeName == "") {
-            return alertModal.show(2, "Missing Input", "Enter a new college name.");
-        } else if (colleges.is(`[title='${collegeName}']`)) {
-            return alertModal.show(
-                2, "Duplicate College",
-                "Please enter a different college name."
-            );
-        }
-
-        try {
-            await addCollege(collegeName);
-            location.replace("/admin/departments/" + collegeName.split(" ").join("_"));
-        } catch (error) {
-            console.log(error);
-        }
-    });
-
+    
     /*
     * main process starts here
     */
+    <% if (currentCollege) { %>
     const colleges = $(".panel-menu > .menu-item");
     const departmentsTable = new EditableTable("#departments-table");
     if (colleges.length > 0) {
@@ -204,4 +186,24 @@
             $(event.currentTarget).removeData("newRow");
         });
     }
+    <% } %>
+    
+    $("#add-college").click(async (event) => {
+        let collegeName = $(event.currentTarget).siblings("input:first").val();
+        if (!collegeName || collegeName == "") {
+            return alertModal.show(2, "Missing Input", "Enter a new college name.");
+        } else if (colleges.is(`[title='${collegeName}']`)) {
+            return alertModal.show(
+                2, "Duplicate College",
+                "Please enter a different college name."
+            );
+        }
+
+        try {
+            await addCollege(collegeName);
+            location.replace("/admin/departments/" + collegeName.split(" ").join("_"));
+        } catch (error) {
+            console.log(error);
+        }
+    });
 </script>

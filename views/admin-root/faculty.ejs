@@ -100,55 +100,57 @@
     </div>
 </div>
 <script src="/lib/responsive-table.js"></script>
-<script>
-    function confirmFacultyEdit(event) {
-        const action = $(event.currentTarget).data("action-edit");
-        try {
-            const newData = $(event.currentTarget).data("updatedData");
-            console.log(newData);
-        } catch (error) {
-            console.log(error);
-        }
-    }
-    const departments = $(".panel-menu > .menu-item").get();
-    const facultyTable = new EditableTable("#faculty-table");
-    
-    if (departments.length > 0) {
-        let openDepartment = departments.find(dept => dept.title == "<%= currentDept.name %>");
-        $(openDepartment).addClass("active");
-        facultyTable.initData(getFaculty("<%= currentDept.id %>"), true, () => {
-            if (facultyTable.data.length <= 0) {
-                return $("#table-title").after(
-                    "<small class='text-muted d-block' id='chair-note'>* The first faculty entry will be " +
-                    "automatically assigned as the chairperson *</small>"
-                );
-            }
-            $(`${facultyTable.body}>tr`).on("row:confirm-change", confirmFacultyEdit)
-        });
-
-        $(facultyTable.addBtn).click(async (event) => {
-            let newFaculty;
+<% if (currentDept) { %>
+    <script>
+        function confirmFacultyEdit(event) {
+            const action = $(event.currentTarget).data("action-edit");
             try {
-                newFaculty = await $(event.currentTarget).data("newRow");
-            } catch (error) {
-                return console.log(error);
-            }
-            
-            try {
-                const message = await addFaculty("<%= currentDept.id %>", newFaculty);
-                alertModal.show(...Object.values(message));
-                $("#chair-note").remove();
+                const newData = $(event.currentTarget).data("updatedData");
+                console.log(newData);
             } catch (error) {
                 console.log(error);
-                const { message, redirect } = error.responseJSON;
-                if (redirect) {
-                    location.replace(redirect);
-                }
-                $(`${facultyTable.body} > tr:last-child`).remove();
-                facultyTable.data.pop();
-                alertModal.show(...Object.values(message));
             }
-            $(event.currentTarget).removeData("newRow");
-        });
-    }
-</script>
+        }
+        const departments = $(".panel-menu > .menu-item").get();
+        const facultyTable = new EditableTable("#faculty-table");
+        
+        if (departments.length > 0) {
+            let openDepartment = departments.find(dept => dept.title == "<%= currentDept.name %>");
+            $(openDepartment).addClass("active");
+            facultyTable.initData(getFaculty("<%= currentDept.id %>"), true, () => {
+                if (facultyTable.data.length <= 0) {
+                    return $("#table-title").after(
+                        "<small class='text-muted d-block' id='chair-note'>* The first faculty entry will be " +
+                        "automatically assigned as the chairperson *</small>"
+                    );
+                }
+                $(`${facultyTable.body}>tr`).on("row:confirm-change", confirmFacultyEdit)
+            });
+    
+            $(facultyTable.addBtn).click(async (event) => {
+                let newFaculty;
+                try {
+                    newFaculty = await $(event.currentTarget).data("newRow");
+                } catch (error) {
+                    return console.log(error);
+                }
+                
+                try {
+                    const message = await addFaculty("<%= currentDept.id %>", newFaculty);
+                    alertModal.show(...Object.values(message));
+                    $("#chair-note").remove();
+                } catch (error) {
+                    console.log(error);
+                    const { message, redirect } = error.responseJSON;
+                    if (redirect) {
+                        location.replace(redirect);
+                    }
+                    $(`${facultyTable.body} > tr:last-child`).remove();
+                    facultyTable.data.pop();
+                    alertModal.show(...Object.values(message));
+                }
+                $(event.currentTarget).removeData("newRow");
+            });
+        }
+    </script>
+<% } %>
