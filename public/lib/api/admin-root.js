@@ -47,6 +47,22 @@ const addSubject = (collegeID, subjData) => new Promise((resolve, reject) => $.p
     (_, status) => resolve(status)
 ).fail((data) => reject(data)));
 
+const getRooms = (bldgID) => new Promise((resolve, reject) => {
+    $.get("http://localhost:3000/api/rooms/" + bldgID,
+        (data, status) => {
+            resolve(data.rooms);
+        }, "json"
+    ).fail((data) => reject(data));
+});
+
+const addRoom = (bldgID, roomData) => new Promise((resolve, reject) => $.post(
+    "http://localhost:3000/api/rooms/" + bldgID, roomData, (_,status) => resolve(status)
+).fail(error => reject(error)));
+
+const addBuilding = (name) => new Promise((resolve, reject) => $.post(
+    "http://localhost:3000/api/buildings/", { name: name }, (_, status) => resolve(status)
+).fail(error => reject(error)));
+
 // const updateFaculty = (deptID, facultyData) => new Promise((resolve, reject) => $.post(
 //     "http://localhost:3000/api/faculty-data/" + deptID, facultyData,
 //     (data) => resolve(data.message), "json"

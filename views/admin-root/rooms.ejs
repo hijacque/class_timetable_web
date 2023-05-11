@@ -1,3 +1,4 @@
+<% const {buildings, currentBldg} = data %>
 <div class="bg-light task-view" id="rooms-view">
     <div class="side-panel">
         <div class="panel-header mx-4">
@@ -17,25 +18,26 @@
         </div>
         <hr>
         <div class="mx-3 panel-body">
-            <% if (data.buildings.length> 0) { %>
+            <% if (buildings.length> 0) { %>
                 <ul class="list-group panel-menu">
-                    <% for (const building of data.buildings) { %>
-                        <button type="button" class="list-group-item list-group-item-action menu-item"
-                            title="<%= building.name %>" id="<%= building.id %>">
-                            <p class="text-truncate m-0">
-                                <%= building.name %>
-                            </p>
-                        </button>
-                        <% } %>
+                    <% for (const {id, name} of buildings) { %>
+                        <a type="button" class="list-group-item list-group-item-action menu-item"
+                            <% if (id != currentBldg.id) { %>
+                                href="/admin/rooms/<%= name.split(" ").join("_") %>"
+                            <% } %>
+                            title="<%= name %>">
+                            <p class="text-truncate m-0"><%= name %></p>
+                        </a>
+                    <% } %>
                 </ul>
                 <% } else { %>
                     <p class="text-muted text-center">No Buildings</p>
-                    <% } %>
+                <% } %>
         </div>
     </div>
     <div class="shadow-3 bg-white px-5 pt-4">
-        <% if (data.buildings.length> 0) { %>
-            <h2 style="color: #8673b4;" class="table-title"></h2>
+        <% if (buildings.length> 0 && currentBldg) { %>
+            <h2 style="color: #8673b4;" class="table-title">Rooms in <%= currentBldg.name %></h2>
             <br>
             <button class="btn btn-primary btn-rounded" data-cts-toggle="table" data-cts-target="#rooms-table">
                 <i class="fas fa-edit fa-lg me-2"></i>edit table</button>
@@ -59,64 +61,40 @@
                     </tr>
                 </tfoot>
             </table>
-            <% } else { %>
-                Show some default "No Data" message
-                <% } %>
+        <% } else if (buildings.length > 0) { %>
+            <h4 style="color: #8673b4;">No buildings chosen yet...</h4>
+        <% } else { %>
+            <h4 style="color: #8673b4;">No buildings found</h4>
+        <% } %>
     </div>
 </div>
 <script src="/lib/responsive-table.js"></script>
 <script>
-    const getRooms = (bldgID) => new Promise((resolve, reject) => {
-        $.get("http://localhost:3000/api/rooms/" + bldgID,
-            (data, status) => {
-                resolve(data.rooms);
-            }, "json"
-        ).fail((data) => reject(data));
-    });
-
-    const addRoom = (bldgID, roomData) => $.post(
-        "http://localhost:3000/api/rooms/" + bldgID, roomData,
-        (data, status) => {
-            console.log(data);
-        }, "json"
-    );
-
-    const addBuilding = (name) => $.post(
-        "http://localhost:3000/api/buildings/", { name: name },
-        (data, status) => {
-            console.log(data);
-        }, "json"
-    );
-
-    const buildings = $(".panel-menu>button.menu-item");
+    const buildings = $(".panel-menu > .menu-item").get();
     // initialize responsive Rooms table
     const roomsTable = new EditableTable("#rooms-table");
-    let bldgTitle = $(".table-title");
     if (buildings.length > 0) {
-        let openBuilding = buildings.get(0);
+        let openBuilding = buildings.find(bldg => bldg.title == "<%= currentBldg.name %>");
         $(openBuilding).addClass("active");
-        roomsTable.initData(getRooms(openBuilding.id), true);
-        $(bldgTitle).text("Rooms in " + openBuilding.title);
-
-        // retrieves the rooms from the chosen building
-        $("button.menu-item").click((event) => {
-            let activeItem = event.currentTarget;
-            if (!$(activeItem).hasClass("active")) {
-                openBuilding = activeItem;
-                $(".side-panel").hide();
-                $("button.menu-item.active").removeClass("active");
-                $(activeItem).addClass("active");
-                roomsTable.initData(getRooms(activeItem.id), true);
-                $(bldgTitle).text("Rooms in " + activeItem.title);
-            }
-        });
-
+        roomsTable.initData(getRooms("<%= currentBldg.id %>"), true);
+        
         $(roomsTable.addBtn).click(async (event) => {
+            let newRoom;
             try {
-                let addedData = await $(event.currentTarget).data("newRow");
-                if (addedData) { addRoom(openBuilding.id, addedData); }
+                newRoom = await $(event.currentTarget).data("newRow");
             } catch (error) {
-                $(`${roomsTable.body}:last-child`).remove();
+                return console.error(error);
+            }
+            try {
+                await addRoom("<%= currentBldg.id %>", newRoom);
+            } catch (error) {
+                console.error(error);
+                const {redirect, message} = error.responseJSON || error.responseText;
+                if (redirect) {
+                    return location.replace(redirect);
+                }
+                alertModal.show(...Object.values(message));
+                $(`${roomsTable.body} > tr:last-child`).remove();
                 roomsTable.data.pop();
             }
 
@@ -124,13 +102,31 @@
         });
     }
 
-    $("#add-building").click((event) => {
-        let bldgInput = $(event.currentTarget).siblings("input").get(0);
+    $("#add-building").click(async (event) => {
+        const newBldg = $(event.currentTarget).siblings("input").get(0).value;
+        if (buildings.some(bldg => bldg.title == newBldg)) {
+            return alertModal.show(
+                2, "Duplicate building", 
+                "Building with the same name already exists."
+            );
+        }
+
         try {
-            addBuilding(bldgInput.value);
-            location.reload();
+            await addBuilding(newBldg);
+            location.replace("/admin/rooms/" + newBldg.split(" ").join("_"));
         } catch (error) {
             console.log(error);
+            const {redirect, message} = error.responseJSON || error.responseText;
+            if (redirect) {
+                return location.replace(redirect);
+            }
+            if (message) {
+                alertModal.show(
+                    ...Object.values(message) ||
+                    0, "Unexpected error", 
+                    "Encountered an error while adding building, please try again later."
+                );
+            }
         }
     });
 </script>
