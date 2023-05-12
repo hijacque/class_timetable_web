@@ -21,7 +21,7 @@
             <% if (courses.length> 0) { %>
                 <ul class="list-group panel-menu">
                     <% for (const {id, title} of courses) { %>
-                        <button type="button" class="list-group-item list-group-item-action menu-item"
+                        <a type="button" class="list-group-item list-group-item-action menu-item"
                             <% if (currentCourse.id != id) { %>
                                 href="/chair/courses/<%= title.split(' ').join("_") %>"
                             <% } %>
@@ -29,7 +29,7 @@
                             <p class="text-truncate m-0">
                                 <%= title %>
                             </p>
-                        </button>
+                        </a>
                     <% } %>
                 </ul>
             <% } else { %>
@@ -40,7 +40,8 @@
     <div class="bg-white px-5 pt-4">
         <% if (courses.length > 0 && currentCourse) { %>
             <div class="dropdown">
-                <a class="btn btn-primary btn-lg btn-rounded btn-top dropdown-toggle" data-mdb-toggle="dropdown" title="Add semester" id="add-semester">
+                <a class="btn btn-primary btn-lg btn-rounded btn-top dropdown-toggle" data-mdb-toggle="dropdown" 
+                    title="Add semester" id="add-semester">
                     add semester
                 </a>
                 <ul class="dropdown-menu" aria-labelledby="add-semester">
@@ -51,9 +52,9 @@
                 </ul>
             </div>
             <h3 style="color: #8673b4;" id="curriculum-title">
-                <%= courses[0]["title"] %> Curriculum
+                <%= currentCourse.title %> Curriculum
             </h3>
-            <label for="curriculum-title">Total No. of Units: 0</label>
+            <label for="curriculum-title">Total No. of Units: <span id="total-units">0</span></label>
             <hr>
         <% } else if (courses.length > 0) { %>
             <h4>No courses chosen yet..</h4>
@@ -65,7 +66,7 @@
 
 <script src="/lib/responsive-table.js"></script>
 <script>
-    function addTermTables(data = []) {
+    function addTermTables(tables = []) {
         const tableContent = 
             `<thead><th table-cts-column="code text" style="width: 150px;">COURSE CODE</th>` +
             `<th table-cts-column="title text">COURSE TITLE</th>` +
@@ -73,14 +74,14 @@
             `<td table-cts-column="edit">Action</td></thead>` +
             `<tbody></tbody>` +
             `<tfoot><tr class="add-data">` +
-                `<td><input type="text" class="form-control add-td-input unique reuse"></td>` +
-                `<td><input type="text" class="form-control add-td-input optional"></td>` +
+                `<td><input type="text" class="form-control add-td-input reuse"></td>` +
+                `<td><input type="text" class="form-control add-td-input optional reuse"></td>` +
                 `<td><label class="add-td-input optional"></label></td>` +
             `</tr></tfoot>`;
         
         let view = $("#courses-view>div:last-child");
-        for (let i = 0; i < data.length; i++) {
-            const term = data[i];
+        for (let i = 0; i < tables.length; i++) {
+            const term = tables[i];
             const newTable = `<div class="semester-header"><h6>${toOrdinal(term.year)} Year, ` +
                 `${(term.term == "s") ? "Summer" : toOrdinal(term.term) + " Semester"}</h6><div>` +
                 `<a class="btn btn-primary btn-floating" data-cts-toggle="table" ` +
@@ -99,32 +100,34 @@
                 newRow.semester = term.term;
                     
                 try {
-                    const newSubject = await addSubject(openCourse.id, newRow);
+                    const newSubject = await addCourseSubject("<%= currentCourse.id %>", newRow);
                     const [code, title, units] = lastRow.children().get();
                     code.textContent = newSubject.code;
                     title.textContent = newSubject.title;
                     units.textContent = newSubject.units;
                 } catch (error) {
+                    const {redirect, message} = error;
+                    if (redirect) {
+                        return location.replace(redirect);
+                    }
+                    alertModal.show(...Object.values(message));
                     lastRow.remove();
-                    console.log(error);
                 }
             }));
             semesterTables.push(newSemTable);
         }
 
-        const totalTerms = data.length;
+        const totalTerms = tables.length;
         if (totalTerms > 0) {
-            latestYear = data[totalTerms-1].year;
-            latestTerm = data[totalTerms-1].term;
+            latestYear = tables[totalTerms-1].year;
+            latestTerm = tables[totalTerms-1].term;
         }
     }
 
-    async function initCourseCurriculum(data = [], asyncData = false) {
-        if (asyncData) {
-            data = await data;
-        }
+    async function initCourseCurriculum(data) {
+        data = await data;
         console.log(data);
-        $("label[for='curriculum-title']").text("Total No. of Units: " + data.totalUnits || 0);
+        $("#total-units").text(data.totalUnits || 0);
         addTermTables(data.curriculum);
         if (latestSem == "s") {
             $("li:has('#new-summer')").hide();
@@ -147,19 +150,23 @@
     
     const totalTermsPerYear = <%- JSON.stringify(data.totalTerms || 0) %>;
     const semesterTables = [];
-    const subjects = <%- JSON.stringify(data.subjects || []) %>;
-    const courses = $(".panel-menu>button.menu-item");
-    const courseTitle = $("#curriculum-title");
-    let latestTerm, latestSem = 0, latestYear = 0;
+    const courses = $(".panel-menu > .menu-item").get();
+    let latestTerm, latestSem, latestYear = 0;
     let openCourse;
     if (courses.length > 0) {
-        openCourse = courses.get(0);
+        openCourse = courses.find(co => co.title == "<%= currentCourse.title %>");
         $(openCourse).addClass("active");
-        initCourseCurriculum(getCurriculum(openCourse.id), true);
+        initCourseCurriculum(getCurriculum("<%= currentCourse.id %>"), true);
         
-        $("#new-year").click(() => {
+        $("#new-year").click(async () => {
             try {
-                addSemester(openCourse.id, { forNewYear: true, latestYear: latestYear });
+                const {message} = await addSemester(
+                    "<%= currentCourse.id %>", 
+                    { forNewYear: 1, totalTerms: totalTermsPerYear }
+                );
+                alertModal.show(
+                    ...Object.values(message || {mode: 3, title:"Something happened", body:"IDK what"})
+                );
                 latestYear++;
             } catch (error) {
                 return console.log(error);
@@ -173,28 +180,26 @@
             }
             addTermTables(newTerms);
         });
-        $("#new-summer").click(() => {
+        $("#new-summer").click(async () => {
             try {
-                addSemester(openCourse.id, { forNewYear: false, latesYear: latestYear });
+                const {message} = await addSemester(
+                    "<%= currentCourse.id %>", 
+                    { forNewYear: 0, totalTerms: totalTermsPerYear }
+                );
+                alertModal.show(
+                    ...Object.values(message || {mode: 3, title:"Something happened", body:"IDK what"})
+                );
             } catch (error) {
-                return console.log(error);
+                const {redirect, message} = error;
+                if (redirect) {
+                    location.replace(redirect);
+                }
+                alertModal(...Object.values(message));
             }
             $("li:has(#new-summer)").hide();
             let view = $("#courses-view>div:last-child").get(0);
             view.scrollTo(0, view.scrollHeight);
             addTermTables([{ year: latestYear, term: "s", subjects:[] }])
-        });
-
-        $("button.menu-item").click((event) => {
-            let activeItem = event.currentTarget;
-            if (!$(activeItem).hasClass("active")) {
-                let index = $(activeItem).index();
-                openCourse = courses[index];
-                $(".side-panel").hide();
-                $("button.menu-item.active").removeClass("active");
-                $(activeItem).addClass("active");
-                $(courseTitle).text(activeItem.title + " Curriculum");
-            }
         });
     }
     
