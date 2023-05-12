@@ -16,27 +16,27 @@ const getSchedules = (termID, category) => new Promise(
     (resolve, reject) => $.get(
         "/api/schedules/" + termID, {category: category}, 
         (data, status) => resolve(data.schedules)
-    ).fail((data) => location.load())
+    ).fail((error) => reject(error))
 );
 
 const addCourse = (title) => new Promise((resolve, reject) => $.post(
     "/api/courses/", {name: title},
-    (data) => resolve(courseID)
+    (data) => resolve(data.courseID)
 ).fail((data) => reject(data)));
 
 const getCurriculum = (courseID) => new Promise((resolve, reject) => {
-    $.get("/api/curriculums/" + courseID,
-        (data, status) => { resolve(data) }, "json"
-    ).fail((data) => console.log(data))
+    $.get("/api/curricula/" + courseID,
+        (data) => { resolve(data) }, "json"
+    ).fail((error) => reject(error.responseJSON))
 });
 
 const addSemester = (courseID, semData) => $.post(
-    "/api/curriculums/" + courseID, semData,
+    "/api/curricula/" + courseID, semData,
     (data, status) => console.log(data)
-).fail((data) => console.log(data));
+).fail((data) => console.log(data.responseJSON));
 
-const addSubject = (courseID, subjData) => new Promise((resolve, reject) => {
+const addCourseSubject = (courseID, subjData) => new Promise((resolve, reject) => {
     $.post("/api/curriculum/" + courseID, subjData,
         (data) => resolve(data.newSubject)
-    ).fail(data => reject(data))
+    ).fail(data => reject(data.responseJSON))
 });

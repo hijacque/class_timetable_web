@@ -9,9 +9,9 @@
         <table class="table table-bordered table-sm fw-bold my-4" id="faculty-table">
             <thead class="text-center">
                 <tr>
-                    <th table-cts-column="faculty_id text" style="width: 120px;">ID</th>
-                    <th table-cts-column="status text" style="width: 120px;">Employment Status</th>
-                    <th table-cts-column="teach_load number">Teach<br>Load</th>
+                    <th table-cts-column="faculty_id text" style="width: 140px;">ID</th>
+                    <th table-cts-column="status text" style="width: 140px;">Employment Status</th>
+                    <th table-cts-column="teach_load number" style="width: 90px;">Teach<br>Load</th>
                     <th table-cts-column="last_name text">Surname</th>
                     <th table-cts-column="first_name text">First Name</th>
                     <th table-cts-column="middle_name text">Middle Name</th>
@@ -33,7 +33,7 @@
                             </ul>
                         </div>
                     </td>
-                    <td><input type="number" class="form-control add-td-input"></td>
+                    <td><input type="number" class="form-control add-td-input text-center"></td>
                     <td><input type="text" class="form-control add-td-input" placeholder="Dela Cruz"></td>
                     <td><input type="text" class="form-control add-td-input" placeholder="Juan"></td>
                     <td><input type="text" class="form-control add-td-input" placeholder="Antonio"></td>
@@ -44,31 +44,23 @@
     </div>
 </div>
 <script src="/lib/responsive-table.js"></script>
+<!-- reuse faculty api calls -->
+<script src="/lib/api/admin-root.js"></script>
 <script>
-    const getFaculty = (departmentID) => new Promise((resolve, reject) => {
-        $.get("/api/faculty/" + departmentID,
-            (data, status) => {
-                resolve(data.faculty);
-            }, "json"
-        ).fail((data) => reject(data));
-    });
-
-
-    const addFaculty = (departmentID, facultyData) => $.post(
-        "/api/faculty/" + departmentID, facultyData,
-        (data, status) => {
-            console.log(data);
-        }, "json"
-    );
-
     const deptID = "<%= data.department.id %>";
     const facultyTable = new EditableTable("#faculty-table");
     facultyTable.initData(getFaculty(deptID), true);
     $(facultyTable.addBtn).click(async (event) => {
         try {
             let addedData = await $(event.currentTarget).data("newRow");
-            if (addedData) { addFaculty(deptID, addedData); }
+            if (addedData) { await addFaculty(deptID, addedData); }
         } catch (error) {
+            console.error(error);
+            const {redirect, message} = error.responseJSON;
+            if (redirect) {
+                location.replace(redirect);
+            }
+            alertModal.show(...Object.values(message));
             $(`${facultyTable.body}:last-child`).remove();
             facultyTable.data.pop();
         }
