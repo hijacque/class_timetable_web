@@ -22,18 +22,24 @@ router.get('/failed/:term', (req, res) => {
 });
 
 router.get("/faculty", getFacultySched, (req, res) => {
+    const {serverMessage} = req.cookies;
+    if (serverMessage) res.clearCookie("serverMessage");
     res.render("schedule-root/base", {
         category: "faculty",
         term: req.term,
-        schedule: req.data
+        schedule: req.data,
+        serverAlert: serverMessage
     });
 });
 
 router.get("/:courseID", getBlockSched, (req, res) => {
+    const {serverMessage} = req.cookies;
+    if (serverMessage) res.clearCookie("serverMessage");
     res.render("schedule-root/base", {
         category: req.params.courseID,
         term: req.term,
-        schedule: req.data
+        schedule: req.data,
+        serverAlert: serverMessage
     });
 });
 
