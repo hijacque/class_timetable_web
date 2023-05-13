@@ -103,12 +103,16 @@
                     <h3 id="term-title"><%- term_ordinal %> Semester, <%= year %>-<%= year+1 %></h3>
                     <form method="post" target="export_schedule" action="/schedule/download/<%= year + term %>/department"
                         onsubmit="window.open('_blank','export_schedule');">
-                        <button type="submit" class="ms-4 btn btn-secondary btn-floating" title="Export schedules">
-                            <i class="fas fa-cloud-arrow-down fa-lg"></i>
+                        <button type="submit" class="ms-4 btn btn-rounded btn-secondary" title="Export schedules">
+                            <i class="fas fa-cloud-arrow-down fa-lg me-2"></i>export
+                        </button>
+                        <button type="button" class="ms-2 btn btn-primary btn-rounded" id="lock-schedules"
+                            title="Lock and save schedules">
+                            <i class="fas fa-unlock fa-lg me-2"></i>save
                         </button>
                     </form>
                 </div>
-                <label for="term-title">Status: <span id="term-status" class="text-success">OPEN</span></label>
+                <label for="term-title">Status: <span id="term-status" class="text-success">save</span></label>
                 <hr>
             <% } else { %>
                 <div class="d-flex">
@@ -117,6 +121,10 @@
                         onsubmit="window.open('_blank','export_schedule');">
                         <button type="submit" class="ms-4 btn btn-secondary btn-floating" title="Export schedules">
                             <i class="fas fa-cloud-arrow-down fa-lg"></i>
+                        </button>
+                        <button type="button" class="ms-2 btn btn-primary btn-rounded" id="unlock-schedules"
+                            title="Lock and save schedules">
+                            <i class="fas fa-unlock fa-lg me-2"></i>edit
                         </button>
                     </form>
                 </div>

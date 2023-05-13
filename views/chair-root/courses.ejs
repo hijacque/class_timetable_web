@@ -101,10 +101,11 @@
                     
                 try {
                     const newSubject = await addCourseSubject("<%= currentCourse.id %>", newRow);
-                    const [code, title, units] = lastRow.children().get();
-                    code.textContent = newSubject.code;
-                    title.textContent = newSubject.title;
-                    units.textContent = newSubject.units;
+                    const [rCode, rTitle, rUnits] = lastRow.children().get();
+                    const [fCode, fTitle] = $(newSemTable.footer).find("add-td-input").get();
+                    rCode.textContent = fCode.value = newSubject.code;
+                    rTitle.textContent = fTitle.value = newSubject.title;
+                    rUnits.textContent = newSubject.units;
                 } catch (error) {
                     const {redirect, message} = error;
                     if (redirect) {
