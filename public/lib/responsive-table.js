@@ -380,11 +380,17 @@ class EditableTable extends ResponsiveTable {
                 // $(columns[i]).children().hide();
                 continue;
             } else if (aboutCol[1] == "dropdown") {
-                const list = aboutCol[2].split(/[\[,\]]/).filter(function (val) { return val != "" });
+                const list = aboutCol[2].trim().split(/[\[,\]]/);
+                const options = list.filter(function (val) { return val != "" && val.toLowerCase() != "cancel" });
+                console.log(options);
+
                 input = `<div class='dropdown'><button class='btn btn-secondary dropdown-toggle td-input' ` +
                     `type='button' data-mdb-toggle='dropdown' aria-expanded='false'>${value}</button>` +
                     `<ul class='dropdown-menu'><li><a class="dropdown-item" role="button">` +
-                    `${list.join('</a></li><li><a class="dropdown-item" role="button">')}</a></li></ul>`;
+                    `${options.join('</a></li><li><a class="dropdown-item" role="button">')}</a></li>` +
+                    (list.some(i => i.toLowerCase() == "cancel") ? "<li><hr class='dropdown-divider m-0'></li>" +
+                    "<li><a class='dropdown-item text-danger' role='button' data-cts-reset='dropdown'>Cancel</a>" +
+                    "</li>" : "");
             } else {
                 input = `<input type='${aboutCol[1]}' class='form-control td-input' value='${value}'>`;
             }
