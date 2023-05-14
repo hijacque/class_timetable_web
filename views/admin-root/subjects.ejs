@@ -35,7 +35,7 @@
                 Subjects offered in <%= currentCollege.name %>
             </h2>
             <br>
-            <a class="btn btn-primary btn-rounded" data-cts-toggle="table" data-cts-target="#subjects-table" href="#table-footer">
+            <a class="btn btn-primary btn-rounded" data-cts-toggle="table" data-cts-target="#subjects-table" href="#add-subj">
                 <i class="fas fa-edit fa-lg me-2"></i>edit table</a>
             <button class="btn btn-success btn-rounded" data-cts-dismiss="table" data-cts-target="#subjects-table"
                 aria-hidden="true">save changes</button>
@@ -44,7 +44,7 @@
                     <tr>
                         <th table-cts-column="code text" style="width: 180px;">Code</th>
                         <th table-cts-column="title text">Title</th>
-                        <th table-cts-column="type text" style="width: 90px;">Type</th>
+                        <th table-cts-column="type dropdown [LEC,LAB,NULL,Cancel]" style="width: 90px;">Type</th>
                         <th table-cts-column="units text" style="width: 90px;">Units</th>
                         <th table-cts-column="req_hours text" style="width: 90px;">Required<br>Hours</th>
                         <th table-cts-column="pref_rooms text" style="width: 250px;">Specialized Rooms</th>
@@ -52,7 +52,7 @@
                     </tr>
                 </thead>
                 <tbody></tbody>
-                <tfoot id="table-footer">
+                <tfoot id="add-subj">
                     <tr class="add-data">
                         <td><input type="text" class="form-control add-td-input unique reuse"></td>
                         <td><input type="text" class="form-control add-td-input reuse"></td>
@@ -74,7 +74,7 @@
                         </td>
                         <td><input type="number" class="form-control add-td-input text-center"></td>
                         <td><input type="number" class="form-control add-td-input reuse text-center"></td>
-                        <td><input type="text" class="form-control add-td-input optional"></td>
+                        <td><input type="text" class="form-control add-td-input optional reuse"></td>
                     </tr>
                 </tfoot>
             </table>
@@ -89,6 +89,26 @@
 <script src="/lib/responsive-table.js"></script>
 <% if (colleges.length > 0 && currentCollege) { %>
     <script>
+        function initSubjectEdit(event) {
+            console.log(event.currentTarget);
+            $(event.currentTarget).find("td:nth-child(3)").empty().append(
+                `<div class="dropdown">` +
+                    `<button class="btn btn-secondary dropdown-toggle add-td-input optional" type="button"` +
+                    `data-mdb-toggle="dropdown" aria-expanded="false">Type</button>` +
+                    `<ul class="dropdown-menu">` +
+                        `<li><a class="dropdown-item" role="button">LEC</a></li>` +
+                        `<li><a class="dropdown-item" role="button">LAB</a></li>` +
+                        `<li><hr class="dropdown-divider m-0"></li>` +
+                        `<li><a class="dropdown-item text-danger" role="button" data-cts-reset="dropdown">Cancel</a></li>` +
+                `</ul></div>`
+            );
+        }
+
+        function confirmSubjChange(event) {
+            const action = $(event.currentTarget).data("edit-action");
+            console.log(action);
+
+        }
         const subjectsTable = new EditableTable("#subjects-table");
         const colleges = $(".panel-menu > .menu-item").get();
         if (colleges.length > 0) {
@@ -121,6 +141,10 @@
                 
                 $(event.currentTarget).removeData("newRow");
             });
+
+            $(`${subjectsTable.body}>tr`)
+                .on("row:edit", initSubjectEdit)
+                .on("row:confirm-change", confirmSubjChange);
         }
     </script>
 <% } %>

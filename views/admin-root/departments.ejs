@@ -42,10 +42,12 @@
         <% if (colleges.length > 0 && currentCollege) { %>
             <h2 style="color: #8673b4;" class="table-title"></h2>
             <br>
-            <button class="btn btn-primary btn-rounded" data-cts-toggle="table" data-cts-target="#departments-table">
-                <i class="fas fa-edit fa-lg me-2"></i>edit table</button>
-            <button class="btn btn-success btn-rounded" data-cts-dismiss="table" data-cts-target="#departments-table"
-                aria-hidden="true">save changes</button>
+            <a class="btn btn-primary btn-rounded" data-cts-toggle="table" href="#add-dept"
+                type="button" data-cts-target="#departments-table">
+                <i class="fas fa-edit fa-lg me-2"></i>edit table
+            </a>
+            <a class="btn btn-success btn-rounded" data-cts-dismiss="table" data-cts-target="#departments-table"
+                aria-hidden="true">save changes</a>
             <table class="table table-bordered table-sm fw-bold my-4" id="departments-table">
                 <thead class="text-center">
                     <tr>
@@ -56,7 +58,7 @@
                     </tr>
                 </thead>
                 <tbody></tbody>
-                <tfoot>
+                <tfoot id="add-dept">
                     <tr class="add-data">
                         <td><input type="text" class="form-control add-td-input unique"></td>
                         <td><label class="add-td-input optional"></label></td>
@@ -144,8 +146,8 @@
     /*
     * main process starts here
     */
-    <% if (currentCollege) { %>
     const colleges = $(".panel-menu > .menu-item");
+    <% if (currentCollege) { %>
     const departmentsTable = new EditableTable("#departments-table");
     if (colleges.length > 0) {
         let openCollege = $(".menu-item[title='<%= currentCollege.name %>']");
@@ -154,10 +156,13 @@
 
         // initialize responsive Departments table
         departmentsTable.initData(getDepartments("<%= currentCollege.id %>"), true, 
-            () => $(`${departmentsTable.body}>tr`)
+            () => {
+                $(`${departmentsTable.body}>tr`)
                 .on("row:edit", initDeptEdit)
                 .on("row:confirm-change", confirmDeptEdit)
                 .on("row:cancel-change", cancelDeptEdit)
+                .find("td:nth-child(2):contains('To be assigned...')").addClass("text-muted");
+            }
         );
         $(collegeTitle).text("Departments in " + $(openCollege).text());
 
@@ -171,7 +176,13 @@
 
             try {
                 const message = await addDepartment("<%= currentCollege.id %>", newDeptData);
-                alertModal.show(...Object.values(message));
+                $(`${departmentsTable.body}>tr:last-child>td:nth-child(2)`)
+                    .text("To be assigned...")
+                    .addClass("text-muted");
+                
+                if (message) {
+                    alertModal.show(...Object.values(message));
+                }
             } catch (error) {
                 console.error(error);
                 const { message, redirect } = error.responseJSON;

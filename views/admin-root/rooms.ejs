@@ -70,8 +70,8 @@
 </div>
 <script src="/lib/responsive-table.js"></script>
 <script>
+    const buildings = $(".panel-menu > .menu-item").get();
     <% if (currentBldg) { %>
-        const buildings = $(".panel-menu > .menu-item").get();
         // initialize responsive Rooms table
         const roomsTable = new EditableTable("#rooms-table");
         if (buildings.length > 0) {

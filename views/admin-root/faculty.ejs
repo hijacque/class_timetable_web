@@ -51,10 +51,11 @@
         <% if (colleges.length > 0 && currentDept) { %>
             <h2 style="color: #8673b4;" id="table-title">Faculty in <%= currentDept.name %> Department</h2>
             <br>
-            <button class="btn btn-primary btn-rounded" data-cts-toggle="table" data-cts-target="#faculty-table">
-                <i class="fas fa-edit fa-lg me-2"></i>edit table</button>
-            <button class="btn btn-success btn-rounded" data-cts-dismiss="table" data-cts-target="#faculty-table"
-                aria-hidden="true">save changes</button>
+            <a class="btn btn-primary btn-rounded" data-cts-toggle="table" data-cts-target="#faculty-table"
+                href="#add-faculty" type="button">
+                <i class="fas fa-edit fa-lg me-2"></i>edit table</a>
+            <a class="btn btn-success btn-rounded" data-cts-dismiss="table" data-cts-target="#faculty-table"
+                aria-hidden="true" type="button">save changes</a>
             <table class="table table-bordered table-sm my-4" id="faculty-table">
                 <thead class="text-center">
                     <tr>
@@ -70,7 +71,7 @@
                     </tr>
                 </thead>
                 <tbody></tbody>
-                <tfoot>
+                <tfoot id="add-faculty">
                     <tr class="add-data">
                         <td><input type="text" class="form-control add-td-input unique"></td>
                         <td>
