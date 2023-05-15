@@ -1,7 +1,12 @@
+html, body {
+    overflow: hidden;
+}
+
 div.card {
     height: 100%;
     width: 50%;
     margin: 0 auto;
+    overflow: scroll;
 }
 
 .dropdown-toggle:after {
