@@ -86,15 +86,21 @@
                 } catch (error) {
                     return console.error(error);
                 }
+
                 try {
                     await addRoom("<%= currentBldg.id %>", newRoom);
-                } catch (error) {
-                    console.error(error);
-                    const {redirect, message} = error.responseJSON || error.responseText;
-                    if (redirect) {
-                        return location.replace(redirect);
+                } catch (eResponse) {
+                    if (eResponse) {
+                        if (eResponse.redirect) {
+                            location.replace(eResponse.redirect);
+                        }
+                        if (eResponse.message) {
+                            alertModal.show(...Object.values(eResponse.message));
+                        }
+                    } else {
+                        alertModal.show(0, "Server error", "Unexpected error occured, please try again later.");
                     }
-                    alertModal.show(...Object.values(message));
+
                     $(`${roomsTable.body} > tr:last-child`).remove();
                     roomsTable.data.pop();
                 }
@@ -116,18 +122,16 @@
         try {
             await addBuilding(newBldg);
             location.replace("/admin/rooms/" + newBldg.split(" ").join("_"));
-        } catch (error) {
-            console.log(error);
-            const {redirect, message} = error.responseJSON || error.responseText;
-            if (redirect) {
-                return location.replace(redirect);
-            }
-            if (message) {
-                alertModal.show(
-                    ...Object.values(message) ||
-                    0, "Unexpected error", 
-                    "Encountered an error while adding building, please try again later."
-                );
+        } catch (eResponse) {
+            if (eResponse) {
+                if (eResponse.redirect) {
+                    location.replace(eResponse.redirect);
+                }
+                if (eResponse.message) {
+                    alertModal.show(...Object.values(eResponse.message));
+                }
+            } else {
+                alertModal.show(0, "Server error", "Unexpected error occured, please try again later.");
             }
         }
     });

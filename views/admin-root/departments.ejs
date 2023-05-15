@@ -40,7 +40,7 @@
     </div>
     <div class="shadow-3 bg-white px-5 pt-4">
         <% if (colleges.length > 0 && currentCollege) { %>
-            <h2 style="color: #8673b4;" class="table-title"></h2>
+            <h2 style="color: #8673b4;" class="table-title">Departments in <%= currentCollege.name %></h2>
             <br>
             <a class="btn btn-primary btn-rounded" data-cts-toggle="table" href="#add-dept"
                 type="button" data-cts-target="#departments-table">
@@ -73,6 +73,87 @@
 </div>
 <script src="/lib/responsive-table.js"></script>
 <script>
+    /*
+    * main process starts here
+    */
+    const colleges = $(".panel-menu > .menu-item");
+    <% if (currentCollege) { %>
+    const departmentsTable = new EditableTable("#departments-table");
+    if (colleges.length > 0) {
+        let openCollege = $(".menu-item[title='<%= currentCollege.name %>']");
+        $(openCollege).addClass("active");
+
+        // initialize responsive Departments table
+        departmentsTable.initData(getDepartments("<%= currentCollege.id %>"), true, 
+            () => {
+                $(`${departmentsTable.body}>tr`)
+                .on("row:edit", initDeptEdit)
+                .on("row:confirm-change", confirmDeptEdit)
+                .on("row:cancel-change", cancelDeptEdit)
+                .find("td:nth-child(2):contains('To be assigned...')").addClass("text-muted");
+            }
+        );
+
+        $(departmentsTable.addBtn).click(async (event) => {
+            let newDeptData;
+            try {
+                newDeptData = await $(event.currentTarget).data("newRow");
+            } catch (error) {
+                return console.error(error);
+            }
+
+            try {
+                const message = await addDepartment("<%= currentCollege.id %>", newDeptData);
+                $(`${departmentsTable.body}>tr:last-child>td:nth-child(2)`)
+                    .text("To be assigned...")
+                    .addClass("text-muted");
+                
+                if (message) {
+                    alertModal.show(...Object.values(message));
+                }
+            } catch (eResponse) {
+                if (eResponse) {
+                    if (eResponse.redirect) {
+                    location.replace(eResponse.redirect);
+                    }
+                    if (eResponse.message) {
+                        alertModal.show(...Object.values(eResponse.message));
+                    }
+                } else {
+                    alertModal.show(0, "Server error", "Unexpected error occured, please try again later.");
+                }
+
+                $(`${departmentsTable.body}>tr:last-child`).remove();
+                departmentsTable.data.pop();
+            }
+            $(event.currentTarget).removeData("newRow");
+        });
+    }
+    <% } %>
+    
+    $("#add-college").click(async (event) => {
+        let collegeName = $(event.currentTarget).siblings("input:first").val();
+        if (!collegeName || collegeName == "") {
+            return alertModal.show(2, "Missing Input", "Enter a new college name.");
+        }
+
+        try {
+            await addCollege(collegeName);
+            location.replace("/admin/departments/" + collegeName.split(" ").join("_"));
+        } catch (eResponse) {
+            if (eResponse) {
+                if (eResponse.redirect) {
+                    location.replace(eResponse.redirect);
+                }
+                if (eResponse.message) {
+                    alertModal.show(...Object.values(eResponse.message));
+                }
+            } else {
+                alertModal.show(0, "Server error", "Unexpected error occured, please try again later.");
+            }
+        }
+    });
+
     async function initDeptEdit(event) {
         // get current chairperson
         let chairColumn = $(event.currentTarget).children().get(1);
@@ -83,8 +164,10 @@
 
         $(event.currentTarget).data("prevChair", origItem);
         let deptID = departmentsTable.data[$(event.currentTarget).index()]["id"];
+        console.log(deptID);
         // get all faculty in the department
         let faculty = await getFaculty(deptID, ["faculty_id", "last_name", "first_name", "middle_name"]);
+        console.log(faculty);
         if (faculty.length <= 1) {
             return;
         }
@@ -121,100 +204,30 @@
             return console.log("Chairperson unchanged.");
         }
         try {
-            const message = await updateDepartment(deptID, { deptName: deptColumn.value, chair: newChair });
-            alertModal.show(...Object.values(message));
-        } catch (error) {
-            console.error(error);
-            const { message, redirect } = error.responseJSON;
-            if (redirect) {
-                location.replace(redirect);
+            await updateDepartment(deptID, { deptName: deptColumn.value, chair: newChair });
+            location.reload();
+        } catch (eResponse) {
+            if (eResponse) {
+                if (eResponse.redirect) {
+                    location.replace(eResponse.redirect);
+                }
+                if (eResponse.message) {
+                    alertModal.show(...Object.values(eResponse.message));
+                }
+                console.log(eResponse);
+            } else {
+                alertModal.show(0, "Server error", "Unexpected error occured, please try again later.");
             }
 
+            console.log(event.currentTarget);
             $(event.currentTarget).trigger("row:cancel-change");
-            alertModal.show(...Object.values(message));
         }
     }
 
-    async function cancelDeptEdit(event) {
-        if ($(event.currentTarget).data("edit-action") == 1) {
-            const chairColumn = $(event.currentTarget).children().get(1);
-            let prevChair = $(event.currentTarget).data("prevChair");
+    async function cancelDeptEdit(chairColumn) {
+        if ($(chairColumn).data("edit-action") == 1) {
+            let prevChair = $(chairColumn).data("prevChair");
             chairColumn.textContent = prevChair;
         }
     }
-    
-    /*
-    * main process starts here
-    */
-    const colleges = $(".panel-menu > .menu-item");
-    <% if (currentCollege) { %>
-    const departmentsTable = new EditableTable("#departments-table");
-    if (colleges.length > 0) {
-        let openCollege = $(".menu-item[title='<%= currentCollege.name %>']");
-        $(openCollege).addClass("active");
-        let collegeTitle = $(".table-title");
-
-        // initialize responsive Departments table
-        departmentsTable.initData(getDepartments("<%= currentCollege.id %>"), true, 
-            () => {
-                $(`${departmentsTable.body}>tr`)
-                .on("row:edit", initDeptEdit)
-                .on("row:confirm-change", confirmDeptEdit)
-                .on("row:cancel-change", cancelDeptEdit)
-                .find("td:nth-child(2):contains('To be assigned...')").addClass("text-muted");
-            }
-        );
-        $(collegeTitle).text("Departments in " + $(openCollege).text());
-
-        $(departmentsTable.addBtn).click(async (event) => {
-            let newDeptData;
-            try {
-                newDeptData = await $(event.currentTarget).data("newRow");
-            } catch (error) {
-                return console.error(error);
-            }
-
-            try {
-                const message = await addDepartment("<%= currentCollege.id %>", newDeptData);
-                $(`${departmentsTable.body}>tr:last-child>td:nth-child(2)`)
-                    .text("To be assigned...")
-                    .addClass("text-muted");
-                
-                if (message) {
-                    alertModal.show(...Object.values(message));
-                }
-            } catch (error) {
-                console.error(error);
-                const { message, redirect } = error.responseJSON;
-                if (redirect) {
-                    location.replace(redirect);
-                }
-
-                $(`${departmentsTable.body}>tr:last-child`).remove();
-                departmentsTable.data.pop();
-                alertModal.show(...Object.values(message));
-            }
-            $(event.currentTarget).removeData("newRow");
-        });
-    }
-    <% } %>
-    
-    $("#add-college").click(async (event) => {
-        let collegeName = $(event.currentTarget).siblings("input:first").val();
-        if (!collegeName || collegeName == "") {
-            return alertModal.show(2, "Missing Input", "Enter a new college name.");
-        } else if (colleges.is(`[title='${collegeName}']`)) {
-            return alertModal.show(
-                2, "Duplicate College",
-                "Please enter a different college name."
-            );
-        }
-
-        try {
-            await addCollege(collegeName);
-            location.replace("/admin/departments/" + collegeName.split(" ").join("_"));
-        } catch (error) {
-            console.log(error);
-        }
-    });
 </script>

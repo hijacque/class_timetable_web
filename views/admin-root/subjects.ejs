@@ -128,13 +128,17 @@
                 
                 try {
                     await addSubject("<%= currentCollege.id %>", newSubject);
-                } catch (error) {
-                    console.error(error);
-                    const {message, redirect} = error.responseJSON || error.responseText;
-                    if (redirect) {
-                        return location.replace(redirect);
+                } catch (eResponse) {
+                    if (eResponse) {
+                        if (eResponse.redirect) {
+                            location.replace(eResponse.redirect);
+                        }
+                        if (eResponse.message) {
+                            alertModal.show(...Object.values(eResponse.message));
+                        }
+                    } else {
+                        alertModal.show(0, "Server error", "Unexpected error occured, please try again later.");
                     }
-                    alertModal.show(...Object.values(message));
                     $(`${subjectsTable.body} > tr:last-child`).remove();
                     subjectsTable.data.pop();
                 }

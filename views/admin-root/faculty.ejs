@@ -60,7 +60,7 @@
                 <thead class="text-center">
                     <tr>
                         <th table-cts-column="faculty_id text" style="width: 140px;">ID</th>
-                        <th table-cts-column="status text" style="width: 140px;">Employment Status</th>
+                        <th table-cts-column="status dropdown[full-time,part-time]" style="width: 140px;">Employment Status</th>
                         <th table-cts-column="teach_load number" style="width: 100px;">Teach<br>Load</th>
                         <th table-cts-column="last_name text">Surname</th>
                         <th table-cts-column="first_name text">First Name</th>
@@ -77,7 +77,7 @@
                         <td>
                             <div class="dropdown">
                                 <button class="btn btn-secondary dropdown-toggle add-td-input" type="button"
-                                    data-mdb-toggle="dropdown" aria-expanded="false">Status</button>
+                                    data-mdb-toggle="dropdown" aria-expanded="false" title="Status">Status</button>
                                 <ul class="dropdown-menu">
                                     <li><a class="dropdown-item" role="button">full-time</a></li>
                                     <li><a class="dropdown-item" role="button">part-time</a></li>
@@ -107,6 +107,7 @@
             const action = $(event.currentTarget).data("action-edit");
             try {
                 const newData = $(event.currentTarget).data("updatedData");
+                // TODO: create api call for updating faculty data
                 console.log(newData);
             } catch (error) {
                 console.log(error);
@@ -137,18 +138,26 @@
                 }
                 
                 try {
-                    const message = await addFaculty("<%= currentDept.id %>", newFaculty);
-                    alertModal.show(...Object.values(message));
+                    await addFaculty("<%= currentDept.id %>", newFaculty);
+                    // location.reload();
+                    // console.log(message);
+                    // alertModal.show(...Object.values(message));
                     $("#chair-note").remove();
-                } catch (error) {
-                    console.log(error);
-                    const { message, redirect } = error.responseJSON;
-                    if (redirect) {
-                        location.replace(redirect);
+                } catch (eResponse) {
+                    console.log(eResponse);
+                    if (eResponse) {
+                        if (eResponse.redirect) {
+                            location.replace(eResponse.redirect);
+                        }
+                        if (eResponse.message) {
+                            alertModal.show(...Object.values(eResponse.message));
+                        }
+                    } else {
+                        alertModal.show(0, "Server error", "Unexpected error occured, please try again later.");
                     }
-                    $(`${facultyTable.body} > tr:last-child`).remove();
+
                     facultyTable.data.pop();
-                    alertModal.show(...Object.values(message));
+                    $(`${facultyTable.body} > tr:last-child`).remove();
                 }
                 $(event.currentTarget).removeData("newRow");
             });
