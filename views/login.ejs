@@ -42,7 +42,7 @@
                         <h2 class="card-title">Let's get started!</h2>
                     </div>
                     <p class="mt-5 mb-1">Enter your account information</p>
-                    <div>
+                    <form action="/login" method="post">
                         <div class="input-group input-group-lg my-4 shadow-0 align-items-center">
                             <span class="input-group-text">
                                 <i class="fas fa-at fa-lg"></i>
@@ -75,7 +75,7 @@
                             <p class="mb-0 me-3">Don't have an account?</p>
                             <a href="/signup" class="btn btn-outline-primary btn-rounded btn-sm">Create new</a>
                         </div>
-                    </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -94,7 +94,7 @@
         alertModal.show(<%- JSON.stringify(mode) %>, "<%= title %>", "<%= body %>");
         <% } %>
 
-        $("#submit").click(() => {
+        $("#submit").closest("form").submit(() => {
             $.post("/login", {
                 email: $("#email").val(),
                 password: $("#password").val()

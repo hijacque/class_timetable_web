@@ -8,7 +8,9 @@ class ThemedAlert {
     }
 
     show(mode, title = "New Message", body = "", redirect) {
-        let alertTitle = this.alert.find("#alert-title");
+        let alertTitle = this.alert.find("#alert-title").removeClass(
+            "text-danger text-success text-warning text-info"
+        );
         switch (mode) {
             case 0:
                 alertTitle.addClass("text-danger");
@@ -23,9 +25,7 @@ class ThemedAlert {
                 alertTitle.addClass("text-info");
                 break;
             default:
-                alertTitle.removeClass(
-                    "text-danger text-success text-warning text-info"
-                );
+                alertTitle.css("color", "#8673b4");
                 break;
         }
         alertTitle.text(title);

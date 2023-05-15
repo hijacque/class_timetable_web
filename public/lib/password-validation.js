@@ -12,11 +12,11 @@ $(".toggle-pass").click((event) => {
 });
 
 function initValidatePassword(alertModal) {
-    let alertBody = $("#alert-body");
-    let alertTitle = $("#alert-title");
-    if ($(alertBody).text() != "") {
-        alertModal.show();
-    }
+    // let alertBody = $("#alert-body");
+    // let alertTitle = $("#alert-title");
+    // if ($(alertBody).text() != "") {
+    //     alertModal.show();
+    // }
 
     let valid;
     $("#submit").click(() => {
@@ -40,16 +40,17 @@ function initValidatePassword(alertModal) {
             }
 
             if (!valid) {
-                $(alertTitle).text("Check your password").addClass("text-warning");
-                $(alertBody).html(textAlert);
-                alertModal.show();
+                // $(alertTitle).text("Check your password").addClass("text-warning");
+                // $(alertBody).html(textAlert);
+                alertModal.show(2, "Check your password", textAlert);
                 $("#confirm-pass").val("");
             }
         }
     });
 
-    $("#submit").closest("form").submit((ev) => {
+    $("#submit").click((ev) => {
         if (!valid) {
+            $(ev.currentTarget).data("validPassword", false);
             ev.preventDefault(ev);
         } else {
             $("html").css("cursor", "wait");
@@ -57,6 +58,7 @@ function initValidatePassword(alertModal) {
             $("input").css("cursor", "wait");
             $("input").prop("readonly", true);
             $("input[type=radio]").prop("disabled", true);
+            $(ev.currentTarget).data("validPassword", true);
         }
     });
 }

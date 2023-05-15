@@ -88,17 +88,20 @@
     <!-- MDB -->
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.0.0/mdb.min.js"></script>
     <script src="/lib/display-dropdown.js"></script>
+    <script src="/lib/themed-alert.js"></script>
     <script src="/lib/password-validation.js"></script>
     <script>
-        const alertModal = new mdb.Modal($("#alert-modal"));
+        const alertModal = new ThemedAlert(new mdb.Modal($("#alert-modal")), "alert-modal");
         initValidatePassword(alertModal);
 
         $("#submit").click((event) => {
             const totalTerms = $("#total-terms").val();
-            if (totalTerms) {
+            if ($("input[name=termType]").length && totalTerms > 2) {
                 $(event.currentTarget).closest("form").append(
                     `<input type='hidden' name='termType' value='${totalTerms}'>`
                 );
+            } else if (totalTerms > 2) {
+                $("input[name=TermType]").val(totalTerms);
             }
         })
 
