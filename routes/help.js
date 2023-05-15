@@ -91,7 +91,7 @@ router.route("/change-password")
             title: res.locals.msg_title,
             body: res.locals.msg_body,
             mode: res.locals.msg_mode
-        }).status(200).redirect("/login");
+        }).status(200).json({ redirect: "/logout" });
     });
 
 module.exports = router;
