@@ -27,16 +27,16 @@ const addCourse = (title) => new Promise((resolve, reject) => $.post(
 const getCurriculum = (courseID) => new Promise((resolve, reject) => {
     $.get("/api/curricula/" + courseID,
         (data) => { resolve(data) }, "json"
-    ).fail((error) => reject(error.responseJSON))
+    ).fail((error) => reject(error))
 });
 
 const addSemester = (courseID, semData) => $.post(
     "/api/curricula/" + courseID, semData,
     (data, status) => console.log(data)
-).fail((data) => console.log(data.responseJSON));
+).fail((data) => console.log(data));
 
 const addCourseSubject = (courseID, subjData) => new Promise((resolve, reject) => {
     $.post("/api/curriculum/" + courseID, subjData,
         (data) => resolve(data.newSubject)
-    ).fail(data => reject(data.responseJSON))
+    ).fail(data => reject(data))
 });
