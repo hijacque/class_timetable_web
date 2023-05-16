@@ -51,18 +51,30 @@
     const facultyTable = new EditableTable("#faculty-table");
     facultyTable.initData(getFaculty(deptID), true);
     $(facultyTable.addBtn).click(async (event) => {
+        let newFaculty;
         try {
-            let addedData = await $(event.currentTarget).data("newRow");
-            if (addedData) { await addFaculty(deptID, addedData); }
+            newFaculty = await $(event.currentTarget).data("newRow");
         } catch (error) {
-            console.error(error);
-            const {redirect, message} = error.responseJSON;
-            if (redirect) {
-                location.replace(redirect);
+            return console.log(error);
+        }
+
+        try {
+            await addFaculty("<%= data.department.id %>", newFaculty);
+        } catch (eResponse) {
+            console.log(eResponse);
+            if (eResponse) {
+                if (eResponse.redirect) {
+                    location.replace(eResponse.redirect);
+                }
+                if (eResponse.message) {
+                    alertModal.show(...Object.values(eResponse.message));
+                }
+            } else {
+                alertModal.show(0, "Server error", "Unexpected error occured, please try again later.");
             }
-            alertModal.show(...Object.values(message));
-            $(`${facultyTable.body}:last-child`).remove();
+
             facultyTable.data.pop();
+            $(`${facultyTable.body} > tr:last-child`).remove();
         }
         $(event.currentTarget).removeData("newRow");
     });
