@@ -1,4 +1,4 @@
-<% const {current, subjOptions, forms} = data %>
+<% const {current, subjOptions, forms, type} = data %>
 <div class="bg-light task-view pt-4" id="preference-view">
     <% if (current) { %>
     <div class="side-panel px-3">
@@ -7,7 +7,7 @@
             <ul class="list-group panel-menu">
                 <% for (const {pref_id, year, ordinal_term, term} of forms) { %>
                     <a type="button" class="list-group-item list-group-item-action menu-item"
-                        href="/faculty/preference?term=<%= year %><%= term %>"
+                        href="/<%= type %>/preference?term=<%= year %><%= term %>"
                         title="<%= year %><%= term %>" id="<%= pref_id %>" >
                         <p class="text-truncate m-0">
                             <%= year %>-<%= year + 1 %>, <%- ordinal_term %> Semester
@@ -40,8 +40,8 @@
                         <button class="btn btn-secondary dropdown-toggle btn-rounded mt-1" type="button" id="pref-subj"
                             data-mdb-toggle="dropdown" aria-expanded="false">Add Field</button>
                         <ul class="dropdown-menu" aria-labelledby="pref-subj">
-                            <% for (const {title} of subjOptions) { %>
-                            <li><a class="dropdown-item" role="button"><%= title %></a></li>
+                            <% for (const subject of subjOptions) { %>
+                            <li><a class="dropdown-item" role="button"><%= subject %></a></li>
                             <% } %>
                         </ul>
                     </div>
@@ -102,9 +102,9 @@
 <% if (current) { %>
 <script>
     const expertises = [];
-    const submitPreference = (schedules) => new Promise((resolve, reject) => $.post(
+    const submitPreference = (schedules = []) => new Promise((resolve, reject) => $.post(
         "http://localhost:3000/api/preferences/<%= current.pref_id %>",
-        {subjects: expertises, schedules: schedules || []}, 
+        {subjects: expertises, schedules: schedules}, 
         (data) => resolve(data), "json",
     ).fail((data) => reject(data)));
 
@@ -138,35 +138,51 @@
     });
 
     $("#submit-pref").click(async () => {
-        const prefSchedules = $("#pref-schedule>tbody>tr").get().map((row, i) => {
-            let start = $(row).find(".start-time").val();
-            let end = $(row).find(".end-time").val();
+        let prefSchedules = $("#pref-schedule>tbody>tr").get();
+        for (let i = 0; i < prefSchedules.length; i++) {
+            const start = $(prefSchedules[i]).find(".start-time").val();
+            const end = $(prefSchedules[i]).find(".end-time").val();
+            
+            prefSchedules[i] = { day: i + 1 };
+            if (start && end) {
+                let startTime = roundMinutes(start, 30);
+                if (startTime < 7 * 60) {
+                    $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
+                    alertModal.show(2, $(sched).first().text() + " start time is too early", "Class must start on or later than 7AM");
+                    return console.log("Class must start on or later than 7AM");
+                }
+                prefSchedules[i].start = startTime;
 
-            // flip times to continue
-            if (start > end) {
-                return {
-                    day: i, 
-                    start: (start) ? roundMinutes(end, 30) : null,
-                    end: (end) ? roundMinutes(start, 30) : null
-                };
+                let endTime = roundMinutes(end, 30);
+                if (endTime > 22 * 60) {
+                    $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
+                    alertModal.show(2, $(sched).first().text() + " end time is too late", "Class must end on or before than 10PM");
+                    return console.log("Class must end on or before 10PM");
+                }
+                prefSchedules[i].end = endTime;
+                console.log(startTime, endTime);
             }
-            return {
-                day: i, 
-                start: (start) ? roundMinutes(start, 30) : null,
-                end: (end) ? roundMinutes(end, 30) : null
-            };
-        });
-
-        console.log(await submitPreference(prefSchedules));
+        }
         
-        $("#preference-view").empty();
-        $("#alert-title").text("Your Preference is Recorded").addClass("text-success");
-        $("#alert-body").html(
-            "Your preferred subjects and schedule has been recorded.<br><br>" +
-            "The official schedule for next semester will be posted by the chairperson."
-        );
-        $("#confirm-alert").click(() => location.reload());
-        alertModal.show();
+        console.log(prefSchedules);
+        console.log(expertises);
+        try {
+            const {message} = await submitPreference(prefSchedules.filter(sched => sched.start && sched.end));
+            $("#confirm-alert").click(() => location.reload());
+            alertModal.show(...Object.values(message));
+        } catch (eResponse) {
+            if (eResponse) {
+                if (eResponse.redirect) {
+                    location.replace(eResponse.redirect);
+                }
+                if (eResponse.message) {
+                    $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
+                    alertModal.show(...Object.values(eResponse.message));
+                }
+            } else {
+                alertModal.show(0, "Server error", "Unexpected error occured, please try again later.");
+            }
+        }
     });
 
     const currentForm = $("#<%= current.pref_id %>").addClass("active");

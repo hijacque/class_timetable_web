@@ -4,6 +4,7 @@
     <%- include('../base') %>
     <title>Faculty</title>
     <link rel="stylesheet" href="/styles/faculty-root.css">
+    <script src="/lib/themed-alert.js"></script>
 </head>
 <body class="dashboard">
     <div class="modal fade" id="alert-modal" tabindex="-1" aria-labelledby="alert-title" aria-hidden="true"
@@ -44,8 +45,12 @@
     <!-- MDB -->
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.0.0/mdb.min.js"></script>
     <script>
-        const alertModal = new mdb.Modal($("#alert-modal"));
-
+        const alertModal = new ThemedAlert(new mdb.Modal($("#alert-modal")), "alert-modal");
+        <% if (serverAlert && Object.keys(serverAlert).length == 3) { %>
+            <% const {mode, title, body} = serverAlert %>
+            alertModal.show(<%- JSON.stringify(mode) %>, "<%= title %>", "<%= body %>");
+        <% } %>
+        
         let openSection = "<%- section %>";
         $(`a.task[id=${openSection}]`)
         .toggleClass("btn-secondary btn-light border-end border-4 border-primary")
