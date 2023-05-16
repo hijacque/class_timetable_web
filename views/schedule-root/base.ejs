@@ -5,16 +5,33 @@
     <%- include('../base') %>
         <title>Edit Schedule</title>
         <link rel="stylesheet" href="/styles/schedule-root.css">
+        <script src="/lib/themed-alert.js"></script>
 </head>
 
 <body>
+    <div class="modal fade" id="alert-modal" tabindex="-1" aria-labelledby="alert-title" aria-hidden="true"
+        data-mdb-backdrop="static" data-mdb-keyboard="false">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="alert-title"></h5>
+                </div>
+                <div class="modal-body" id="alert-body"></div>
+                <div class="modal-footer text-center">
+                    <button type="button" class="btn btn-secondary" data-mdb-dismiss="modal" id="confirm-alert">
+                        OK
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="app-bar bg-light">
         <% if (category == "faculty") { %>
-            <a type="button" onclick="window.location.href = '/chair/schedules?term=<%= term.code %>'">
+            <a type="button" onclick="window.location.href = '/chair/schedules/<%= term.code %>'">
                 <i class="fas fa-arrow-left fa-2x"></i>
             </a>
         <% } else { %>
-            <a onclick="window.location.href = '/chair/schedules?term=<%= term.code %>&course=<%= category %>'"
+            <a onclick="window.location.href = '/chair/schedules/<%= term.code %>?course=<%= category %>'"
                 type="button" >
                 <i class="fas fa-arrow-left fa-2x"></i>
             </a>
@@ -31,7 +48,13 @@
     <!-- MDB -->
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.0.0/mdb.min.js"></script>
     <script>
-        const newClassForm = new mdb.Modal(document.getElementById('add-class'));
+        const alertModal = new ThemedAlert(new mdb.Modal($("#alert-modal")), "alert-modal");
+        <% if (serverAlert && Object.keys(serverAlert).length == 3) { %>
+            <% const {mode, title, body} = serverAlert %>
+            alertModal.show(<%- JSON.stringify(mode) %>, "<%= title %>", "<%= body %>");
+        <% } %>
+        
+        const newClassForm = new mdb.Modal($("#add-class"));
     </script>
 </body>
 </html>

@@ -9,28 +9,30 @@
             </div>
             <div class="modal-body">
                 <label for="class-subject">Subject:</label><span id="class-subject"></span><br>
+                <label for="class-block">Block:</label>
+                <span id="class-block"><%= current.course %> <%= current.year %>-<%= current.block_no %></span><br>
                 <label for="class-hours">Assigned hours:</label>
                 <span id="class-hours"></span><br>
                 <div class="d-flex align-items-center my-3" >
                     <label for="class-faculty" class="fw-bold me-2">Faculty:</label>
+                    <span class="class-faculty"></span>
                     <div class="dropdown">
-                        <span id="class-faculty"></span>
-                        <a class="btn btn-secondary dropdown-toggle" type="button"
-                            data-mdb-toggle="dropdown" aria-expanded="false" id="class-faculty">Pick Professor</a>
+                        <a class="btn btn-secondary dropdown-toggle class-faculty" type="button"
+                            data-mdb-toggle="dropdown" aria-expanded="false">pick professor</a>
                         <ul class="dropdown-menu" aria-labelledby="class-faculty">
                             <% for (const prof of faculty) { %>
-                                <li><a class="dropdown-item" role="button" id="<%= prof.id %>">
+                                <li><a class="dropdown-item px-2" role="button" id="<%= prof.id %>">
                                     <% if (prof.teach_load == "FULL") { %>
-                                        <span class="text-warning ms-2"><%= prof.name %></span>
-                                        ( <%= prof.teach_load %> )
+                                        <span class="text-warning faculty-name"><%= prof.name %></span>
+                                        <span class="faculty-load">( <%= prof.teach_load %> )</span>
                                     <% } else { %>
-                                        <span class="ms-2"><%= prof.name %></span>
-                                        ( <%= prof.teach_load %> )
+                                        <span class="ms-2 faculty-name"><%= prof.name %></span>
+                                        <span class="faculty-load">( <%= prof.teach_load %> )</span>
                                     <% } %>
                                 </a></li>
                             <% } %>
                             <li><hr class="dropdown-divider m-0"></li>
-                            <li><a class="dropdown-item text-danger" role="button">Cancel</a></li>
+                            <li><a class="dropdown-item text-danger cancel" role="button">Cancel</a></li>
                         </ul>
                     </div>
                 </div>
@@ -49,7 +51,7 @@
                             <li><a class="dropdown-item" role="button" data-cts-enum="6">SATURDAY</a></li>
                             <li><a class="dropdown-item" role="button" data-cts-enum="7">SUNDAY</a></li>
                             <li><hr class="dropdown-divider m-0"></li>
-                            <li><a class="dropdown-item text-danger" role="button">Cancel</a></li>
+                            <li><a class="dropdown-item text-danger cancel" type="button">Cancel</a></li>
                         </ul>
                     </div>
                     <span class="input-group-text"><i class="fas fa-at"></i></span>
@@ -63,10 +65,10 @@
                             data-mdb-toggle="dropdown" aria-expanded="false" id="class-mode">Pick Mode</a>
                         <ul class="dropdown-menu" aria-labelledby="class-mode">
                             <li><a class="dropdown-item" role="button" data-cts-enum="1">F2F</a></li>
-                            <li><a class="dropdown-item" role="button" data-cts-enum="2">online</a></li>
-                            <li><a class="dropdown-item" role="button" data-cts-enum="3">blended</a></li>
+                            <li><a class="dropdown-item" role="button" data-cts-enum="2">Online</a></li>
+                            <li><a class="dropdown-item" role="button" data-cts-enum="3">Blended</a></li>
                             <li><hr class="dropdown-divider m-0"></li>
-                            <li><a class="dropdown-item text-danger" role="button">Cancel</a></li>
+                            <li><a class="dropdown-item text-danger cancel" type="button">Cancel</a></li>
                         </ul>
                     </div>
                     <input type="text" id="class-room" class="form-control" placeholder="Room no." disabled>
@@ -74,7 +76,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-mdb-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="confirm-new-class">Assign</button>
+                <button type="button" class="btn btn-primary" id="confirm-new-class" data-mdb-dismiss="modal">Assign</button>
             </div>
         </div>
     </div>
@@ -89,7 +91,7 @@
             <% if (leftClasses.length > 0) { %>
                 <ul class="list-group panel-menu">
                 <% for (const {subj_id, subject, req_hours, assigned_time, faculty_id, faculty_name} of leftClasses) { %>
-                    <button type="button" title="<%= subject %>" 
+                    <button type="button" title="<%= subject %>" id="<%= subj_id %>"
                         class="list-group-item list-group-item-action menu-item"
                         <% if (faculty_id) { %>
                             itemid="<%= faculty_id %>"
@@ -99,7 +101,7 @@
                         <p class="text-truncate m-0">
                             <%= subject %><br>
                             <% if (faculty_id) { %>
-                                <small class="text-muted prof-name">Professor: <%= faculty_name %></small>
+                                <small class="text-muted faculty-name">Professor: <%= faculty_name %></small>
                             <% } %>
                         </p>
                     </button>
@@ -440,42 +442,32 @@
 
 <script src="/lib/display-dropdown.js"></script>
 <script>
-    const startHeightSched = <%- JSON.stringify(Math.min(...classes.map(c => c.start) )) %>;
-    
-    if (startHeightSched > 9) {
-        $(document).ready(() => setTimeout(() => {
-            $(".main-view>div:last-child").stop().animate({scrollTop: startHeightSched * 43 + 235}, 1000, 'swing');
-        }, 300));
-    }
-    
-    const addClass = (blockID, schedule) => new Promise((resolve, reject) => {
-        $.post("/api/schedules/<%= term.id %>",
-            { faculty: facultyID, schedule: schedule},
-            () => location.reload(),
-            "json"
+    const addClass = (schedule) => new Promise((resolve, reject) => {
+        $.post("/api/schedules/<%= term.id %>", { schedule: schedule }, (data) => resolve(data)
         ).fail((error) => {
             console.log(error);
-            reject(error);
+            reject(error.responseJSON || error.responseText);
         });
     });
-
-    displayDropMenu($("#class-day"), "Pick Day");
-    displayDropMenu($("#class-mode"), "Pick Mode");
-    displayDropMenu($("a#class-faculty"), "Pick Professor");
-
+    
     $(".menu-item").click((event) => {
-        const newClass = $(event.currentTarget);
-        $("#class-subject").text(newClass.attr("title")).attr("aria-valuenow", newClass.attr("id"));
-        $("#class-hours").text(`${newClass.attr("aria-valuenow")} / ${newClass.attr("aria-valuemax")}`);
+        const newClass = event.currentTarget;
+        $("#class-subject").text(newClass.title).attr("aria-valuenow", newClass.id);
+        const assignedHours = parseFloat(newClass.ariaValueNow);
+        const reqHours = parseInt(newClass.ariaValueMax);
+        $("#class-hours")
+            .text(`${assignedHours} / ${reqHours}`)
+            .attr("aria-valuemax", reqHours - assignedHours)
+            .attr("aria-valuemin", assignedHours);
         
-        const facultyID = newClass.attr("itemid");
+        const facultyID = newClass.getAttribute("itemid");
         if (facultyID && facultyID != "") {
-            const facultyName = newClass.find(".prof-name").text().slice(11);
-            $("span#class-faculty").text(facultyName).attr("itemid", facultyID);
-            $("a#class-faculty").hide();
+            const facultyName = $(newClass).find(".faculty-name").text().slice(11);
+            $("span.class-faculty").text(facultyName).attr("aria-valuenow", facultyID);
+            $("a.dropdown-toggle.class-faculty").hide();
         } else {
-            $("span#class-faculty").empty();
-            $("a#class-faculty").show();
+            $("span.class-faculty").empty();
+            $("a.dropdown-toggle.class-faculty").show();
         }
         newClassForm.show();
     });
@@ -495,48 +487,100 @@
         $("#class-mode").attr("aria-valuenow", modeIndex);
         if (modeIndex == 1) {
             $("#class-room").prop("disabled", false).focus();
-        } else if (modeIndex <= 3) {
-            $("#class-room").prop("disabled", true);
+        } else {
+            $("#class-room").val(null).prop("disabled", true);
         }
-    })
+    });
+
+    $("[aria-labelledby='class-faculty'] > li > a.dropdown-item").click((event) => {
+        $("a.dropdown-toggle.class-faculty")
+            .attr("aria-valuenow", event.currentTarget.id)
+            .text($(event.currentTarget).find(".faculty-name").text());
+        // TODO: get preferred subjects and schedule
+    });
+
+    $("#confirm-alert").click((event) => {
+        event.currentTarget.removeAttribute("data-mdb-target");
+    });
 
     $("#confirm-new-class").click(async (event) => {
         const day = $("#class-day");
         const start = $("#class-start");
         const end = $("#class-end");
-        const reqMinutes = parseFloat($("#class-hours").text().slice(-1)) * 60;
-        if (day.text() == "Pick Day" || !start.val() || !end.val()) {
+        const hours = $("#class-hours");
+        const reqMinutes = parseFloat(hours.attr("aria-valuemax")) * 60;
+        if (day.val() == "Pick Day" || !start.val() || !end.val()) {
+            $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
+            alertModal.show(2, "Missing schedule input", "Fill in week day, start time and end time.");
             return console.log("Missing schedule input.");
         } else if (start.val() > end.val()) {
+            $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
+            alertModal.show(2, "Invalid time input", "End time is earlier than start time");
             return console.log("Start time must be earlier than end time");
         }
         let startTime = roundMinutes(start.val(), 30);
         if (startTime < 7 * 60) {
+            $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
+            alertModal.show(2, "Start time is too early", "Class must start on or later than 7AM");
             return console.log("Class must start on or later than 7AM");
         }
         
         let endTime = roundMinutes(end.val(), 30);
-
         if (endTime > 22 * 60) {
+            $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
+            alertModal.show(2, "End time is too late", "Class must end on or before than 10PM");
             return console.log("Class must end on or before 10PM");
-        } else if (end - start > reqMinutes) {
-            console.log("Assigned time exceeds required hours.");
-            endTime = Math.trunc(startTime + reqMinutes);
+        } else if (endTime - startTime > reqMinutes) {
+            $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
+            alertModal.show(2, "Invalid time input", "Assigned time exceeds required hours.");
+            return console.log("Assigned time exceeds required hours.");
         }
-        console.log(day.attr("aria-valuenow"), startTime, endTime);
+        
+        const faculty = $(".class-faculty[aria-valuenow]:first");
+        if (faculty.text().trim() == "pick professor") {
+            $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
+            return alertModal.show(2, "Missing professor", "Choose faculty to assign.");
+        }
+        
+        const mode = $("#class-mode");
+        const room = $("#class-room");
+        const subject = $("#class-subject");
         try {
-            await addClass($(".page-title").attr("id"), {
-                subject: $("#class-subject").attr("aria-valuenow"),
-                mode: $("#class-mode").attr("aria-valuenow") || 1,
-                room: $("#class-room").val().toLowerCase(),
-                block: $("#class-block").attr("aria-valuenow"),
+            await addClass({
+                faculty: faculty.attr("aria-valuenow"),
+                subject: subject.attr("aria-valuenow"),
+                mode: mode.attr("aria-valuenow") || 1,
+                room: room.val().toLowerCase(),
+                block: "<%= current.id %>",
                 day: day.attr("aria-valuenow"),
                 start: startTime,
                 end: endTime,
-                partial: ($("#class-hours").text().split(" ")[0] != "0")
+                partial: parseFloat(hours.attr("aria-valuemin")) > 0 ? 1 : 0
             });
+            // $(".sched-body").append(
+            //     `<div class="sched-block" title="${subject.text()}\n` +
+            //         `Prof. ${faculty.text()}\n${mode.text()} ${schedule.room ? "@ " + schedule.room : ""}"` +
+            //         `style="grid-column: ${schedule.day} / span 1; ` +
+            //         `grid-row: ${schedule.start} / ${schedule.end};">` +
+            //     `<h6 class="text-break">${subject.text()}</h6>` +
+            //     `<p class="text-truncate"><small>` +
+            //         `Prof. ${faculty.text()}<br>${mode.text()} ` +
+            //         `${schedule.room ? "@ " + schedule.room : ""}</small></p>`
+            // );
+            location.reload();
+            // $(".main-view > div:last-child").scrollTop(0);
+            // scrollToFirstSched(schedule.start);
+            // alertModal.show(...Object.values(message));
+            // $(`.menu-item#${subject.attr("aria-valuenow")}`).remove();
+            // resetClassForm();
         } catch (error) {
-            console.log(error);
+            console.error(error);
+            const {redirect, message} = error;
+            if (redirect) {
+                return location.replace(redirect);
+            }
+            $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
+            alertModal.show(...Object.values(message));
         }
     });
 
@@ -548,4 +592,15 @@
         const finalHours = (rounded - finalMins);
         return finalHours + finalMins;
     }
+
+    $(document).ready(() => setTimeout(() => {
+        const startHeight = <%- JSON.stringify(Math.min(...classes.map(c => c.start)) || 0) %>;
+        if (startHeight > 9) {
+            $(".main-view>div:last-child").stop().animate({scrollTop: startHeight * 50 + 107}, 1000, 'swing');
+        }
+    }, 300));
+    
+    displayDropMenu($("#class-day"), "Pick Day");
+    displayDropMenu($("#class-mode"), "Pick Mode");
+    displayDropMenu($("#class-faculty"), "Pick Professor");
 </script>

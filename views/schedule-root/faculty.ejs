@@ -56,7 +56,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-mdb-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="confirm-new-class">Assign</button>
+                <button type="button" class="btn btn-primary" id="confirm-new-class" data-mdb-dismiss="modal">Assign</button>
             </div>
         </div>
     </div>
@@ -96,7 +96,12 @@
                                     class="list-group-item list-group-item-action menu-item"
                                     aria-valuemax="<%= deptClasses[i].req_hours || 0 %>"
                                     aria-valuenow="<%= deptClasses[i].assigned_time || 0 %>">
-                                    <p class="text-truncate m-0"><%= deptClasses[i].subject %></p>
+                                    <p class="text-truncate m-0">
+                                        <%= deptClasses[i].subject %><br>
+                                        <% if (deptClasses[i].assigned_time > 0) { %>
+                                            <small class="text-muted">Assigned hours: <%= deptClasses[i].assigned_time %> / <%= deptClasses[i].req_hours %></small>
+                                        <% } %>
+                                    </p>
                                 </button>
                         <% } %>
                         </ul>
@@ -132,7 +137,13 @@
                                 title="<%= otherClasses[i].subject %>" id="<%= otherClasses[i].id %>"
                                 aria-valuemax="<%= otherClasses[i].req_hours || 0 %>"
                                 aria-valuenow="<%= otherClasses[i].assigned_time || 0 %>">
-                                <p class="text-truncate m-0"><%= otherClasses[i].subject %></p>
+                                <p class="text-truncate m-0">
+                                    <%= otherClasses[i].subject %><br>
+                                    <% if (faculty_id) { %>
+                                        <small class="text-muted faculty-name">Professor: <%= faculty_name %></small>
+                                    <% } %>
+                                    <small></small>
+                                </p>
                             </button>
                         <% } %>
                         </ul>
@@ -489,27 +500,28 @@
         }, 300));
     }
     
-    const addClass = (facultyID, schedule) => new Promise((resolve, reject) => {
+    const addClass = (schedule) => new Promise((resolve, reject) => {
         $.post("/api/schedules/<%= term.id %>",
-            { faculty: facultyID, schedule: schedule},
-            () => location.reload(),
-            "json"
-        ).fail((error) => {
-            console.log(error);
-            reject(error);
-        });
+            { schedule: schedule }, () => location.reload()
+        ).fail((error) => reject(error.responseJSON));
     });
 
     displayDropMenu($("#class-day"), "Pick Day");
     displayDropMenu($("#class-mode"), "Pick Mode");
-
+    
     $(".menu-item").click((event) => {
         const newClass = event.currentTarget;
         $("#class-subject").text(newClass.title).attr("aria-valuenow", newClass.getAttribute("itemid"));
+        const assignedHours = parseFloat(newClass.ariaValueNow);
+        const reqHours = parseInt(newClass.ariaValueMax);
+        $("#class-hours")
+            .text(`${assignedHours} / ${reqHours}`)
+            .attr("aria-valuemax", reqHours - assignedHours)
+            .attr("aria-valuemin", assignedHours);
         
-        $("#class-hours").text(`${newClass.ariaValueNow} / ${newClass.ariaValueMax}`);
         const block = $(newClass).closest(".panel-menu");
         $("#class-block").text(block.attr("title")).attr("aria-valuenow", block.attr("id"));
+        // $("#class-block").text(block.attr("title")).attr("aria-valuenow", block.attr("id"));
         newClassForm.show();
     });
 
@@ -528,40 +540,52 @@
         $("#class-mode").attr("aria-valuenow", modeIndex);
         if (modeIndex == 1) {
             $("#class-room").prop("disabled", false).focus();
-        } else if (modeIndex <= 3) {
-            $("#class-room").prop("disabled", true);
+        } else {
+            $("#class-room").val(null).prop("disabled", true);
         }
-    })
+    });
+
+    $("#confirm-alert").click((event) => {
+        event.currentTarget.removeAttribute("data-mdb-target");
+    });
 
     $("#confirm-new-class").click(async (event) => {
         const day = $("#class-day");
         const start = $("#class-start");
         const end = $("#class-end");
-        const reqMinutes = parseFloat($("#class-hours").text().slice(-1)) * 60;
-
+        const hours = $("#class-hours");
+        const reqMinutes = parseFloat(hours.attr("aria-valuemax")) * 60;
         if (day.text() == "Pick Day" || !start.val() || !end.val()) {
-            return console.error("Missing schedule input.");
+            $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
+            alertModal.show(2, "Missing schedule input", "Fill in week day, start time and end time.");
+            return console.log("Missing schedule input.");
         } else if (start.val() > end.val()) {
-            return console.error("Start time must be earlier than end time");
+            $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
+            alertModal.show(2, "Invalid time input", "End time is earlier than start time");
+            return console.log("Start time must be earlier than end time");
         }
-
         let startTime = roundMinutes(start.val(), 30);
         if (startTime < 7 * 60) {
-            return console.error("Class must start on or later than 7AM");
+            $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
+            alertModal.show(2, "Start time is too early", "Class must start on or later than 7AM");
+            return console.log("Class must start on or later than 7AM");
         }
-        
         
         let endTime = roundMinutes(end.val(), 30);
         if (endTime > 22 * 60) {
-            return console.error("Class must end on or before 10PM");
-        } else if (end - start > reqMinutes) {
-            console.error("Assigned time exceeds required hours.");
-            endTime = Math.trunc(startTime + reqMinutes);
+            $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
+            alertModal.show(2, "End time is too late", "Class must end on or before than 10PM");
+            return console.log("Class must end on or before 10PM");
+        } else if (endTime - startTime > reqMinutes) {
+            $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
+            alertModal.show(2, "Invalid time input", "Assigned time exceeds required hours.");
+            return console.log("Assigned time exceeds required hours.");
         }
-
+        
         console.log(day.attr("aria-valuenow"), startTime, endTime);
         try {
-            await addClass($(".page-title").attr("id"), {
+            await addClass({
+                faculty: "<%= id %>",
                 subject: $("#class-subject").attr("aria-valuenow"),
                 mode: $("#class-mode").attr("aria-valuenow") || 1,
                 room: $("#class-room").val().toLowerCase(),
@@ -569,10 +593,29 @@
                 day: day.attr("aria-valuenow"),
                 start: startTime,
                 end: endTime,
-                partial: ($("#class-hours").text().split(" ")[0] != "0")
+                partial: parseFloat(hours.attr("aria-valuemin")) > 0 ? 1 : 0
             });
-        } catch (error) {
-            console.error(error);
+        } catch (eResponse) {
+            // console.log(eRosponse);
+            if (eResponse) {
+                if (eResponse.redirect) {
+                    location.replace(eResponse.redirect);
+                }
+                if (eResponse.message) {
+                    $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
+                    alertModal.show(...Object.values(eResponse.message));
+                }
+            } else {
+                $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
+                alertModal.show(0, "Server error", "Unexpected error occured, please try again later.");
+            }
+            // console.error(error);
+            // const {redirect, message} = error;
+            // if (redirect) {
+            //     return location.replace(redirect);
+            // }
+            // $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
+            // alertModal.show(...Object.values(message));
         }
     });
 
