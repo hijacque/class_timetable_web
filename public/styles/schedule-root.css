@@ -16,8 +16,9 @@ body {
 .main-view {
     width: 100%;
     display: grid;
-    grid-template-columns: 300px auto;
+    grid-template-columns: 1fr auto;
     grid-template-rows: auto;
+    gap: 0;
     overflow-y: hidden;
 }
 
