@@ -79,7 +79,7 @@ router.get("/chair/:task?/:current?", verifySession, getChairData, getFacultyDat
         res.render("chair-root/base", {
             section: (tasks.includes(req.params.task)) ? req.params.task : "profile" || "profile",
             taskData: req.taskData,
-            serverAlert: {}
+            serverAlert: req.cookies.serverMessage
         });
     } else {
         res.redirect("/logout");
@@ -92,7 +92,7 @@ router.get("/faculty/:task?",verifySession, getFacultyData, (req, res) => {
         res.render("faculty-root/base", {
             section: req.params.task || "profile",
             taskData: req.taskData,
-            serverAlert: {}
+            serverAlert: req.cookies.serverMessage
         });
     } else {
         res.redirect("/logout");
