@@ -709,14 +709,15 @@ router.route("/schedules/:termID")
         const DB = req.app.locals.database;
         let query;
         if (req.query.category == "faculty") {
-            query = `SELECT f.id, CONCAT(f.last_name, ", ", f.first_name, " ", f.middle_name) AS name, ` +
+            query = `SELECT f.id, CONCAT(f.last_name, ", ", f.first_name, " ", f.middle_name) AS name, pref.sched_status, ` +
                 `f.faculty_id, CONCAT(pref.assigned_load, " / ", f.teach_load) AS teach_load, pref.status AS pref_status, ` +
                 `f.status AS faculty_status FROM Terms t INNER JOIN Preferences pref ON t.id = pref.term_id ` +
                 `INNER JOIN Faculty f ON pref.faculty_id = f.id INNER JOIN Departments d ON f.dept_id = d.id ` +
                 `WHERE d.chair_id = '${user.id}' AND t.id = '${req.params.termID}' ` +
                 `ORDER BY f.status, name`;
         } else {
-            query = `SELECT id, year, block_no, total_students FROM Blocks WHERE course_id = "${req.query.category}" ` +
+            query = `SELECT id, year, block_no, total_students, CASE WHEN is_complete THEN 'COMPLETE' ELSE ` +
+                `'incomplete' END AS sched_status FROM Blocks WHERE course_id = "${req.query.category}" ` +
                 `AND term_id = "${req.params.termID}" ORDER BY year, block_no`;
         }
 
@@ -749,7 +750,7 @@ router.route("/schedules/:termID")
         let classroom;
         if (mode == 1 && (!room || room == "")) {
             [classroom] = await DB.executeQuery(
-                `SELECT CONCAT("'", r.id, "'"), r.name FROM ROOMS r INNER JOIN Buildings b ON r.bldg_id = b.id INNER JOIN ` +
+                `SELECT r.id, r.name FROM ROOMS r INNER JOIN Buildings b ON r.bldg_id = b.id INNER JOIN ` +
                     `Terms t ON b.school_id = t.school_id WHERE t.id = '${termID}'` +
                     (prefRooms.length > 0) ? " AND r.name LIKE '%" +
                     prefRooms.map(r => r.split(" ").join("%")).join("%' OR r.name LIKE '%") + "%'" : "" + ` LIMIT 1`
@@ -758,7 +759,7 @@ router.route("/schedules/:termID")
         } else if (mode == 1) {
             const regexRoom = room.split(" ");
             [classroom] = await DB.executeQuery(
-                `SELECT CONCAT("'", r.id, "'"), r.name FROM ROOMS r INNER JOIN Buildings b ON r.bldg_id = b.id INNER JOIN ` +
+                `SELECT r.id, r.name FROM ROOMS r INNER JOIN Buildings b ON r.bldg_id = b.id INNER JOIN ` +
                 `Terms t ON b.school_id = t.school_id WHERE t.id = '${termID}' AND ` +
                 `r.name LIKE '%${regexRoom.join("%")}%' LIMIT 1`
             );
@@ -840,7 +841,7 @@ router.route("/schedules/:termID")
         let query;
         if (partial == 1) {
             query = `INSERT INTO Schedules VALUES ('${termID}', '${subject}', '${block}', ` +
-                `'${faculty}', ${classroom ? classroom.id : "NULL"}, ${day}, ${start}, ${end}, ${mode})`;
+                `'${faculty}', ${classroom ? `'${classroom.id}'` : "NULL"}, ${day}, ${start}, ${end}, ${mode})`;
         } else {
             query = `UPDATE Schedules SET faculty_id = '${faculty}', room_id = ${classroom ? classroom.id : "NULL"}, ` +
                 `day = ${day}, start = ${start}, end = ${end}, mode = ${mode} WHERE block_id = '${block}' AND ` +
@@ -860,11 +861,14 @@ router.route("/schedules/:termID")
             room: classroom ? classroom.name : null
         };
         console.log(finalSched);
-        res.cookie("serverMessage", {
-            mode: 1,
-            title: "New Class Assigned",
-            body: message || "If the schedule is not fully plotted, please assign the remaining hours"
-        }).status(200).json({ schedule: finalSched });
+        if (message) {
+            res.cookie("serverMessage", {
+                mode: 1,
+                title: "New Class Assigned",
+                body: message
+            });
+        }
+        res.status(200).end();
     });
 
 router.post("/blocks/:courseID", async (req, res) => {
