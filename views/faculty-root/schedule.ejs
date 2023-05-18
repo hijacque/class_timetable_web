@@ -1,289 +1,323 @@
+<% const {current, terms, type} = data %>
 <div class="bg-light task-view pb-4 pt-4" id="schedule-view">
-    <% const {term, classes} = data %>
-    <% if (term && classes) { %>
-    <h3 class="text-center mb-4 mt-2">
-        Current Schedule
-    </h3>
-    <div class="scheduler">
-        <div></div>
-        <div class="days">
-            <div>MON</div>
-            <div>TUE</div>
-            <div>WED</div>
-            <div>THU</div>
-            <div>FRI</div>
-            <div>SAT</div>
-            <div>SUN</div>
-        </div>
-        <div class="times">
-            <div>7 AM</div>
-            <div>8 AM</div>
-            <div>9 AM</div>
-            <div>10 AM</div>
-            <div>11 AM</div>
-            <div>12 PM</div>
-            <div>1 PM</div>
-            <div>2 PM</div>
-            <div>3 PM</div>
-            <div>4 PM</div>
-            <div>5 PM</div>
-            <div>6 PM</div>
-            <div>7 PM</div>
-            <div>8 PM</div>
-            <div>9 PM</div>
-            <div>10 PM</div>
-        </div>
-        <div class="schedules">
-            <div class="sched-grid">
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-            </div>
-            <div class="sched-body">
-                <% for (const {subject, year, block_no, course, mode, room, day, start, end} of classes) { %>
-                    <div class="sched-block" data-mdb-toggle="tooltip" data-mdb-html="true"
-                        <% if (room) { %>
-                        title="<b><%= subject %></b><br><small><%= year %>-<%= block_no %> <%= course %><br><i><%= mode %> @ <%= room %></i></small>"
-                        <% } else { %>
-                        title="<b><%= subject %></b><br><small><%= year %>-<%= block_no %> <%= course %><br><i><%= mode %></i></small>"
-                        <% } %>
-                        style="grid-column: <%= day %> / span 1; grid-row: <%= start %> / <%= end %>;">
-                        <h6 class="text-break"><%= subject %></h6>
-                        <p class="text-truncate"><small>
-                            <%= year %>-<%= block_no %> <%= course %><br>
-                            <% if (room) { %>
-                                <i><%= mode %> @ <%= room %></i>
-                            <% } else { %>
-                                <i><%= mode %></i>
-                            <% } %>
-                        </small></p>
-                    </div>
-                <% } %>
-            </div>
+    <div class="side-panel px-3">
+        <h4>Posted Schedules</h4>
+        <div class="panel-body">
+            <hr>
+            <% if (terms) { %>
+            <ul class="list-group panel-menu">
+                <% for (const {id, year, ordinal_term, term} of terms) { %>
+                    <a type="button" class="list-group-item list-group-item-action menu-item"
+                        href="/<%= type %>/schedule?term=<%= year %><%= term %>" title="<%= year %><%= term %>">
+                        <p class="text-truncate m-0">
+                            <%= year %>-<%= year + 1 %>, <%- ordinal_term %> Semester
+                        </p>
+                    </a>
+                    <% } %>
+            </ul>
+            <% } else { %>
+                No Schedules
+            <% } %>
         </div>
     </div>
+    <% if (current && terms) { %>
+        <div class="bg-white">
+            <% const {year, ordinal_term} = current.term %>
+            <h3 class="text-center mb-4 mt-2">
+                Class Timetable<br>
+                <small><%- ordinal_term %> Semester, <%= year %>-<%= year+1 %></small>
+            </h3>
+            <div class="scheduler">
+                <div></div>
+                <div class="days">
+                    <div>MON</div>
+                    <div>TUE</div>
+                    <div>WED</div>
+                    <div>THU</div>
+                    <div>FRI</div>
+                    <div>SAT</div>
+                    <div>SUN</div>
+                </div>
+                <div class="times">
+                    <div>7 AM</div>
+                    <div>8 AM</div>
+                    <div>9 AM</div>
+                    <div>10 AM</div>
+                    <div>11 AM</div>
+                    <div>12 PM</div>
+                    <div>1 PM</div>
+                    <div>2 PM</div>
+                    <div>3 PM</div>
+                    <div>4 PM</div>
+                    <div>5 PM</div>
+                    <div>6 PM</div>
+                    <div>7 PM</div>
+                    <div>8 PM</div>
+                    <div>9 PM</div>
+                    <div>10 PM</div>
+                </div>
+                <div class="schedules">
+                    <div class="sched-grid">
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                    </div>
+                    <div class="sched-body">
+                        <% for (const {subject, year, block_no, course, mode, room, day, start, end} of current.classes) { %>
+                            <div class="sched-block" data-mdb-toggle="tooltip" data-mdb-html="true"
+                                <% if (room) { %>
+                                title="<b><%= subject %></b><br><small><%= year %>-<%= block_no %> <%= course %><br><i><%= mode %> @ <%= room %></i></small>"
+                                <% } else { %>
+                                title="<b><%= subject %></b><br><small><%= year %>-<%= block_no %> <%= course %><br><i><%= mode %></i></small>"
+                                <% } %>
+                                style="grid-column: <%= day %> / span 1; grid-row: <%= start %> / <%= end %>;">
+                                <h6 class="text-break"><%= subject %></h6>
+                                <p class="text-truncate"><small>
+                                    <%= year %>-<%= block_no %> <%= course %><br>
+                                    <% if (room) { %>
+                                        <i><%= mode %> @ <%= room %></i>
+                                    <% } else { %>
+                                        <i><%= mode %></i>
+                                    <% } %>
+                                </small></p>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <% } else if (terms) { %>
+        <h2 class='text-center'>No schedule selected...</h2>
     <% } else { %>
-        <h2 class="text-center">No Open Current Schedules</h2>
+        <h2 class='text-center'>No Open Preference Forms</h2>
     <% } %>
 </div>
+<script>
+    const terms = $(".menu-item").get();
+    if (terms.length > 0) {
+        const currentTerm = $(terms.find(t => t.title == "<%= current.term.year + current.term.term %>"));
+        console.log(currentTerm);
+        currentTerm.addClass("active");
+    }
+</script>

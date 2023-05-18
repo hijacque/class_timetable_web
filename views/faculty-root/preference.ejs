@@ -1,9 +1,10 @@
 <% const {current, subjOptions, forms, type} = data %>
 <div class="bg-light task-view pt-4" id="preference-view">
-    <% if (current) { %>
     <div class="side-panel px-3">
         <h4>Pending<br>Preference Forms</h4>
-        <div class="mt-4 panel-body">
+        <div class="panel-body">
+            <hr>
+            <% if (current && forms) { %>
             <ul class="list-group panel-menu">
                 <% for (const {pref_id, year, ordinal_term, term} of forms) { %>
                     <a type="button" class="list-group-item list-group-item-action menu-item"
@@ -15,16 +16,19 @@
                     </a>
                 <% } %>
             </ul>
+            <% } else { %>
+                No forms
+            <% } %>
         </div>
     </div>
     <div class="bg-white">
+        <% if (current && forms) { %>
         <div>
             <a class="btn btn-primary btn-lg btn-rounded btn-top mt-2" title="Submit preference form" 
                 id="submit-pref" type="button">
                 <i class="fas fa-check fa-lg me-2"></i>submit
             </a>
         </div>
-
         <% const {pref_id, year, ordinal_term, term} = current %>
         <h3 class="text-center mb-4">
             Faculty Schedule Preference Form<br>
@@ -94,10 +98,12 @@
                     </tbody>
                 </table>
             </div>
+        <% } else if (forms) { %>
+            <h2 class="text-center">No forms selected yet..</h2>
+        <% } else { %>
+            <h2 class="text-center">No Open Preference Forms</h2>
+        <% } %>
     </div>
-    <% } else { %>
-        <h2 class='text-center'>No Open Preference Forms</h2>
-    <% } %>
 </div>
 <% if (current) { %>
 <script>
