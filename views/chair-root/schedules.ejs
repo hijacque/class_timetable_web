@@ -1,4 +1,4 @@
-<% let {openTerms, closedTerms, currentTerm } = data %>
+<% let {terms, currentTerm, semesters } = data %>
 <div class="bg-light task-view" id="schedules-view">
     <div class="side-panel">
         <div class="panel-header mx-4">
@@ -22,8 +22,7 @@
                     <a class="text-primary dropdown-toggle input-group-text rounded-0" type="button"
                         data-mdb-toggle="dropdown" aria-expanded="false" id="new-term-sem">Semester</a>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" role="button">1<sup>st</sup> Semester</a></li>
-                        <li><a class="dropdown-item" role="button">2<sup>nd</sup> Semester</a></li>
+                        <%- semesters.map(s => `<li><a class="dropdown-item" role="button">${s} Semester</a></li>`).join("") %>
                         <li><a class="dropdown-item" role="button">Summer</a></li>
                         <li><hr class="dropdown-divider m-0"></li>
                         <li><a class="dropdown-item text-danger" role="button">Cancel</a></li>
@@ -34,71 +33,36 @@
                 </a>
             </div>
         </div>
-        <div class="panel-body">
-            <a type="button" class="collapse-btn" data-mdb-toggle="collapse" data-mdb-target="#open-terms"
-                aria-expanded="false">
-                <i class="fas fa-caret-down me-2"></i><text>Open Schedules</text>
-            </a>
-            <% if (openTerms.length> 0) { %>
-                <div class="collapse show" id="open-terms" title="OPEN">
-                    <div>
-                        <ul class="list-group panel-menu">
-                            <% for (const term of openTerms) { %>
-                                <a type="button" class="list-group-item list-group-item-action menu-item"
-                                    <% if (term.id != currentTerm.id) { %>
-                                        href="/chair/schedules/<%= term.year %><%= term.term %>" 
-                                    <% } %>
-                                    title="<%= term.year %><%= term.term %>">
-                                    <p class="text-truncate m-0">
-                                        <%- term.term_ordinal %> Semester, <%= term.year %>-<%= term.year + 1 %>
-                                    </p>
-                                </a>
-                            <% } %>
-                        </ul>
-                    </div>
-                </div>
-                <% } else { %>
-                    <div class="collapse" id="open-terms">
-                        <p>No Open Terms</p>
-                    </div>
-                <% } %>
-                    <a type="button" class="collapse-btn" data-mdb-toggle="collapse" data-mdb-target="#closed-terms" aria-expanded="false">
-                        <i class="fas fa-caret-down me-2"></i><text>Closed Schedules</text>
+        <div class="panel-body pb-2 px-3">
+            <hr>
+            <ul class="list-group panel-menu">
+                <% for (const term of terms) { %>
+                    <a type="button" class="list-group-item list-group-item-action menu-item"
+                        <% if (term.id != currentTerm.id) { %>
+                            href="/chair/schedules/<%= term.year %><%= term.term %>" 
+                        <% } %>
+                        title="<%= term.year %><%= term.term %>">
+                        <p class="text-truncate m-0">
+                            <%- term.term_ordinal %> Semester, <%= term.year %>-<%= term.year + 1 %>
+                        </p>
                     </a>
-                <% if (closedTerms.length> 0) { %>
-                    <div class="collapse show" id="closed-terms" title="CLOSED">
-                        <div><ul class="list-group panel-menu">
-                            <% for (const term of closedTerms) { %>
-                                <a type="button" class="list-group-item list-group-item-action menu-item"
-                                    <% if (term.id != currentTerm.id) { %>
-                                        href="/chair/schedules/<%= term.year %><%= term.term %>" 
-                                    <% } %>
-                                    title="<%= term.year %><%= term.term %>">
-                                    <p class="text-truncate m-0">
-                                        <%- term.term_ordinal %> Semester, <%= term.year %>-<%= term.year + 1 %>
-                                    </p>
-                                </a>
-                            <% } %>
-                        </ul></div>
-                    </div>
-                <% } else { %>
-                    <div class="collapse" id="closed-terms">
-                        <p>No Closed Terms</p>
-                    </div>
                 <% } %>
+            </ul>
         </div>
     </div>
     <div class="shadow-3 bg-white px-5 pt-4">
-        <% if ((openTerms.length > 0 || closedTerms.length > 0) && currentTerm) { %>
+        <% if (terms.length > 0 && currentTerm) { %>
             <% const {year, term, term_ordinal} = currentTerm %>
-            <% if (currentTerm.status == 'open') { %>
-                <form method="post" target="auto_schedule" action="/schedule/generate"
-                    onsubmit="window.open('_blank','auto_schedule');">
-                    <button name="term" type="submit" title="Autogenerate Schedule" id="generate-sched"
-                        class="btn btn-primary btn-lg btn-rounded btn-top" value="<%= year + term %>">
-                        generate schedule<i class="fas fa-star fa-lg ms-3"></i>
-                    </button>
-                </form>
+            <% if (!currentTerm.isPosted) { %>
+                <% if (!currentTerm.isSaved) { %>
+                    <form method="post" target="auto_schedule" action="/schedule/generate"
+                        onsubmit="window.open('_blank','auto_schedule');">
+                        <button name="term" type="submit" title="Autogenerate Schedule" id="generate-sched"
+                            class="btn btn-primary btn-lg btn-rounded btn-top" value="<%= year + term %>">
+                            generate schedule<i class="fas fa-star fa-lg ms-3"></i>
+                        </button>
+                    </form>
+                <% } %>
                 <div class="d-flex">
                     <h3 id="term-title"><%- term_ordinal %> Semester, <%= year %>-<%= year+1 %></h3>
                     <form method="post" target="export_schedule" action="/schedule/download/<%= year + term %>/department"
@@ -106,11 +70,29 @@
                         <button type="submit" class="ms-4 btn btn-rounded btn-secondary" title="Export schedules">
                             <i class="fas fa-cloud-arrow-down fa-lg me-2"></i>export
                         </button>
-                        <button type="button" class="ms-2 btn btn-primary btn-rounded" id="lock-schedules"
-                            title="Lock and save schedules">
-                            <i class="fas fa-unlock fa-lg me-2"></i>save
-                        </button>
                     </form>
+                    <% if (currentTerm.isSaved) { %>
+                        <form action="/schedule/unsave/<%= year + term %>" method="post">
+                            <!-- TODO: create schedules tab in admin view -->
+                            <!-- TODO: create api call for saving department schedules -->
+                            <button type="submit" class="ms-2 btn btn-danger btn-rounded" id="unlock-schedules"
+                                title="Edit schedules">
+                                <i class="fas fa-unlock fa-lg me-2"></i>open all
+                            </button>
+                        </form>
+                        <form action="/schedule/post/<%= year + term %>" method="post">
+                            <button type="submit" class="ms-2 btn btn-success btn-rounded" id="post-schedules"
+                                title="Post schedules">
+                                <i class="fas fa-share fa-lg me-2"></i>post all
+                            </button>
+                        </form>
+                    <% } else { %>
+                        <form action="/schedule/save/<%= year + term %>" method="post">
+                            <button type="submit" class="ms-2 btn btn-primary btn-rounded" id="lock-schedules" title="Save schedules">
+                                <i class="fas fa-unlock fa-lg me-2"></i>save all
+                            </button>
+                        </form>
+                    <% } %>
                 </div>
                 <label for="term-title">Status: <span id="term-status" class="text-success">OPEN</span></label>
                 <hr>
@@ -119,16 +101,24 @@
                     <h3 id="term-title"><%- term_ordinal %> Semester, <%= year %>-<%= year+1 %></h3>
                     <form method="post" target="export_schedule" action="/schedule/download/<%= year + term %>/department"
                         onsubmit="window.open('_blank','export_schedule');">
-                        <button type="submit" class="ms-4 btn btn-secondary btn-floating" title="Export schedules">
-                            <i class="fas fa-cloud-arrow-down fa-lg"></i>
+                        <button type="submit" class="ms-4 btn btn-rounded btn-secondary" title="Export schedules">
+                            <i class="fas fa-cloud-arrow-down fa-lg me-2"></i>export
                         </button>
-                        <button type="button" class="ms-2 btn btn-primary btn-rounded" id="unlock-schedules"
-                            title="Lock and save schedules">
-                            <i class="fas fa-unlock fa-lg me-2"></i>edit
+                    </form>
+                    <form action="/schedule/unpost/<%= year + term %>" method="post">
+                        <button type="submit" class="ms-2 btn btn-warning btn-rounded" id="unpost-schedules"
+                            title="unpost schedules">
+                            <i class="fas fa-times fa-lg me-2"></i>unpost
+                        </button>
+                    </form>
+                    <form action="/schedule/delete/<%= year + term %>" method="post">
+                        <button type="submit" class="ms-2 btn btn-danger btn-rounded" id="delete-schedules"
+                            title="delete schedules">
+                            <i class="fas fa-trash fa-lg me-2"></i>delete
                         </button>
                     </form>
                 </div>
-                <label for="term-title">Status: <span id="term-status" class="text-muted">CLOSED</span></label>
+                <label for="term-title">Status: <span id="term-status" class="text-primary">POSTED</span></label>
                 <hr>
             <% } %>
             <% const {prev, current, next} = data %>
@@ -162,7 +152,7 @@
                 </ul>
             </nav>
             <table class="table table-bordered table-sm my-4"></table>
-        <% } else if (openTerms.length > 0 || closedTerms.length > 0) { %>
+        <% } else if (terms.length > 0) { %>
             <h3>No chosen term yet...</h3>
         <% } else { %>
             <h3>Woops! No terms found yet, create new schedule now.</h3>
@@ -185,23 +175,30 @@
                     `<th table-cts-column="teach_load number" style="width: 80px;">Assigned Load</th>` +
                     `<th table-cts-column="name">Name</th>` +
                     `<th table-cts-column="pref_status" style="width: 120px;">Preference Status</th>` +
+                    `<%- !currentTerm.isPosted ? '<th table-cts-column="sched_status" style="width: 110px;">Schedule Status</th>' : '' %>` +
                 `</tr></thead><tbody></tbody>`
             );
             const facultyTable = new DisplayTable("#faculty-schedule");
             facultyTable.initData(
                 getSchedules(termID, id), true, 
-                () => $(`${facultyTable.body}>tr`).click(event => openSchedule(id, event))
+                () => {
+                    const rows = $(`${facultyTable.body}>tr`).click(event => openSchedule(id, event));
+                    rows.find("td:contains('submitted'), td:contains('posted')").addClass("text-success");
+                    rows.find("td:contains('saved')").addClass("text-primary");
+                }
             );
         } else {
             scheduleTable.attr("id", "blocks-schedule").append(
                 `<thead clas='text-center'><tr><th table-cts-column="year" style="width: 120px;">Year</th>` +
                 `<th table-cts-column="block_no" style="width: 120px;">Block</th>` +
                 `<th table-cts-column="total_students number" style="width: 160px;">No. of Students</th>` +
+                `<th table-cts-column="sched_status" style="width: 120px;">Schedule<br>Status</th>` +
                 `<th table-cts-column="edit">Action</th></tr></thead><tbody></tbody>` +
                 `<tfoot><tr class='add-data'>` +
-                    `<td><input type="number" class="form-control add-td-input reuse"></td>` +
+                    `<td><input type="number" class="form-control add-td-input reuse text-center"></td>` +
                     `<td><label class="add-td-input optional"></label></td>` +
-                    `<td><input type="number" class="form-control add-td-input optional" min="1" max="100"></td>` +
+                    `<td><input type="number" class="form-control add-td-input optional text-center" min="1" max="100"></td>` +
+                    `<td><label class="add-td-input optional"></label></td>` +
                 `</tr></tfoot>`
             );
 
@@ -217,7 +214,8 @@
                         $(`${blocksTable.body}>tr:last-child`).remove();
                     }
                 });
-                $(`${blocksTable.body}>tr`).click((event) => openSchedule(id, event));
+                $(`${blocksTable.body}>tr`).click((event) => openSchedule(id, event))
+                    .find("td:contains('COMPLETE')").addClass("text-success");
             });
         }
     }

@@ -5,14 +5,6 @@
     z-index: 1;
 }
 
-/* div:last-child > div:has(.btn-top) {
-    z-index: 1;
-    position: fixed;
-    top: 0;
-    right: 0;
-    margin: 24px 48px 0 0;
-} */
-
 .semester-header {
     display: flex;
     min-width: fit-content;
@@ -53,9 +45,13 @@ table>tbody>tr>td:not(td.edit-action) { cursor: default; }
     margin-right: auto;
 }
 
+#blocks-schedule>tbody>tr>td:nth-child(1),
+#blocks-schedule>tbody>tr>td:nth-child(2),
+#blocks-schedule>tbody>tr>td:nth-child(4),
 #faculty-schedule>tbody>tr>td:nth-child(2),
 #faculty-schedule>tbody>tr>td:nth-child(3),
 #faculty-schedule>tbody>tr>td:nth-child(5),
+#faculty-schedule>tbody>tr>td:nth-child(6),
 #faculty-table>tbody>tr>td:nth-child(2),
 #faculty-table>tbody>tr>td:nth-child(3),
 td:has(.td-input) {
