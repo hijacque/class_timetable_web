@@ -1,4 +1,4 @@
-<% const {classes, leftClasses, current, courseID, prevBlock, nextBlock, faculty} = data %>
+<% const {classes, deptClasses, otherClasses, current, courseID, prevBlock, nextBlock, faculty} = data %>
 <div class="modal fade" id="add-class" data-mdb-backdrop="static" data-mdb-keyboard="false"
     tabindex="-1" aria-labelledby="add-class-label" aria-hidden="true">
     <div class="modal-dialog">
@@ -82,36 +82,6 @@
     </div>
 </div>
 <div class="main-view">
-    <div class="side-panel">
-        <div class="panel-header mx-4">
-            <h5>Unassigned Classes</h5>
-        </div>
-        <div class="panel-body px-3">
-            <hr>
-            <% if (leftClasses.length > 0) { %>
-                <ul class="list-group panel-menu">
-                <% for (const {subj_id, subject, req_hours, assigned_time, faculty_id, faculty_name} of leftClasses) { %>
-                    <button type="button" title="<%= subject %>" id="<%= subj_id %>"
-                        class="list-group-item list-group-item-action menu-item"
-                        <% if (faculty_id) { %>
-                            itemid="<%= faculty_id %>"
-                        <% } %>
-                        aria-valuemax="<%= req_hours || 0 %>"
-                        aria-valuenow="<%= assigned_time || 0 %>">
-                        <p class="text-truncate m-0">
-                            <%= subject %><br>
-                            <% if (faculty_id) { %>
-                                <small class="text-muted faculty-name">Professor: <%= faculty_name %></small>
-                            <% } %>
-                        </p>
-                    </button>
-                <% } %>
-                </ul>
-            <% } else { %>
-                <p class="text-muted text-center">No more classes</p>
-            <% } %>
-        </div>
-    </div>
     <div>
         <nav aria-label="Schedule Navigation for Blocks">   
             <ul class="pagination" id="schedule-nav">
@@ -128,9 +98,9 @@
                         <p class="prev page-label"></p>
                     </li>
                 <% } %>
-                    <li class="page-item"><h4 class="text-center mt-2" style="color:#b9aadc">
-                        <%= current.course %>
-                    </h4></li>
+                    <li class="page-item">
+                        <h4 class="text-center mt-2" style="color:#b9aadc"><%= current.course %></h4>
+                    </li>
                 <% if (nextBlock) { %>
                     <% const {year, ordinal_year, block_no} = nextBlock %>
                     <li class="justify-content-end page-item">
@@ -436,6 +406,72 @@
                     <% } %>
                 </div>
             </div>
+        </div>
+    </div>
+    <div class="side-panel">
+        <div class="panel-header mx-4">
+            <h5>Unassigned Classes</h5>
+        </div>
+        <div class="panel-body">
+            <a type="button" class="collapse-btn" data-mdb-toggle="collapse" data-mdb-target="#department-classes"
+                aria-expanded="false">
+                <i class="fas fa-caret-down me-2"></i><text>Departmental Classes</text>
+            </a>
+            <% if (deptClasses.length> 0) { %>
+                <div class="collapse show" id="department-classes">
+                    <ul class="list-group panel-menu">
+                        <% for (const {subj_id, subject, req_hours, assigned_time, faculty_id, faculty_name} of deptClasses) { %>
+                            <button type="button" title="<%= subject %>" id="<%= subj_id %>"
+                                class="list-group-item list-group-item-action menu-item"
+                                <% if (faculty_id) { %>
+                                    itemid="<%= faculty_id %>"
+                                <% } %>
+                                aria-valuemax="<%= req_hours || 0 %>"
+                                aria-valuenow="<%= assigned_time || 0 %>">
+                                <p class="text-truncate m-0">
+                                    <%= subject %><br>
+                                    <% if (faculty_id) { %>
+                                        <small class="text-muted faculty-name">Professor: <%= faculty_name %></small>
+                                    <% } %>
+                                </p>
+                            </button>
+                        <% } %>
+                    </ul>
+                </div>
+            <% } else { %>
+                <div class="collapse show" id="department-classes">
+                    <p>No more classes to assign</p>
+                </div>
+            <% } %>
+            <a type="button" class="collapse-btn" data-mdb-toggle="collapse" data-mdb-target="#other-classes" 
+                aria-expanded="false"><i class="fas fa-caret-down me-2"></i><text>Other Classes</text>
+            </a>
+            <% if (otherClasses.length> 0) { %>
+                <div class="collapse show" id="other-classes">
+                    <ul class="list-group rounded-0">
+                        <% for (const {subj_id, subject, req_hours, assigned_time, faculty_id, faculty_name} of otherClasses) { %>
+                            <button type="button" title="<%= subject %>" id="<%= subj_id %>"
+                                class="list-group-item list-group-item-action"
+                                <% if (faculty_id) { %>
+                                    itemid="<%= faculty_id %>"
+                                <% } %>
+                                aria-valuemax="<%= req_hours || 0 %>"
+                                aria-valuenow="<%= assigned_time || 0 %>">
+                                <p class="text-truncate m-0">
+                                    <%= subject %><br>
+                                    <% if (faculty_id) { %>
+                                        <small class="text-muted faculty-name">Professor: <%= faculty_name %></small>
+                                    <% } %>
+                                </p>
+                            </button>
+                        <% } %>
+                    </ul>
+                </div>
+            <% } else { %>
+                <div class="collapse" id="other-classes">
+                    <p>No more classes to assign</p>
+                </div>
+            <% } %>
         </div>
     </div>
 </div>

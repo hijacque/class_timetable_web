@@ -1,5 +1,6 @@
 <% const {prevFaculty, nextFaculty, current} = schedule %>
 <% const {id, name} = current %>
+<% if (current.sched_status == 'open') { %>
 <div class="modal fade" id="add-class" data-mdb-backdrop="static" data-mdb-keyboard="false"
     tabindex="-1" aria-labelledby="add-class-label" aria-hidden="true">
     <div class="modal-dialog">
@@ -61,102 +62,9 @@
         </div>
     </div>
 </div>
+<% } %>
 <div class="main-view">
-    <div class="side-panel">
-        <div class="panel-header mx-4 mb-3">
-            <h5>Unassigned Classes</h5>
-        </div>
-        <div class="panel-body">
-            <a type="button" class="collapse-btn" data-mdb-toggle="collapse" data-mdb-target="#department-classes"
-                aria-expanded="false">
-                <i class="fas fa-caret-down me-2"></i><text>Departmental Classes</text>
-            </a>
-            <% if (deptClasses.length> 0) { %>
-                <div class="collapse show" id="department-classes">
-                    <div>
-                        <h6 class="block-title">
-                            <small><%= deptClasses[0].course %></small><br>
-                            Year <%= deptClasses[0].year %> - Block <%= deptClasses[0].block_no %>
-                        </h6>
-                        <ul class="list-group panel-menu" id="<%= deptClasses[0].block_id %>"
-                            title="<%= deptClasses[0].course %> <%= deptClasses[0].year %> - <%= deptClasses[0].block_no %>">
-                        <% for (let i=0; i < deptClasses.length; i++) { %>
-                            <% if ((i > 0 && deptClasses[i].year != deptClasses[i-1].year) || (i > 0 && deptClasses[i].block_no != deptClasses[i-1].block_no)) { %>
-                                </ul>
-                                <hr>
-                                <h6 class="block-title">
-                                    <small><%= deptClasses[i].course %></small><br>
-                                    Year <%= deptClasses[i].year %> - Block <%= deptClasses[i].block_no %>
-                                </h6>
-                                <ul class="list-group panel-menu" id="<%= deptClasses[i].block_id %>"
-                                    title="<%= deptClasses[i].course %> <%= deptClasses[i].year %> - <%= deptClasses[i].block_no %>">
-                            <% } %>
-                                <button type="button" title="<%= deptClasses[i].subject %>" 
-                                    itemid="<%= deptClasses[i].subj_id %>"
-                                    class="list-group-item list-group-item-action menu-item"
-                                    aria-valuemax="<%= deptClasses[i].req_hours || 0 %>"
-                                    aria-valuenow="<%= deptClasses[i].assigned_time || 0 %>">
-                                    <p class="text-truncate m-0">
-                                        <%= deptClasses[i].subject %><br>
-                                        <% if (deptClasses[i].assigned_time > 0) { %>
-                                            <small class="text-muted">Assigned hours: <%= deptClasses[i].assigned_time %> / <%= deptClasses[i].req_hours %></small>
-                                        <% } %>
-                                    </p>
-                                </button>
-                        <% } %>
-                        </ul>
-                    </div>
-                </div>
-            <% } else { %>
-                <div class="collapse" id="department-classes">
-                    <p>No more classes to assign</p>
-                </div>
-            <% } %>
-            <a type="button" class="collapse-btn" data-mdb-toggle="collapse" data-mdb-target="#other-classes" 
-                aria-expanded="false"><i class="fas fa-caret-down me-2"></i><text>Other Classes</text>
-            </a>
-            <% if (otherClasses.length> 0) { %>
-                <div class="collapse" id="other-classes">
-                    <div>
-                        <h6 class="block-title"><small><%= otherClasses[0].course %></small><br>
-                            Year <%= otherClasses[0].year %> - Block <%= otherClasses[0].block_no %>
-                        </h6>
-                        <ul class="list-group panel-menu">
-                        <% for (let i=0; i < otherClasses.length; i++) { %>
-                            <% if (i> 0 && otherClasses[i].year != otherClasses[i-1].year) { %>
-                                </ul>
-                                <hr>
-                                <h6 class="block-title"><small><%= otherClasses[i].course %></small><br>
-                                    Year <%= otherClasses[i].year %> - Block <%= otherClasses[i].block_no %>
-                                </h6>
-                                <ul class="list-group panel-menu" id="<%= otherClasses[i].block_id %>"
-                                    title="<%= otherClasses[i].course %> <%= otherClasses[i].year %> - <%= otherClasses[i].block_no %>">
-                            <% } %>
-                            <button type="button" class="list-group-item list-group-item-action menu-item"
-                                itemid="<%= otherClasses[i].id %>"
-                                title="<%= otherClasses[i].subject %>" id="<%= otherClasses[i].id %>"
-                                aria-valuemax="<%= otherClasses[i].req_hours || 0 %>"
-                                aria-valuenow="<%= otherClasses[i].assigned_time || 0 %>">
-                                <p class="text-truncate m-0">
-                                    <%= otherClasses[i].subject %><br>
-                                    <% if (faculty_id) { %>
-                                        <small class="text-muted faculty-name">Professor: <%= faculty_name %></small>
-                                    <% } %>
-                                    <small></small>
-                                </p>
-                            </button>
-                        <% } %>
-                        </ul>
-                    </div>
-                </div>
-            <% } else { %>
-                <div class="collapse" id="other-classes">
-                    <p>No more classes to assign</p>
-                </div>
-            <% } %>
-        </div>
-    </div>
-    <div>
+    <div class="w-100">
         <nav aria-label="Schedule Navigation for Faculty">
             <ul class="pagination" id="schedule-nav">
                 <% if (prevFaculty) { %>
@@ -186,21 +94,44 @@
                 <% } %>
             </ul>
         </nav>
-        <% const {faculty_id, status, pref_status, pref_subjs, teach_load, classes} = current %>
+        <% const {faculty_id, status, sched_status, pref_status, pref_subjs, teach_load, classes} = current %>
         <div class="about">
-            <form method="post" target="export_schedule" action="/schedule/download/<%= term.code %>/faculty" 
-                class="d-flex" onsubmit="window.open('_blank','export_schedule');">
-                <h4 class="page-title"><%= name %></h4>
-                <input type="hidden" name="id" value="<%= faculty_id %>">
-                <input type="hidden" name="name" value="<%= name %>">
-                <button type="submit" class="ms-4 btn btn-secondary btn-floating" title="Export schedules">
-                    <i class="fas fa-cloud-arrow-down fa-lg"></i>
-                </button>
-            </form>
+            <div class="d-flex">
+                <h4 class="page-title">
+                    <%= name %>
+                </h4>
+                <form method="post" target="export_schedule" action="/schedule/download/<%= term.code %>/faculty"
+                    onsubmit="window.open('_blank','export_schedule');">
+                    <input type="hidden" name="id" value="<%= faculty_id %>">
+                    <input type="hidden" name="name" value="<%= name %>">
+                    <button type="submit" class="ms-4 btn btn-secondary btn-floating" title="Export schedules">
+                        <i class="fas fa-cloud-arrow-down fa-lg"></i>
+                    </button>
+                </form>
+                <% if (sched_status == 'open') { %>
+                <form action="/schedule/save/<%= term.code %>/<%= current.id %>" method="post">
+                    <!-- TODO: create schedules tab in admin view -->
+                    <!-- TODO: create api call for saving department schedules -->
+                    <input type="hidden" name="facultyID" value="<%= faculty_id %>">
+                    <button type="submit" class="ms-2 btn btn-primary btn-floating" id="lock-schedules" title="Save schedules">
+                        <i class="fas fa-lock fa-lg me-2"></i>
+                    </button>
+                </form>
+                <% } else if (sched_status == 'saved') { %>
+                    <form action="/schedule/unsave/<%= term.code %>/<%= current.id %>" method="post">
+                        <!-- TODO: create schedules tab in admin view -->
+                        <!-- TODO: create api call for saving department schedules -->
+                        <button type="submit" class="ms-2 btn btn-danger btn-floating" id="lock-schedules" title="Unlock schedules">
+                            <i class="fas fa-unlock fa-lg me-2"></i>
+                        </button>
+                    </form>
+                <% } %>
+            </div>
             <h6 class="text-muted"><%= faculty_id %></h6>
             <p>
                 <b>Employment Status:</b> <%= status %><br>
                 <b>Faculty Load:</b> <%= teach_load %><br>
+                <b>Schedule Status:</b> <%= sched_status %><br>
                 <% if (pref_status == 'submitted') { %>
                 <b>Preferred Subjects:</b> <%= pref_subjs.join(", ") %>
                 <% } else { %>
@@ -488,6 +419,102 @@
             </div>
         </div>
     </div>
+    <% if (current.sched_status == 'open') { %>
+        <div class="side-panel">
+            <div class="panel-header mx-4 mb-3">
+                <h5>Unassigned Classes</h5>
+            </div>
+            <div class="panel-body">
+                <a type="button" class="collapse-btn" data-mdb-toggle="collapse" data-mdb-target="#department-classes"
+                    aria-expanded="false">
+                    <i class="fas fa-caret-down me-2"></i><text>Departmental Classes</text>
+                </a>
+                <% if (deptClasses.length> 0) { %>
+                    <div class="collapse show" id="department-classes">
+                        <div>
+                            <h6 class="block-title">
+                                <small><%= deptClasses[0].course %></small><br>
+                                Year <%= deptClasses[0].year %> - Block <%= deptClasses[0].block_no %>
+                            </h6>
+                            <ul class="list-group panel-menu" id="<%= deptClasses[0].block_id %>"
+                                title="<%= deptClasses[0].course %> <%= deptClasses[0].year %> - <%= deptClasses[0].block_no %>">
+                            <% for (let i=0; i < deptClasses.length; i++) { %>
+                                <% if ((i > 0 && deptClasses[i].year != deptClasses[i-1].year) || (i > 0 && deptClasses[i].block_no != deptClasses[i-1].block_no)) { %>
+                                    </ul>
+                                    <hr>
+                                    <h6 class="block-title">
+                                        <small><%= deptClasses[i].course %></small><br>
+                                        Year <%= deptClasses[i].year %> - Block <%= deptClasses[i].block_no %>
+                                    </h6>
+                                    <ul class="list-group panel-menu" id="<%= deptClasses[i].block_id %>"
+                                        title="<%= deptClasses[i].course %> <%= deptClasses[i].year %> - <%= deptClasses[i].block_no %>">
+                                <% } %>
+                                    <button type="button" title="<%= deptClasses[i].subject %>" 
+                                        itemid="<%= deptClasses[i].subj_id %>"
+                                        class="list-group-item list-group-item-action menu-item"
+                                        aria-valuemax="<%= deptClasses[i].req_hours || 0 %>"
+                                        aria-valuenow="<%= deptClasses[i].assigned_time || 0 %>">
+                                        <p class="text-truncate m-0">
+                                            <%= deptClasses[i].subject %><br>
+                                            <% if (deptClasses[i].assigned_time > 0) { %>
+                                                <small class="text-muted">Assigned hours: <%= deptClasses[i].assigned_time %> / <%= deptClasses[i].req_hours %></small>
+                                            <% } %>
+                                        </p>
+                                    </button>
+                            <% } %>
+                            </ul>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <div class="collapse" id="department-classes">
+                        <p>No more classes to assign</p>
+                    </div>
+                <% } %>
+                <a type="button" class="collapse-btn" data-mdb-toggle="collapse" data-mdb-target="#other-classes" 
+                    aria-expanded="false"><i class="fas fa-caret-down me-2"></i><text>Other Classes</text>
+                </a>
+                <% if (otherClasses.length> 0) { %>
+                    <div class="collapse" id="other-classes">
+                        <div>
+                            <h6 class="block-title"><small><%= otherClasses[0].course %></small><br>
+                                Year <%= otherClasses[0].year %> - Block <%= otherClasses[0].block_no %>
+                            </h6>
+                            <ul class="list-group panel-menu">
+                            <% for (let i=0; i < otherClasses.length; i++) { %>
+                                <% if (i> 0 && otherClasses[i].year != otherClasses[i-1].year) { %>
+                                    </ul>
+                                    <hr>
+                                    <h6 class="block-title"><small><%= otherClasses[i].course %></small><br>
+                                        Year <%= otherClasses[i].year %> - Block <%= otherClasses[i].block_no %>
+                                    </h6>
+                                    <ul class="list-group panel-menu" id="<%= otherClasses[i].block_id %>"
+                                        title="<%= otherClasses[i].course %> <%= otherClasses[i].year %> - <%= otherClasses[i].block_no %>">
+                                <% } %>
+                                <button type="button" class="list-group-item list-group-item-action menu-item"
+                                    itemid="<%= otherClasses[i].id %>"
+                                    title="<%= otherClasses[i].subject %>" id="<%= otherClasses[i].id %>"
+                                    aria-valuemax="<%= otherClasses[i].req_hours || 0 %>"
+                                    aria-valuenow="<%= otherClasses[i].assigned_time || 0 %>">
+                                    <p class="text-truncate m-0">
+                                        <%= otherClasses[i].subject %><br>
+                                        <% if (faculty_id) { %>
+                                            <small class="text-muted faculty-name">Professor: <%= faculty_name %></small>
+                                        <% } %>
+                                        <small></small>
+                                    </p>
+                                </button>
+                            <% } %>
+                            </ul>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <div class="collapse" id="other-classes">
+                        <p>No more classes to assign</p>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+        <% } %>
 </div>
 
 <script src="/lib/display-dropdown.js"></script>

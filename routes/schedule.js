@@ -1,5 +1,10 @@
 const router = require("express").Router();
-const { getFacultySched, getBlockSched, generateSchedule, getBlockSchedTable, getFacultySchedTable } = require("./../lib/schedule");
+const { 
+    getFacultySched, getBlockSched, generateSchedule, 
+    getBlockSchedTable, getFacultySchedTable, 
+    saveFacultySchedule, postFacultySchedules,
+    unsaveFacultySchedule, unpostFacultySchedules 
+} = require("./../lib/schedule");
 const { verifySession } = require("./../lib/verification");
 
 router.use(verifySession);
@@ -59,6 +64,33 @@ router.post("/download/:term/block", getBlockSchedTable, (req, res) => {
     res.status(200).render('export-schedule', {
         workbooks: req.workbooks
     });
+});
+
+router.post("/save/:term/:faculty?", saveFacultySchedule, (req, res) => {
+    console.log(req.params);
+    res.redirect("/chair/schedules/" + req.params.term);
+});
+
+router.post("/unsave/:term/:faculty?", unsaveFacultySchedule, (req, res) => {
+    console.log(req.params);
+    res.redirect("/chair/schedules/" + req.params.term);
+});
+
+router.post("/post/:term/", postFacultySchedules, (req, res) => {
+    console.log(req.params);
+    res.redirect("/chair/schedules/" + req.params.term);
+});
+
+router.post("/unpost/:term/", unsaveFacultySchedule, (req, res) => {
+    console.log(req.params);
+    res.redirect("/chair/schedules/" + req.params.term);
+});
+
+router.post("/delete/:term/", (req, res) => {
+    // TODO: remove term_id in preferences
+    // TODO: remove schedules with faculty from department
+    console.log("Deleting departmental faculty schedules...");
+    res.redirect("/chair/schedules/" + req.params.term);
 });
 
 module.exports = router;
