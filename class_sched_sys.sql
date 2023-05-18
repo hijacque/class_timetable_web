@@ -29,6 +29,7 @@ CREATE TABLE `Blocks` (
   `year` int unsigned DEFAULT NULL,
   `block_no` int unsigned DEFAULT '1',
   `total_students` int unsigned DEFAULT NULL,
+  `is_complete` binary(1) DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `term_id` (`term_id`),
   KEY `course_id` (`course_id`),
@@ -119,6 +120,7 @@ CREATE TABLE `Departments` (
   `college_id` varchar(8) DEFAULT NULL,
   `chair_id` varchar(12) DEFAULT NULL,
   `name` varchar(100) DEFAULT NULL,
+  `recent_act` varchar(150) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `college_id` (`college_id`),
   CONSTRAINT `departments_ibfk_1` FOREIGN KEY (`college_id`) REFERENCES `Colleges` (`id`) ON DELETE CASCADE
@@ -177,6 +179,7 @@ CREATE TABLE `Preferences` (
   `assigned_load` int unsigned DEFAULT '0',
   `status` enum('pending','submitted','unanswered','closed') DEFAULT 'pending',
   `id` varchar(8) NOT NULL,
+  `sched_status` enum('open','saved','posted') DEFAULT 'open',
   PRIMARY KEY (`id`),
   KEY `term_id` (`term_id`),
   KEY `faculty_id` (`faculty_id`),
@@ -354,4 +357,4 @@ CREATE TABLE `Users` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2023-04-30 21:51:40
+-- Dump completed on 2023-05-18 18:36:36
