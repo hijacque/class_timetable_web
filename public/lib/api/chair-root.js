@@ -8,8 +8,8 @@ const addTerm = (year, semester) => new Promise((resolve, reject) => $.post(
 const addBlock = (courseID, year, totalStudents, termID) => new Promise((resolve, reject) => {
     $.post("/api/blocks/" + courseID, 
         { year: year, totalStudents: totalStudents, termID: termID },
-        (data) => resolve(data.newBlock)
-    ).fail((data) => location.reload())
+        (data) => resolve(data)
+    ).fail((error) => reject(error.responseJSON))
 });
 
 const getSchedules = (termID, category) => new Promise(

@@ -496,22 +496,54 @@ router.route("/curricula/:courseID?") // getting and adding the semesters in a c
         let [{ latestYear }] = await DB.executeQuery(
             `SELECT MAX(year) AS latestYear FROM Curricula WHERE course_id = "${req.params.courseID}"`
         );
+        latestYear = latestYear ? latestYear + 1 : 1;
 
         let query = `INSERT INTO Curricula VALUES `;
         let message;
+        let openSchedules;
+        console.log("total terms: " + totalTerms);
         if (forNewYear == 1) {
             message = `A new academic year with ${totalTerms} semesters is ready.`;
             let values = [];
+            let terms = [];
             for (let i = 1; i <= totalTerms; i++) {
-                values.push(`'${req.params.courseID}', NULL, ${(latestYear || 0) + 1}, '${i}'`);
+                values.push(`'${req.params.courseID}', NULL, ${latestYear}, '${i}'`);
+                terms.push(i);
             }
-            query += `(${values.join("), (")})`;
+            query += `(${values.join("), (")}); `;
+
+            openSchedules = await DB.executeQuery(
+                `SELECT t.id, SUM(pr.sched_status IN ('open', 'saved', 'posted')) AS totalFaculty, ` +
+                `SUM(pr.term_id IS NULL) AS totalClosed FROM Terms t INNER JOIN Preferences pr ON ` +
+                `t.id = pr.term_id INNER JOIN Faculty f ON pr.faculty_id = f.id INNER JOIN Departments d ON ` +
+                `f.dept_id = d.id WHERE d.chair_id = "${user.id}" AND t.term IN ` +
+                `('${terms.join("', '")}') ` +
+                `GROUP BY t.id HAVING totalClosed != totalFaculty ORDER BY t.year DESC, t.term DESC`
+            );
         } else {
             message = "A summer term in the curriculum is ready."
-            query += `('${req.params.courseID}', NULL, ${latestYear || 0}, 's')`;
-        }
+            query += `('${req.params.courseID}', NULL, ${latestYear}, 's'); `;
 
-        await DB.executeQuery(query);
+            openSchedules = await DB.executeQuery(
+                `SELECT t.id, SUM(pr.sched_status IN ('open', 'saved', 'posted')) AS totalFaculty, ` +
+                `SUM(pr.term_id IS NULL) AS totalClosed FROM Terms t INNER JOIN Preferences pr ON ` +
+                `t.id = pr.term_id INNER JOIN Faculty f ON pr.faculty_id = f.id INNER JOIN Departments d ON ` +
+                `f.dept_id = d.id WHERE d.chair_id = "${user.id}" AND t.term = 's' ` +
+                `GROUP BY t.id HAVING totalClosed != totalFaculty ORDER BY t.year DESC, t.term DESC`
+            );
+        }
+        console.table(openSchedules);
+
+        blocks = [];
+        for (const { id } of openSchedules) {
+            let blockID = crypto.randomBytes(6).toString("base64url");
+            blocks.push(
+                `('${blockID}', '${req.params.courseID}', '${id}', ${latestYear}, 1)`
+            );
+        }
+        await DB.executeQuery(
+            query + `INSERT INTO Blocks (id, course_id, term_id, year, block_no) VALUES ${blocks.join(", ")};`
+        );
         res.status(200).json({
             message: {
                 mode: 1,
@@ -603,8 +635,7 @@ router.post("/curriculum/:courseID", async (req, res) => { // adding a subject i
     await DB.executeQuery(
         `INSERT INTO Schedules (term_id, subj_id, block_id) SELECT t.id, '${subjID.id}', b.id ` +
         `FROM Blocks b INNER JOIN Terms t ON b.term_id = t.id INNER JOIN Courses co ON b.course_id = co.id LEFT JOIN ` +
-        `Departments d ON co.dept_id = d.id WHERE d.chair_id = '${user.id}' AND t.term = '${semester}' AND ` +
-        `t.status = 'open'`
+        `Departments d ON co.dept_id = d.id WHERE d.chair_id = '${user.id}' AND t.term = '${semester}'`
     );
 
     res.status(200).json({
@@ -657,15 +688,15 @@ router.post("/terms", async (req, res) => {
     const termID = crypto.randomBytes(6).toString("base64url");
     const faculty = await DB.executeQuery(`SELECT id FROM Faculty ORDER by dept_id`);
 
-    const courses = await DB.executeQuery(
-        `SELECT DISTINCT co.id, MAX(cu.year) AS total_years FROM Courses co INNER JOIN Curricula cu ON co.id = cu.course_id ` +
-        `INNER JOIN Departments d ON co.dept_id = d.id GROUP BY co.id`
-    );
-
     for (let i = 0; i < faculty.length; i++) {
         const prefID = crypto.randomBytes(6).toString("base64url");
         faculty[i] = `('${prefID}', '${termID}', '${faculty[i].id}')`;
     }
+
+    const courses = await DB.executeQuery(
+        `SELECT DISTINCT co.id, MAX(cu.year) AS total_years FROM Courses co INNER JOIN Curricula cu ON co.id = cu.course_id ` +
+        `INNER JOIN Departments d ON co.dept_id = d.id GROUP BY co.id`
+    );
 
     const blocks = [];
     for (const course of courses) {
@@ -887,41 +918,41 @@ router.post("/blocks/:courseID", async (req, res) => {
 
     const DB = req.app.locals.database;
     const { termID, year, totalStudents } = req.body;
-    let newBlock = await DB.executeQuery(
-        `SELECT MAX(b.block_no) + 1 AS new_block FROM (SELECT block_no FROM Blocks WHERE year = ${year} ` +
+    // TODO: check if input yeat is consistent with the curriculum
+
+    let [newBlock] = await DB.executeQuery(
+        `SELECT MAX(b.block_no) + 1 AS number FROM (SELECT block_no FROM Blocks WHERE year = ${year} ` +
         `AND course_id = '${req.params.courseID}' AND term_id = '${termID}' AND block_no IS NOT NULL) AS b `
     );
 
-    newBlock = newBlock[0]["new_block"];
-    if (!newBlock || newBlock <= 1) {
-        return res.status(409).end(); // block number conflict
+    if (!newBlock || newBlock.number <= 1) {
+        return res.status(409).json({
+            message: {
+                mode: 2,
+                title: "New block conflict",
+                body: "The year is not consistent with the curriculum."
+            }
+        }); // block number conflict
     }
 
     const blockID = crypto.randomBytes(6).toString("base64url");
     let query;
     if (totalStudents) {
         query = `INSERT INTO Blocks VALUES ('${blockID}', '${req.params.courseID}', '${termID}', ` +
-            `${year}, ${newBlock}, ${totalStudents}); `
+            `${year}, ${newBlock.number}, ${totalStudents}); `
     } else {
         query = `INSERT INTO Blocks (id, term_id, course_id, year, block_no) VALUES ('${blockID}', '${termID}', ` +
-            `'${req.params.courseID}', ${year}, ${newBlock}); `
+            `'${req.params.courseID}', ${year}, ${newBlock.number}); `
     }
 
     query += `INSERT INTO Schedules (term_id, subj_id, block_id) ` +
         `SELECT b.term_id, cu.subj_id, b.id FROM Blocks b INNER JOIN Curricula cu ON b.course_id = cu.course_id ` +
         `AND b.year = cu.year INNER JOIN Terms t ON b.term_id = t.id AND cu.term = t.term WHERE ` +
-        `b.term_id = '${termID}' AND b.year = ${year} AND b.block_no = ${newBlock} AND cu.subj_id IS NOT NULL ` +
+        `b.term_id = '${termID}' AND b.year = ${year} AND b.block_no = ${newBlock.number} AND cu.subj_id IS NOT NULL ` +
         `ORDER BY b.year, b.block_no;`
 
     await DB.executeQuery(query);
-    res.status(200).json({
-        newBlock: newBlock,
-        message: {
-            mode: 1,
-            title: "New block created",
-            body: `Block ${year}-${newBlock} is ready for class scheduling.`
-        }
-    });
+    res.status(200).json({ newBlock: newBlock.number });
 });
 
 // faculty control
