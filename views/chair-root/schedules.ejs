@@ -71,15 +71,13 @@
                             <i class="fas fa-cloud-arrow-down fa-lg me-2"></i>export
                         </button>
                     </form>
+                    <form action="/schedule/unsave/<%= year + term %>" method="post">
+                        <button type="submit" class="ms-2 btn btn-danger btn-rounded" id="unlock-schedules"
+                            title="Edit schedules">
+                            <i class="fas fa-unlock fa-lg me-2"></i>open all
+                        </button>
+                    </form>
                     <% if (currentTerm.isSaved) { %>
-                        <form action="/schedule/unsave/<%= year + term %>" method="post">
-                            <!-- TODO: create schedules tab in admin view -->
-                            <!-- TODO: create api call for saving department schedules -->
-                            <button type="submit" class="ms-2 btn btn-danger btn-rounded" id="unlock-schedules"
-                                title="Edit schedules">
-                                <i class="fas fa-unlock fa-lg me-2"></i>open all
-                            </button>
-                        </form>
                         <form action="/schedule/post/<%= year + term %>" method="post">
                             <button type="submit" class="ms-2 btn btn-success btn-rounded" id="post-schedules"
                                 title="Post schedules">
@@ -89,7 +87,7 @@
                     <% } else { %>
                         <form action="/schedule/save/<%= year + term %>" method="post">
                             <button type="submit" class="ms-2 btn btn-primary btn-rounded" id="lock-schedules" title="Save schedules">
-                                <i class="fas fa-unlock fa-lg me-2"></i>save all
+                                <i class="fas fa-lock fa-lg me-2"></i>save all
                             </button>
                         </form>
                     <% } %>
@@ -194,7 +192,7 @@
                 `<th table-cts-column="total_students number" style="width: 160px;">No. of Students</th>` +
                 `<th table-cts-column="sched_status" style="width: 120px;">Schedule<br>Status</th>` +
                 `<th table-cts-column="edit">Action</th></tr></thead><tbody></tbody>` +
-                `<tfoot><tr class='add-data'>` +
+                `<tfoot id='add-block'><tr class='add-data'>` +
                     `<td><input type="number" class="form-control add-td-input reuse text-center"></td>` +
                     `<td><label class="add-td-input optional"></label></td>` +
                     `<td><input type="number" class="form-control add-td-input optional text-center" min="1" max="100"></td>` +
@@ -204,13 +202,39 @@
 
             const blocksTable = new EditableTable("#blocks-schedule");
             blocksTable.initData(getSchedules(termID, id), true, () => {
-                $(blocksTable.addBtn).click(async (event) => {
+                $(blocksTable.addBtn).attr("href", "#add-block").click(async (event) => {
+                    let block;
                     try {
-                        const {year, total_students} = await $(event.currentTarget).data("newRow");
-                        const newBlock = await addBlock(id, year, total_students, termID);
-                        $(`${blocksTable.body}>tr:last-child`).click((event) => openSchedule(id, event)).children("td:nth-child(2)").text(newBlock);
+                        block = await $(event.currentTarget).data("newRow");
                     } catch (error) {
-                        console.log("woopss");
+                        return console.log(error);
+                    }
+
+                    try {
+                        const {newBlock} = await addBlock(
+                            id, block.year, block.total_students, termID
+                        );
+                        console.log(newBlock);
+
+                        let columns = $(`${blocksTable.body}>tr:last-child`)
+                            .click((event) => openSchedule(id, event)).children("td").get();
+                        
+                        console.log(columns);
+                        columns[1].textContent = newBlock;
+                        columns[3].textContent = "incomplete";
+                        $("#schedules-view>div:last-child").scrollTop()
+                    } catch (eResponse) {
+                        console.log(eResponse);
+                        if (eResponse) {
+                            if (eResponse.redirect) {
+                                location.replace(eResponse.redirect);
+                            }
+                            if (eResponse.message) {
+                                alertModal.show(...Object.values(eResponse.message));
+                            }
+                        } else {
+                            alertModal.show(0, "Server error", "Unexpected error occured, please try again later.");
+                        }
                         $(`${blocksTable.body}>tr:last-child`).remove();
                     }
                 });

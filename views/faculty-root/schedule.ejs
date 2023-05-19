@@ -1,5 +1,5 @@
 <% const {current, terms, type} = data %>
-<div class="bg-light task-view pb-4 pt-4" id="schedule-view">
+<div class="bg-light task-view" id="schedule-view">
     <div class="side-panel px-3">
         <h4>Posted Schedules</h4>
         <div class="panel-body">
@@ -21,9 +21,9 @@
         </div>
     </div>
     <% if (current && terms) { %>
-        <div class="bg-white">
+        <div class="bg-white px-5">
             <% const {year, ordinal_term} = current.term %>
-            <h3 class="text-center mb-4 mt-2">
+            <h3 class="text-center mb-4 mt-4">
                 Class Timetable<br>
                 <small><%- ordinal_term %> Semester, <%= year %>-<%= year+1 %></small>
             </h3>
@@ -308,16 +308,18 @@
             </div>
         </div>
     <% } else if (terms) { %>
-        <h2 class='text-center'>No schedule selected...</h2>
+        <h2 class='text-center text-muted mt-4'>No schedule selected...</h2>
     <% } else { %>
-        <h2 class='text-center'>No Open Preference Forms</h2>
+        <h2 class='text-center text-muted mt-4'>No Posted Schedules</h2>
     <% } %>
 </div>
-<script>
-    const terms = $(".menu-item").get();
-    if (terms.length > 0) {
-        const currentTerm = $(terms.find(t => t.title == "<%= current.term.year + current.term.term %>"));
-        console.log(currentTerm);
-        currentTerm.addClass("active");
-    }
-</script>
+<% if (current) { %>
+    <script>
+        const terms = $(".menu-item").get();
+        if (terms.length > 0) {
+            const currentTerm = $(terms.find(t => t.title == "<%= current.term.year + current.term.term %>"));
+            console.log(currentTerm);
+            currentTerm.addClass("active");
+        }
+    </script>
+<% } %>
