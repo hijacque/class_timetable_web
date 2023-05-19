@@ -42,7 +42,7 @@
                         <h2 class="card-title">Let's get started!</h2>
                     </div>
                     <p class="mt-5 mb-1">Enter your account information</p>
-                    <form action="/login" method="post">
+                    <form method="post">
                         <div class="input-group input-group-lg my-4 shadow-0 align-items-center">
                             <span class="input-group-text">
                                 <i class="fas fa-at fa-lg"></i>
@@ -94,13 +94,14 @@
         alertModal.show(<%- JSON.stringify(mode) %>, "<%= title %>", "<%= body %>");
         <% } %>
 
-        $("#submit").closest("form").submit(() => {
+        $("#submit").closest("form").submit((ev) => {
+            ev.preventDefault(ev);
             $.post("/login", {
                 email: $("#email").val(),
                 password: $("#password").val()
-            }, (data, status) => {
-                window.location.replace(data.root);
-            });
+            }, (data) => {
+                location.replace(data.root);
+            }).fail(data => window.location.replace(data.root));
         });
     </script>
 </body>

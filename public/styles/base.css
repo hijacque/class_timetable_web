@@ -260,6 +260,7 @@ a#profile.task {
     display: grid;
     grid-template-columns: 70px 1fr;
     padding-top: 1px;
+    padding-left: 1px;
     background-color: #0f0d11;
     /* border-top: 1px solid black; */
 }
@@ -331,6 +332,7 @@ div.sched-body>div.sched-block {
     box-shadow: 0 1px 5px #b6b3b977;
     line-height: 20px;
     overflow: hidden;
+    cursor: pointer;
 }
 
 .stack-list>* {
