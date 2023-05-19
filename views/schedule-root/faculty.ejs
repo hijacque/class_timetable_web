@@ -1,12 +1,12 @@
 <% const {prevFaculty, nextFaculty, current} = schedule %>
 <% const {id, name} = current %>
 <% if (current.sched_status == 'open') { %>
-<div class="modal fade" id="add-class" data-mdb-backdrop="static" data-mdb-keyboard="false"
-    tabindex="-1" aria-labelledby="add-class-label" aria-hidden="true">
+<div class="modal fade" id="schedule-class" data-mdb-backdrop="static" data-mdb-keyboard="false"
+    tabindex="-1" aria-labelledby="schedule-class-label" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="add-class-label">Assign New Class</h5>
+                <h5 class="modal-title" id="schedule-class-label">Assign New Class</h5>
                 <button type="button" class="btn-close" data-mdb-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -20,7 +20,7 @@
                 <p><small>Class Schedule</small></p>
                 <div class="input-group mb-2">
                     <div class="dropdown">
-                        <a class="text-primary dropdown-toggle input-group-text rounded-end-0" type="button"
+                        <a class="text-primary dropdown-toggle input-group-text rounded-0 rounded-start" type="button"
                             data-mdb-toggle="dropdown" aria-expanded="false" id="class-day">Pick Day</a>
                         <ul class="dropdown-menu" aria-labelledby="class-day">
                             <li><a class="dropdown-item" role="button" data-cts-enum="1">MONDAY</a></li>
@@ -41,23 +41,28 @@
                 </div>
                 <div class="input-group mb-3">
                     <div class="dropdown">
-                        <a class="text-primary dropdown-toggle input-group-text rounded-end-0" type="button"
+                        <a class="text-primary dropdown-toggle input-group-text rounded-0 rounded-start" type="button"
                             data-mdb-toggle="dropdown" aria-expanded="false" id="class-mode">Pick Mode</a>
                         <ul class="dropdown-menu" aria-labelledby="class-mode">
                             <li><a class="dropdown-item" role="button" data-cts-enum="1">F2F</a></li>
-                            <li><a class="dropdown-item" role="button" data-cts-enum="2">online</a></li>
-                            <li><a class="dropdown-item" role="button" data-cts-enum="3">blended</a></li>
+                            <li><a class="dropdown-item" role="button" data-cts-enum="2">Online</a></li>
+                            <li><a class="dropdown-item" role="button" data-cts-enum="3">Blended</a></li>
                             <li><hr class="dropdown-divider m-0"></li>
                             <li><a class="dropdown-item text-danger" role="button">Cancel</a></li>
                         </ul>
                     </div>
-                    <!-- <input type="text" id="class-bldg" class="form-control" placeholder="Building" disabled> -->
                     <input type="text" id="class-room" class="form-control" placeholder="Room no." disabled>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-mdb-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="confirm-new-class" data-mdb-dismiss="modal">Assign</button>
+            <div class="modal-footer d-flex justify-content-between">
+                <div>
+                    <button type="button" class="btn btn-danger" id="delete-schedule" data-mdb-dismiss="modal">delete</button>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-secondary me-2" data-mdb-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="change-schedule" data-mdb-dismiss="modal">change</button>
+                    <button type="button" class="btn btn-primary" id="add-schedule" data-mdb-dismiss="modal">assign</button>
+                </div>
             </div>
         </div>
     </div>
@@ -110,8 +115,6 @@
                 </form>
                 <% if (sched_status == 'open') { %>
                 <form action="/schedule/save/<%= term.code %>/<%= current.id %>" method="post">
-                    <!-- TODO: create schedules tab in admin view -->
-                    <!-- TODO: create api call for saving department schedules -->
                     <input type="hidden" name="facultyID" value="<%= faculty_id %>">
                     <button type="submit" class="ms-2 btn btn-primary btn-floating" id="lock-schedules" title="Save schedules">
                         <i class="fas fa-lock fa-lg me-2"></i>
@@ -119,8 +122,7 @@
                 </form>
                 <% } else if (sched_status == 'saved') { %>
                     <form action="/schedule/unsave/<%= term.code %>/<%= current.id %>" method="post">
-                        <!-- TODO: create schedules tab in admin view -->
-                        <!-- TODO: create api call for saving department schedules -->
+                        <input type="hidden" name="facultyID" value="<%= faculty_id %>">
                         <button type="submit" class="ms-2 btn btn-danger btn-floating" id="lock-schedules" title="Unlock schedules">
                             <i class="fas fa-unlock fa-lg me-2"></i>
                         </button>
@@ -403,14 +405,23 @@
                             <% } else { %>
                             title="<b><%= schedule.subject %></b><br><small><%= schedule.year %>-<%= schedule.block_no %> <%= schedule.course %><br><i><%= schedule.mode %></i></small>"
                             <% } %>
-                            style="grid-column: <%= schedule.day %> / span 1; grid-row: <%= schedule.start %> / <%= schedule.end %>;">
-                            <h6 class="text-break"><%= schedule.subject %></h6>
+                            style="grid-column: <%= schedule.day %> / span 1; grid-row: <%= schedule.start_time %> / <%= schedule.end_time %>;"
+                            aria-valuemin="<%= schedule.start %>" aria-valuemax="<%= schedule.end %>" 
+                            aria-valuenow="<%= schedule.day %>" aria-current="<%= schedule.duration %>">
+                            <h6 class="text-break subject" itemid="<%= schedule.subj_id %>">
+                                <%= schedule.subject %>
+                            </h6>
                             <p class="text-truncate"><small>
-                                <%= schedule.year %>-<%= schedule.block_no %> <%= schedule.course %><br>
+                                <span class="block" itemid="<%= schedule.block_id %>">
+                                    <%= schedule.year %>-<%= schedule.block_no %> <%= schedule.course %>
+                                </span><br>
                                 <% if (schedule.room) { %>
-                                    <i><%= schedule.mode %> @ <%= schedule.room %></i>
+                                    <i>
+                                        <span class="mode"><%= schedule.mode %></span> @ 
+                                        <span class="room" itemid="<%= schedule.room_id %>"><%= schedule.room %></span>
+                                    </i>
                                 <% } else { %>
-                                    <i><%= schedule.mode %></i>
+                                    <i class="mode"><%= schedule.mode %></i>
                                 <% } %>
                             </small></p>
                         </div>
@@ -424,7 +435,7 @@
             <div class="panel-header mx-4 mb-3">
                 <h5>Unassigned Classes</h5>
             </div>
-            <div class="panel-body">
+            <div class="panel-body pb-5">
                 <a type="button" class="collapse-btn" data-mdb-toggle="collapse" data-mdb-target="#department-classes"
                     aria-expanded="false">
                     <i class="fas fa-caret-down me-2"></i><text>Departmental Classes</text>
@@ -497,8 +508,8 @@
                                     aria-valuenow="<%= otherClasses[i].assigned_time || 0 %>">
                                     <p class="text-truncate m-0">
                                         <%= otherClasses[i].subject %><br>
-                                        <% if (faculty_id) { %>
-                                            <small class="text-muted faculty-name">Professor: <%= faculty_name %></small>
+                                        <% if (otherClasses[i].assigned_time > 0) { %>
+                                            <small class="text-muted">Assigned hours: <%= otherClasses[i].assigned_time %> / <%= deptClasses[i].req_hours %></small>
                                         <% } %>
                                         <small></small>
                                     </p>
@@ -519,25 +530,18 @@
 
 <script src="/lib/display-dropdown.js"></script>
 <script>
-    const startHeightSched = <%- JSON.stringify(Math.min(...classes.map(c => c.start) )) %>;
-    
-    if (startHeightSched > 9) {
-        $(document).ready(() => setTimeout(() => {
-            $(".main-view>div:last-child").stop().animate({scrollTop: startHeightSched * 43 + 235}, 1000, 'swing');
-        }, 300));
-    }
-    
+    displayDropMenu($("#class-day"), "Pick Day");
+    displayDropMenu($("#class-mode"), "Pick Mode");
+
     const addClass = (schedule) => new Promise((resolve, reject) => {
         $.post("/api/schedules/<%= term.id %>",
             { schedule: schedule }, () => location.reload()
         ).fail((error) => reject(error.responseJSON));
     });
-
-    displayDropMenu($("#class-day"), "Pick Day");
-    displayDropMenu($("#class-mode"), "Pick Mode");
     
     $(".menu-item").click((event) => {
         const newClass = event.currentTarget;
+        $("#schedule-class-label").text("Assign New Class");
         $("#class-subject").text(newClass.title).attr("aria-valuenow", newClass.getAttribute("itemid"));
         const assignedHours = parseFloat(newClass.ariaValueNow);
         const reqHours = parseInt(newClass.ariaValueMax);
@@ -548,8 +552,30 @@
         
         const block = $(newClass).closest(".panel-menu");
         $("#class-block").text(block.attr("title")).attr("aria-valuenow", block.attr("id"));
-        // $("#class-block").text(block.attr("title")).attr("aria-valuenow", block.attr("id"));
-        newClassForm.show();
+        
+        $("#add-schedule").hide();
+        $("#change-schedule, #delete-schedule").show();
+        scheduleForm.show();
+    });
+
+    $(".sched-block").click((event) => {
+        const prevClass = event.currentTarget;
+        $("#schedule-class-label").text("Change Class Schedule");
+        const [subj, block, mode, room] = $(prevClass).find(".subject, .block, .mode, .room");
+        console.log(prevClass.ariaValueMin, prevClass.ariaValueMax, prevClass.ariaValueNow);
+        $("#class-subject").text(subj.textContent).attr("aria-valuenow", subj.getAttribute("itemid"));
+        $("#class-block").text(block.textContent).attr("aria-valuenow", block.getAttribute("itemid"));
+        $("#class-start").val(prevClass.ariaValueMin);
+        $("#class-end").val(prevClass.ariaValueMax);
+        $("#class-hours").text(prevClass.ariaCurrent);
+        $(`ul[aria-labelledby='class-day']>li:nth-child(${prevClass.ariaValueNow})>a.dropdown-item`).trigger("click");
+        $(`ul[aria-labelledby='class-mode']>li>a.dropdown-item:contains(${mode.textContent})`).trigger("click");
+        if (room) {
+            $("#class-room").val(room.textContent);
+        }
+        $("#add-schedule").hide();
+        $("#change-schedule, #delete-schedule").show();
+        scheduleForm.show();
     });
 
     $("[aria-labelledby='class-day'] > li > a.dropdown-item").click((event) => {
@@ -562,7 +588,10 @@
 
     $("[aria-labelledby='class-mode'] > li > a.dropdown-item").click((event) => {
         const modeIndex = event.currentTarget.getAttribute("data-cts-enum");
-        if (!modeIndex) return $("#class-room").attr("aria-valuenow", null);
+        if (!modeIndex) {
+            $("#class-room").val(null).prop("disabled", true);
+            return $("#class-room").attr("aria-valuenow", null);
+        }
 
         $("#class-mode").attr("aria-valuenow", modeIndex);
         if (modeIndex == 1) {
@@ -576,40 +605,9 @@
         event.currentTarget.removeAttribute("data-mdb-target");
     });
 
-    $("#confirm-new-class").click(async (event) => {
-        const day = $("#class-day");
-        const start = $("#class-start");
-        const end = $("#class-end");
-        const hours = $("#class-hours");
-        const reqMinutes = parseFloat(hours.attr("aria-valuemax")) * 60;
-        if (day.text() == "Pick Day" || !start.val() || !end.val()) {
-            $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
-            alertModal.show(2, "Missing schedule input", "Fill in week day, start time and end time.");
-            return console.log("Missing schedule input.");
-        } else if (start.val() > end.val()) {
-            $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
-            alertModal.show(2, "Invalid time input", "End time is earlier than start time");
-            return console.log("Start time must be earlier than end time");
-        }
-        let startTime = roundMinutes(start.val(), 30);
-        if (startTime < 7 * 60) {
-            $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
-            alertModal.show(2, "Start time is too early", "Class must start on or later than 7AM");
-            return console.log("Class must start on or later than 7AM");
-        }
-        
-        let endTime = roundMinutes(end.val(), 30);
-        if (endTime > 22 * 60) {
-            $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
-            alertModal.show(2, "End time is too late", "Class must end on or before than 10PM");
-            return console.log("Class must end on or before 10PM");
-        } else if (endTime - startTime > reqMinutes) {
-            $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
-            alertModal.show(2, "Invalid time input", "Assigned time exceeds required hours.");
-            return console.log("Assigned time exceeds required hours.");
-        }
-        
-        console.log(day.attr("aria-valuenow"), startTime, endTime);
+    $("#add-schedule").click(async (event) => {
+        if (!isValidSchedule()) return;
+
         try {
             await addClass({
                 faculty: "<%= id %>",
@@ -623,28 +621,91 @@
                 partial: parseFloat(hours.attr("aria-valuemin")) > 0 ? 1 : 0
             });
         } catch (eResponse) {
-            // console.log(eRosponse);
             if (eResponse) {
                 if (eResponse.redirect) {
                     location.replace(eResponse.redirect);
                 }
                 if (eResponse.message) {
-                    $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
+                    $("#confirm-alert").attr("data-mdb-target", "#schedule-class").attr("data-mdb-toggle", "modal");
                     alertModal.show(...Object.values(eResponse.message));
                 }
             } else {
-                $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
+                $("#confirm-alert").attr("data-mdb-target", "#schedule-class").attr("data-mdb-toggle", "modal");
                 alertModal.show(0, "Server error", "Unexpected error occured, please try again later.");
             }
-            // console.error(error);
-            // const {redirect, message} = error;
-            // if (redirect) {
-            //     return location.replace(redirect);
-            // }
-            // $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
-            // alertModal.show(...Object.values(message));
         }
     });
+
+    $("#change-schedule").click(async (event) => {
+        if (!isValidSchedule()) return;
+        
+        try {
+            await addClass({
+                faculty: "<%= id %>",
+                subject: $("#class-subject").attr("aria-valuenow"),
+                mode: $("#class-mode").attr("aria-valuenow") || 1,
+                room: $("#class-room").val().toLowerCase(),
+                block: $("#class-block").attr("aria-valuenow"),
+                day: day.attr("aria-valuenow"),
+                start: startTime,
+                end: endTime,
+                partial: parseFloat(hours.attr("aria-valuemin")) > 0 ? 1 : 0
+            });
+        } catch (eResponse) {
+            if (eResponse) {
+                if (eResponse.redirect) {
+                    location.replace(eResponse.redirect);
+                }
+                if (eResponse.message) {
+                    $("#confirm-alert").attr("data-mdb-target", "#schedule-class").attr("data-mdb-toggle", "modal");
+                    alertModal.show(...Object.values(eResponse.message));
+                }
+            } else {
+                $("#confirm-alert").attr("data-mdb-target", "#schedule-class").attr("data-mdb-toggle", "modal");
+                alertModal.show(0, "Server error", "Unexpected error occured, please try again later.");
+            }
+        }
+    });
+
+    $("#delete-schedule").click(async (event) => {
+        // TODO: create api call to delete schedule
+    });
+
+    function checkScheduleInputs() {
+        const day = $("#class-day");
+        const start = $("#class-start");
+        const end = $("#class-end");
+        const hours = $("#class-hours");
+        const reqMinutes = parseFloat(hours.attr("aria-valuemax")) * 60;
+        if (day.text() == "Pick Day" || !start.val() || !end.val()) {
+            $("#confirm-alert").attr("data-mdb-target", "#schedule-class").attr("data-mdb-toggle", "modal");
+            alertModal.show(2, "Missing schedule input", "Fill in week day, start time and end time.");
+            return false;
+        } else if (start.val() > end.val()) {
+            $("#confirm-alert").attr("data-mdb-target", "#schedule-class").attr("data-mdb-toggle", "modal");
+            alertModal.show(2, "Invalid time input", "End time is earlier than start time");
+            return false;
+        }
+        let startTime = roundMinutes(start.val(), 30);
+        if (startTime < 7 * 60) {
+            $("#confirm-alert").attr("data-mdb-target", "#schedule-class").attr("data-mdb-toggle", "modal");
+            alertModal.show(2, "Start time is too early", "Class must start on or later than 7AM");
+            return false;
+        }
+        
+        let endTime = roundMinutes(end.val(), 30);
+        if (endTime > 22 * 60) {
+            $("#confirm-alert").attr("data-mdb-target", "#schedule-class").attr("data-mdb-toggle", "modal");
+            alertModal.show(2, "End time is too late", "Class must end on or before than 10PM");
+            return false;
+        } else if (endTime - startTime > reqMinutes) {
+            $("#confirm-alert").attr("data-mdb-target", "#schedule-class").attr("data-mdb-toggle", "modal");
+            alertModal.show(2, "Invalid time input", "Assigned time exceeds required hours.");
+            return false;
+        }
+
+        return true;
+    }
 
     function roundMinutes(time, nearestMinutes = 1) {
         let [hours, mins] = time.split(":");

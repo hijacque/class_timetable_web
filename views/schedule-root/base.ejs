@@ -3,7 +3,7 @@
 
 <head>
     <%- include('../base') %>
-        <title>Edit Schedule</title>
+        <title>Plot Schedules</title>
         <link rel="stylesheet" href="/styles/schedule-root.css">
         <script src="/lib/themed-alert.js"></script>
 </head>
@@ -54,7 +54,7 @@
             alertModal.show(<%- JSON.stringify(mode) %>, "<%= title %>", "<%- body %>");
         <% } %>
         
-        const newClassForm = new mdb.Modal($("#add-class"));
+        const scheduleForm = new mdb.Modal($("#schedule-class"));
     </script>
 </body>
 </html>
