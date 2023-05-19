@@ -88,7 +88,7 @@ router.post("/unpost/:term/", unsaveFacultySchedule, (req, res) => {
 
 router.post("/delete/:term/", (req, res) => {
     // TODO: remove term_id in preferences
-    // TODO: remove schedules with faculty from department
+    // TODO: remove schedules assigned into faculty from the department
     console.log("Deleting departmental faculty schedules...");
     res.redirect("/chair/schedules/" + req.params.term);
 });
