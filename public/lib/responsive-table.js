@@ -123,11 +123,13 @@ class EditableTable extends ResponsiveTable {
     constructor(id, data = [], asyncData = false) {
         super(id);
 
-        const footer = $(`${id}>*>tr.add-data:not(.disabled)`);
+        const footer = $(`${id}>*>tr.add-data:not(.disabled)`).append(
+            `<td class="add-row text-primary"></td>`
+        );
         if (footer.length > 0) {
             this.addBtn = $(
-                `<td class="add-row text-primary"><a role="button"><i class="fas fa-plus-circle fa-2x"></i></a></td>`
-            ).appendTo(footer);
+                `<a role="button"><i class="fas fa-plus-circle fa-2x"></i></a>`
+            ).appendTo(".add-row");
             this.addBtn.click(() => {
                 $(this.addBtn).data("newRow", this.addNewRow());
             });
