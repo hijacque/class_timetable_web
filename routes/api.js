@@ -12,7 +12,7 @@ router.route("/departments/:collegeID?")
     .get(async (req, res) => { // gets departments per college
         // check user credentials
         const user = req.account;
-        if (!user && user.type == "admin") {
+        if (!user || user.type != "admin") {
             res.cookie("serverMessage", {
                 message: {
                     mode: 0,
@@ -41,7 +41,7 @@ router.route("/departments/:collegeID?")
     }).post(async (req, res) => { // creates new department
         // check user credentials
         const user = req.account;
-        if (!user && user.type == "admin") {
+        if (!user || user.type != "admin") {
             res.cookie("serverMessage", {
                 message: {
                     mode: 0,
@@ -81,7 +81,7 @@ router.route("/departments/:collegeID?")
 
 router.post("/department/:deptID?", async (req, res) => { // updates department info (name and/or chairperson)
     const user = req.account;
-    if (!user) {
+    if (!user || user.type != "admin") {
         res.cookie("serverMessage", {
             message: {
                 mode: 0,
@@ -151,7 +151,7 @@ router.post("/department/:deptID?", async (req, res) => { // updates department 
 router.post("/colleges", async (req, res) => { // creates new college
     // check user credentials
     const user = req.account;
-    if (!user && user.type == "admin") {
+    if (!user || user.type != "admin") {
         res.cookie("serverMessage", {
             message: {
                 mode: 0,
@@ -281,7 +281,7 @@ router.route("/subjects/:collegeID?")
         type = (type == "LEC") ? 1 : (type == "LAB") ? 2 : "NULL";
         const [{ totalDuplicates }] = await DB.executeQuery(
             `SELECT COUNT(*) AS totalDuplicates FROM Subjects s INNER JOIN Colleges col ON s.college_id = col.id ` +
-            `WHERE col.school_id = '${user.id}' AND s.code = '${code}' OR (s.title = '${title}' AND s.type = '${type}')`
+            `WHERE col.school_id = '${user.id}' AND s.code = '${code}' OR (s.title = '${title}' AND s.type = ${type})`
         );
 
         if (totalDuplicates > 0) {
@@ -651,7 +651,7 @@ router.post("/curriculum/:courseID", async (req, res) => { // adding a subject i
 router.post("/terms", async (req, res) => {
     // check user credentials
     const user = req.account;
-    if (!user && user.type != "chair") {
+    if (!user || user.type != "chair") {
         res.cookie("serverMessage", {
             message: {
                 mode: 0,
@@ -726,7 +726,7 @@ router.route("/schedules/:termID")
     .get(async (req, res) => { // get faculty or block details per term schedule
         // check user credentials
         const user = req.account;
-        if (!user && user.type != "chair") {
+        if (!user || user.type != "chair") {
             res.cookie("serverMessage", {
                 message: {
                     mode: 0,
@@ -757,7 +757,7 @@ router.route("/schedules/:termID")
     }).post(async (req, res) => { // manual input of schedule
         // check user credentials
         const user = req.account;
-        if (!user && user.type != "chair") {
+        if (!user || user.type != "chair") {
             res.cookie("serverMessage", {
                 message: {
                     mode: 0,
@@ -781,27 +781,46 @@ router.route("/schedules/:termID")
         let classroom;
         let { day, start, end } = req.body.schedule;
         if (mode == 1 && (!room || room == "")) {
-            [classroom] = await DB.executeQuery(
+            console.log(
                 `SELECT r.id, r.name, SUM(sc.day = ${day} AND ((sc.start <= ${start} AND ${start} < sc.end) OR ` +
                 `(sc.start < ${end} AND ${end} <= sc.end) OR (${start} <= sc.start AND sc.start < ${end}) ` +
-                `OR (${start} < sc.end AND sc.end <= ${end}))) AS totalConflict FROM ROOMS r INNER JOIN Buildings b ON r.bldg_id = b.id INNER JOIN ` +
+                `OR (${start} < sc.end AND sc.end <= ${end}))) AS totalConflict FROM ROOMS r INNER JOIN Buildings b ON r.bldg_id = b.id LEFT JOIN ` +
                 `Terms t ON b.school_id = t.school_id LEFT JOIN Schedules sc ON t.id = sc.term_id AND r.id = sc.room_id ` +
-                `WHERE t.id = '${termID}' ` +
+                `WHERE t.id = '${termID}' OR t.id IS NULL` +
                 ((prefRooms.length > 0) ?
                     `AND r.name LIKE '%${prefRooms.map(r => r.split(" ").join("%")).join("%' OR r.name LIKE '%")}%'` 
                     : ""
-                ) + "GROUP BY r.id HAVING totalConflict <= 0 LIMIT 1"
+                ) + "GROUP BY r.id HAVING totalConflict <= 0 OR totalConflict IS NULL LIMIT 1"
+            );
+            [classroom] = await DB.executeQuery(
+                `SELECT r.id, r.name, SUM(sc.day = ${day} AND ((sc.start <= ${start} AND ${start} < sc.end) OR ` +
+                `(sc.start < ${end} AND ${end} <= sc.end) OR (${start} <= sc.start AND sc.start < ${end}) ` +
+                `OR (${start} < sc.end AND sc.end <= ${end}))) AS totalConflict FROM ROOMS r INNER JOIN Buildings b ON r.bldg_id = b.id LEFT JOIN ` +
+                `Terms t ON b.school_id = t.school_id LEFT JOIN Schedules sc ON t.id = sc.term_id AND r.id = sc.room_id ` +
+                `WHERE t.id = '${termID}' OR t.id IS NULL` +
+                ((prefRooms.length > 0) ?
+                    `AND r.name LIKE '%${prefRooms.map(r => r.split(" ").join("%")).join("%' OR r.name LIKE '%")}%'` 
+                    : ""
+                ) + "GROUP BY r.id HAVING totalConflict <= 0 OR totalConflict IS NULL LIMIT 1"
             );
             message = `Auto-assigned schedule into classroom ${classroom.name}`;
         } else if (mode == 1) {
             const regexRoom = room.split(" ");
+            console.log(
+                `SELECT r.id, r.name, SUM(sc.day = ${day} AND ((sc.start <= ${start} AND ${start} < sc.end) OR ` +
+                `(sc.start < ${end} AND ${end} <= sc.end) OR (${start} <= sc.start AND sc.start < ${end}) ` +
+                `OR (${start} < sc.end AND sc.end <= ${end}))) AS totalConflict FROM ROOMS r INNER JOIN Buildings b ON r.bldg_id = b.id LEFT JOIN ` +
+                `Terms t ON b.school_id = t.school_id LEFT JOIN Schedules sc ON r.id = sc.room_id ` +
+                `WHERE t.id = '${termID}' OR t.id IS NULL AND r.name LIKE '%${regexRoom.join("%")}%' GROUP BY r.id ` +
+                `HAVING totalConflict <= 0 OR totalConflict IS NULL ORDER BY r.name LIMIT 1`
+            );
             [classroom] = await DB.executeQuery(
                 `SELECT r.id, r.name, SUM(sc.day = ${day} AND ((sc.start <= ${start} AND ${start} < sc.end) OR ` +
                 `(sc.start < ${end} AND ${end} <= sc.end) OR (${start} <= sc.start AND sc.start < ${end}) ` +
-                `OR (${start} < sc.end AND sc.end <= ${end}))) AS totalConflict FROM ROOMS r INNER JOIN Buildings b ON r.bldg_id = b.id INNER JOIN ` +
-                `Terms t ON b.school_id = t.school_id LEFT JOIN Schedules sc ON t.id = sc.term_id AND r.id = sc.room_id ` +
-                `WHERE t.id = '${termID}' AND r.name LIKE '%${regexRoom.join("%")}%' GROUP BY r.id ` +
-                `HAVING totalConflict <= 0 ORDER BY r.name LIMIT 1`
+                `OR (${start} < sc.end AND sc.end <= ${end}))) AS totalConflict FROM ROOMS r INNER JOIN Buildings b ON r.bldg_id = b.id LEFT JOIN ` +
+                `Terms t ON b.school_id = t.school_id LEFT JOIN Schedules sc ON r.id = sc.room_id ` +
+                `WHERE t.id = '${termID}' OR t.id IS NULL AND r.name LIKE '%${regexRoom.join("%")}%' GROUP BY r.id ` +
+                `HAVING totalConflict <= 0 OR totalConflict IS NULL ORDER BY r.name LIMIT 1`
             );
         }
         console.table(classroom);
@@ -856,7 +875,7 @@ router.route("/schedules/:termID")
             query = `INSERT INTO Schedules VALUES ('${termID}', '${subject}', '${block}', ` +
                 `'${faculty}', ${classroom ? `'${classroom.id}'` : "NULL"}, ${day}, ${start}, ${end}, ${mode})`;
         } else {
-            query = `UPDATE Schedules SET faculty_id = '${faculty}', room_id = ${classroom ? classroom.id : "NULL"}, ` +
+            query = `UPDATE Schedules SET faculty_id = '${faculty}', room_id = ${classroom ? `'${classroom.id}'` : "NULL"}, ` +
                 `day = ${day}, start = ${start}, end = ${end}, mode = ${mode} WHERE block_id = '${block}' AND ` +
                 `subj_id = '${subject}' AND term_id = '${termID}' AND faculty_id IS NULL LIMIT 1;` +
 
@@ -880,7 +899,7 @@ router.route("/schedules/:termID")
 router.post("/schedule/:termID", async (req, res) => { // changes or removes a class schedule
     // check user credentials
     const user = req.account;
-    if (!user && user.type != "chair") {
+    if (!user || user.type != "chair") {
         res.cookie("serverMessage", {
             message: {
                 mode: 0,
@@ -1047,7 +1066,7 @@ router.post("/schedule/:termID", async (req, res) => { // changes or removes a c
 router.post("/blocks/:courseID", async (req, res) => {
     // check user credentials
     const user = req.account;
-    if (!user && user.type != "chair") {
+    if (!user || user.type != "chair") {
         res.cookie("serverMessage", {
             message: {
                 mode: 0,
@@ -1099,10 +1118,16 @@ router.post("/blocks/:courseID", async (req, res) => {
 
 // faculty control
 router.post("/preferences/:prefID", async (req, res) => {
-    // check if logged in, that is req.account is defined
     const user = req.account;
-    if (!user) {
-        return res.status(401).end();
+    if (!user || (user.type != "faculty" && user.type != "chair")) {
+        res.cookie("serverMessage", {
+            message: {
+                mode: 0,
+                title: "Unauthorized request",
+                body: "Please login before accessing admin dashboard."
+            }
+        })
+        return res.status(401).json({ redirect: "/logout" });
     }
 
     const DB = req.app.locals.database;
