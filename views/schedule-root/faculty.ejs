@@ -59,7 +59,8 @@
                     <button type="button" class="btn btn-danger" id="delete-schedule" data-mdb-dismiss="modal">delete</button>
                 </div>
                 <div>
-                    <button type="button" class="btn btn-secondary me-2" data-mdb-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary me-2" data-mdb-dismiss="modal">cancel</button>
+                    <button type="button" class="btn btn-warning me-2" id="reset-schedule">reset</button>
                     <button type="button" class="btn btn-primary" id="change-schedule" data-mdb-dismiss="modal">change</button>
                     <button type="button" class="btn btn-primary" id="add-schedule" data-mdb-dismiss="modal">assign</button>
                 </div>
@@ -99,7 +100,7 @@
                 <% } %>
             </ul>
         </nav>
-        <% const {faculty_id, status, sched_status, pref_status, pref_subjs, teach_load, classes} = current %>
+        <% const {faculty_id, status, sched_status, pref_status, pref_subjs, teach_load} = current %>
         <div class="about">
             <div class="d-flex">
                 <h4 class="page-title">
@@ -398,7 +399,7 @@
                     <div></div>
                 </div>
                 <div class="sched-body">
-                    <% for (const schedule of classes) { %>
+                    <% for (const schedule of current.classes) { %>
                         <div class="sched-block" data-mdb-toggle="tooltip" data-mdb-html="true"
                             <% if (schedule.room) { %>
                             title="<b><%= schedule.subject %></b><br><small><%= schedule.year %>-<%= schedule.block_no %> <%= schedule.course %><br><i><%= schedule.mode %> @ <%= schedule.room %></i></small>"
@@ -530,6 +531,7 @@
 
 <script src="/lib/display-dropdown.js"></script>
 <script>
+    let currentSched = { faculty: "<%= id %>" };
     displayDropMenu($("#class-day"), "Pick Day");
     displayDropMenu($("#class-mode"), "Pick Mode");
 
@@ -538,9 +540,18 @@
             { schedule: schedule }, () => location.reload()
         ).fail((error) => reject(error.responseJSON));
     });
+
+    const manageClass = (action, oldSchedule, newSchedule = {}) => new Promise((resolve, reject) => {
+        $.post(
+            "/api/schedule/<%= term.id %>",
+            { oldSched: oldSchedule, newSched: newSchedule, action: action }, 
+            () => resolve(location.reload())
+        ).fail((error) => reject(error.responseJSON));
+    });
     
     $(".menu-item").click((event) => {
         const newClass = event.currentTarget;
+        console.log(newClass);
         $("#schedule-class-label").text("Assign New Class");
         $("#class-subject").text(newClass.title).attr("aria-valuenow", newClass.getAttribute("itemid"));
         const assignedHours = parseFloat(newClass.ariaValueNow);
@@ -552,9 +563,9 @@
         
         const block = $(newClass).closest(".panel-menu");
         $("#class-block").text(block.attr("title")).attr("aria-valuenow", block.attr("id"));
-        
-        $("#add-schedule").hide();
-        $("#change-schedule, #delete-schedule").show();
+
+        $("#add-schedule").show();
+        $("#change-schedule, #delete-schedule, #reset-schedule").hide();
         scheduleForm.show();
     });
 
@@ -567,14 +578,31 @@
         $("#class-block").text(block.textContent).attr("aria-valuenow", block.getAttribute("itemid"));
         $("#class-start").val(prevClass.ariaValueMin);
         $("#class-end").val(prevClass.ariaValueMax);
-        $("#class-hours").text(prevClass.ariaCurrent);
+        $("#class-hours").text(prevClass.ariaCurrent).attr("aria-valuemax", prevClass.ariaCurrent);
+
+        currentSched.block = block.getAttribute("itemid");
+        currentSched.subject = subj.getAttribute("itemid");
+        currentSched.day = prevClass.ariaValueNow;
+        currentSched.start_time = prevClass.ariaValueMin;
+        currentSched.end_time = prevClass.ariaValueMax;
+        currentSched.start = roundMinutes(prevClass.ariaValueMin);
+        currentSched.end = roundMinutes(prevClass.ariaValueMax);
+        currentSched.mode = mode.textContent;
         $(`ul[aria-labelledby='class-day']>li:nth-child(${prevClass.ariaValueNow})>a.dropdown-item`).trigger("click");
         $(`ul[aria-labelledby='class-mode']>li>a.dropdown-item:contains(${mode.textContent})`).trigger("click");
+
         if (room) {
             $("#class-room").val(room.textContent);
+            currentSched.room_name = room.textContent;
+            currentSched.room_id = room.getAttribute("itemid");
+        } else {
+            delete currentSched.room_name;
+            delete currentSched.room_id;
         }
+        
+        console.log(currentSched);
         $("#add-schedule").hide();
-        $("#change-schedule, #delete-schedule").show();
+        $("#change-schedule, #delete-schedule, #reset-schedule").show();
         scheduleForm.show();
     });
 
@@ -602,11 +630,24 @@
     });
 
     $("#confirm-alert").click((event) => {
-        event.currentTarget.removeAttribute("data-mdb-target");
+        event.currentTarget.removeAttribute("data-mdb-target")
+        event.currentTarget.removeAttribute("data-mdb-toggle");
+    });
+
+    $("#reset-schedule").click(async (event) => {
+        console.log(currentSched);
+        $("#class-end").val(currentSched.end_time);
+        $("#class-start").text(currentSched.start_time);
+        $(`ul[aria-labelledby='class-day']>li:nth-child(${currentSched.day})>a.dropdown-item`).trigger("click");
+        $(`ul[aria-labelledby='class-mode']>li>a.dropdown-item:contains(${currentSched.mode})`).trigger("click");
+        if (currentSched.room_id) {
+            $("#class-room").val(currentSched.room_name);
+        }
     });
 
     $("#add-schedule").click(async (event) => {
-        if (!isValidSchedule()) return;
+        const validTime = validateScheduleInput();
+        if (!validTime) return;
 
         try {
             await addClass({
@@ -615,12 +656,13 @@
                 mode: $("#class-mode").attr("aria-valuenow") || 1,
                 room: $("#class-room").val().toLowerCase(),
                 block: $("#class-block").attr("aria-valuenow"),
-                day: day.attr("aria-valuenow"),
-                start: startTime,
-                end: endTime,
-                partial: parseFloat(hours.attr("aria-valuemin")) > 0 ? 1 : 0
+                day: $("#class-day").attr("aria-valuenow"),
+                start: validTime.startTime,
+                end: validTime.endTime,
+                partial: parseFloat($("#class-hours").attr("aria-valuemin")) > 0 ? 1 : 0,
             });
         } catch (eResponse) {
+            console.log(eResponse);
             if (eResponse) {
                 if (eResponse.redirect) {
                     location.replace(eResponse.redirect);
@@ -637,20 +679,40 @@
     });
 
     $("#change-schedule").click(async (event) => {
-        if (!isValidSchedule()) return;
+        const validTime = validateScheduleInput();
+        if (!validTime) return;
         
         try {
-            await addClass({
+            await manageClass("change", currentSched,{
                 faculty: "<%= id %>",
                 subject: $("#class-subject").attr("aria-valuenow"),
                 mode: $("#class-mode").attr("aria-valuenow") || 1,
                 room: $("#class-room").val().toLowerCase(),
                 block: $("#class-block").attr("aria-valuenow"),
-                day: day.attr("aria-valuenow"),
-                start: startTime,
-                end: endTime,
-                partial: parseFloat(hours.attr("aria-valuemin")) > 0 ? 1 : 0
+                day: $("#class-day").attr("aria-valuenow"),
+                start: validTime.startTime,
+                end: validTime.endTime
             });
+        } catch (eResponse) {
+            if (eResponse) {
+                if (eResponse.redirect) {
+                    location.replace(eResponse.redirect);
+                }
+                if (eResponse.message) {
+                    console.log(eResponse.message);
+                    $("#confirm-alert").attr("data-mdb-target", "#schedule-class").attr("data-mdb-toggle", "modal");
+                    alertModal.show(...Object.values(eResponse.message));
+                }
+            } else {
+                $("#confirm-alert").attr("data-mdb-target", "#schedule-class").attr("data-mdb-toggle", "modal");
+                alertModal.show(0, "Server error", "Unexpected error occured, please try again later.");
+            }
+        }
+    });
+
+    $("#delete-schedule").click(async (event) => {
+        try {
+            await manageClass("delete", currentSched);
         } catch (eResponse) {
             if (eResponse) {
                 if (eResponse.redirect) {
@@ -667,11 +729,7 @@
         }
     });
 
-    $("#delete-schedule").click(async (event) => {
-        // TODO: create api call to delete schedule
-    });
-
-    function checkScheduleInputs() {
+    function validateScheduleInput() {
         const day = $("#class-day");
         const start = $("#class-start");
         const end = $("#class-end");
@@ -686,14 +744,14 @@
             alertModal.show(2, "Invalid time input", "End time is earlier than start time");
             return false;
         }
-        let startTime = roundMinutes(start.val(), 30);
+        const startTime = roundMinutes(start.val(), 30);
         if (startTime < 7 * 60) {
             $("#confirm-alert").attr("data-mdb-target", "#schedule-class").attr("data-mdb-toggle", "modal");
             alertModal.show(2, "Start time is too early", "Class must start on or later than 7AM");
             return false;
         }
         
-        let endTime = roundMinutes(end.val(), 30);
+        const endTime = roundMinutes(end.val(), 30);
         if (endTime > 22 * 60) {
             $("#confirm-alert").attr("data-mdb-target", "#schedule-class").attr("data-mdb-toggle", "modal");
             alertModal.show(2, "End time is too late", "Class must end on or before than 10PM");
@@ -704,7 +762,7 @@
             return false;
         }
 
-        return true;
+        return {startTime: startTime, endTime: endTime};
     }
 
     function roundMinutes(time, nearestMinutes = 1) {

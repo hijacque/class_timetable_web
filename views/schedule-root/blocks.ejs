@@ -1,10 +1,11 @@
 <% const {classes, deptClasses, otherClasses, current, courseID, prevBlock, nextBlock, faculty} = data %>
-<div class="modal fade" id="add-class" data-mdb-backdrop="static" data-mdb-keyboard="false"
+<% if (status == 'open') { %>
+<div class="modal fade" id="schedule-class" data-mdb-backdrop="static" data-mdb-keyboard="false"
     tabindex="-1" aria-labelledby="add-class-label" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="add-class-label">Assign New Class</h5>
+                <h5 class="modal-title" id="schedule-class-label"></h5>
                 <button type="button" class="btn-close" data-mdb-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -13,7 +14,7 @@
                 <span id="class-block"><%= current.course %> <%= current.year %>-<%= current.block_no %></span><br>
                 <label for="class-hours">Assigned hours:</label>
                 <span id="class-hours"></span><br>
-                <div class="d-flex align-items-center my-3" >
+                <div class="d-flex align-items-center my-1" >
                     <label for="class-faculty" class="fw-bold me-2">Faculty:</label>
                     <span class="class-faculty"></span>
                     <div class="dropdown">
@@ -21,12 +22,12 @@
                             data-mdb-toggle="dropdown" aria-expanded="false">pick professor</a>
                         <ul class="dropdown-menu" aria-labelledby="class-faculty">
                             <% for (const prof of faculty) { %>
-                                <li><a class="dropdown-item px-2" role="button" id="<%= prof.id %>">
+                                <li><a class="dropdown-item px-3" role="button" id="<%= prof.id %>">
                                     <% if (prof.teach_load == "FULL") { %>
                                         <span class="text-warning faculty-name"><%= prof.name %></span>
                                         <span class="faculty-load">( <%= prof.teach_load %> )</span>
                                     <% } else { %>
-                                        <span class="ms-2 faculty-name"><%= prof.name %></span>
+                                        <span class="faculty-name"><%= prof.name %></span>
                                         <span class="faculty-load">( <%= prof.teach_load %> )</span>
                                     <% } %>
                                 </a></li>
@@ -40,7 +41,7 @@
                 <p><small>Class Schedule</small></p>
                 <div class="input-group mb-2">
                     <div class="dropdown">
-                        <a class="text-primary dropdown-toggle input-group-text rounded-end-0" type="button"
+                        <a class="text-primary dropdown-toggle input-group-text rounded-0 rounded-start" type="button"
                             data-mdb-toggle="dropdown" aria-expanded="false" id="class-day">Pick Day</a>
                         <ul class="dropdown-menu" aria-labelledby="class-day">
                             <li><a class="dropdown-item" role="button" data-cts-enum="1">MONDAY</a></li>
@@ -61,7 +62,7 @@
                 </div>
                 <div class="input-group mb-3">
                     <div class="dropdown">
-                        <a class="text-primary dropdown-toggle input-group-text rounded-end-0" type="button"
+                        <a class="text-primary dropdown-toggle input-group-text rounded-0 rounded-start" type="button"
                             data-mdb-toggle="dropdown" aria-expanded="false" id="class-mode">Pick Mode</a>
                         <ul class="dropdown-menu" aria-labelledby="class-mode">
                             <li><a class="dropdown-item" role="button" data-cts-enum="1">F2F</a></li>
@@ -74,13 +75,22 @@
                     <input type="text" id="class-room" class="form-control" placeholder="Room no." disabled>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-mdb-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="confirm-new-class" data-mdb-dismiss="modal">Assign</button>
+            <div class="modal-footer d-flex justify-content-between">
+                <div>
+                    <button type="button" class="btn btn-danger" id="delete-schedule" data-mdb-dismiss="modal">delete</button>
+                </div>
+                
+                <div>
+                    <button type="button" class="btn btn-secondary me-2" data-mdb-dismiss="modal">cancel</button>
+                    <button type="button" class="btn btn-warning me-2" id="reset-schedule">reset</button>
+                    <button type="button" class="btn btn-primary" id="change-schedule" data-mdb-dismiss="modal">change</button>
+                    <button type="button" class="btn btn-primary" id="add-schedule" data-mdb-dismiss="modal">assign</button>
+                </div>
             </div>
         </div>
     </div>
 </div>
+<% } %>
 <div class="main-view">
     <div>
         <nav aria-label="Schedule Navigation for Blocks">   
@@ -386,20 +396,30 @@
                 </div>
                 <div class="sched-body">
                     <% for (const schedule of classes) { %>
-                        <div class="sched-block" data-mdb-toggle="tooltip" data-mdb-html="true"
+                        <div data-mdb-toggle="tooltip" data-mdb-html="true"
+                            class="sched-block<%= (schedule.departmental) ? ' dept-subj' : '' %><%= (schedule.partial) ? ' partial' : '' %>"
                             <% if (schedule.room) { %>
                             title="<b><%= schedule.subject %></b><br><small>Prof. <%= schedule.faculty_name %><br><i><%= schedule.mode %> @ <%= schedule.room %></i></small>"
                             <% } else { %>
                             title="<b><%= schedule.subject %></b><br><small>Prof. <%= schedule.faculty_name %><br><i><%= schedule.mode %></i></small>"
                             <% } %>
-                            style="grid-column: <%= schedule.day %> / span 1; grid-row: <%= schedule.start %> / <%= schedule.end %>;">
-                            <h6 class="text-break"><%= schedule.subject %></h6>
+                            style="grid-column: <%= schedule.day %> / span 1; grid-row: <%= schedule.start_time %> / <%= schedule.end_time %>;"
+                            aria-valuemin="<%= schedule.start %>" aria-valuemax="<%= schedule.end %>" 
+                            aria-valuenow="<%= schedule.day %>" aria-current="<%= schedule.duration %>">
+                            <h6 class="text-break subject" itemid="<%= schedule.subj_id %>">
+                                <%= schedule.subject %>
+                            </h6>
                             <p class="text-truncate"><small>
-                                Prof. <%= schedule.faculty_name %><br>
+                                Prof. <span class="faculty" itemid="<%= schedule.faculty_id %>">
+                                    <%= schedule.faculty_name %>
+                                </span><br>
                                 <% if (schedule.room) { %>
-                                    <i><%= schedule.mode %> @ <%= schedule.room %></i>
+                                    <i>
+                                        <span class="mode"><%= schedule.mode %></span> @ 
+                                        <span class="room" itemid="<%= schedule.room_id %>"><%= schedule.room %></span>
+                                    </i>
                                 <% } else { %>
-                                    <i><%= schedule.mode %></i>
+                                    <i class="mode"><%= schedule.mode %></i>
                                 <% } %>
                             </small></p>
                         </div>
@@ -417,26 +437,32 @@
                 aria-expanded="false">
                 <i class="fas fa-caret-down me-2"></i><text>Departmental Classes</text>
             </a>
-            <% if (deptClasses.length> 0) { %>
+            <% if (deptClasses.length> 0 && status == 'open') { %>
                 <div class="collapse show" id="department-classes">
-                    <ul class="list-group panel-menu">
-                        <% for (const {subj_id, subject, req_hours, assigned_time, faculty_id, faculty_name} of deptClasses) { %>
-                            <button type="button" title="<%= subject %>" id="<%= subj_id %>"
-                                class="list-group-item list-group-item-action menu-item"
-                                <% if (faculty_id) { %>
-                                    itemid="<%= faculty_id %>"
-                                <% } %>
-                                aria-valuemax="<%= req_hours || 0 %>"
-                                aria-valuenow="<%= assigned_time || 0 %>">
-                                <p class="text-truncate m-0">
-                                    <%= subject %><br>
+                    <div>
+                        <ul class="list-group panel-menu">
+                            <% for (const {subj_id, subject, req_hours, assigned_time, faculty_id, faculty_name} of deptClasses) { %>
+                                <button type="button" title="<%= subject %>" id="<%= subj_id %>"
+                                    class="list-group-item list-group-item-action menu-item"
                                     <% if (faculty_id) { %>
-                                        <small class="text-muted faculty-name">Professor: <%= faculty_name %></small>
+                                        itemid="<%= faculty_id %>"
                                     <% } %>
-                                </p>
-                            </button>
-                        <% } %>
-                    </ul>
+                                    aria-valuemax="<%= req_hours || 0 %>"
+                                    aria-valuenow="<%= assigned_time || 0 %>">
+                                    <p class="text-truncate m-0">
+                                        <%= subject %><br>
+                                        <% if (faculty_id) { %>
+                                            <small class="text-muted faculty-name">Professor: <%= faculty_name %></small>
+                                        <% } %>
+                                    </p>
+                                </button>
+                            <% } %>
+                        </ul>
+                    </div>
+                </div>
+            <% } else if (deptClasses.length> 0) { %>
+                <div class="collapse show" id="department-classes">
+                    <p>Faculty schedules closed</p>
                 </div>
             <% } else { %>
                 <div class="collapse show" id="department-classes">
@@ -448,24 +474,26 @@
             </a>
             <% if (otherClasses.length> 0) { %>
                 <div class="collapse show" id="other-classes">
-                    <ul class="list-group rounded-0">
-                        <% for (const {subj_id, subject, req_hours, assigned_time, faculty_id, faculty_name} of otherClasses) { %>
-                            <button type="button" title="<%= subject %>" id="<%= subj_id %>"
-                                class="list-group-item list-group-item-action"
-                                <% if (faculty_id) { %>
-                                    itemid="<%= faculty_id %>"
-                                <% } %>
-                                aria-valuemax="<%= req_hours || 0 %>"
-                                aria-valuenow="<%= assigned_time || 0 %>">
-                                <p class="text-truncate m-0">
-                                    <%= subject %><br>
+                    <div>
+                        <ul class="list-group">
+                            <% for (const {subj_id, subject, req_hours, assigned_time, faculty_id, faculty_name} of otherClasses) { %>
+                                <button type="button" title="<%= subject %>" id="<%= subj_id %>"
+                                    class="list-group-item list-group-item-action"
                                     <% if (faculty_id) { %>
-                                        <small class="text-muted faculty-name">Professor: <%= faculty_name %></small>
+                                        itemid="<%= faculty_id %>"
                                     <% } %>
-                                </p>
-                            </button>
-                        <% } %>
-                    </ul>
+                                    aria-valuemax="<%= req_hours || 0 %>"
+                                    aria-valuenow="<%= assigned_time || 0 %>">
+                                    <p class="text-truncate m-0">
+                                        <%= subject %><br>
+                                        <% if (faculty_id) { %>
+                                            <small class="text-muted faculty-name">Professor: <%= faculty_name %></small>
+                                        <% } %>
+                                    </p>
+                                </button>
+                            <% } %>
+                        </ul>
+                    </div>
                 </div>
             <% } else { %>
                 <div class="collapse" id="other-classes">
@@ -476,14 +504,25 @@
     </div>
 </div>
 
+<% if (status == 'open') { %>
 <script src="/lib/display-dropdown.js"></script>
 <script>
+    let currentSched = {block: "<%= current.id %>"}
     const addClass = (schedule) => new Promise((resolve, reject) => {
-        $.post("/api/schedules/<%= term.id %>", { schedule: schedule }, (data) => resolve(data)
+        $.post(
+            "/api/schedules/<%= term.id %>", { schedule: schedule }, () => location.reload()
         ).fail((error) => {
             console.log(error);
             reject(error.responseJSON || error.responseText);
         });
+    });
+
+    const manageClass = (action, newSchedule = {}) => new Promise((resolve, reject) => {
+        $.post(
+            "/api/schedule/<%= term.id %>",
+            { oldSched: currentSched, newSched: newSchedule, action: action }, 
+            () => location.reload()
+        ).fail((error) => reject(error.responseJSON));
     });
     
     $(".menu-item").click((event) => {
@@ -505,7 +544,58 @@
             $("span.class-faculty").empty();
             $("a.dropdown-toggle.class-faculty").show();
         }
-        newClassForm.show();
+        
+        $("#schedule-class-label").text("Assign New Class");
+        $("#add-schedule").show();
+        $("#change-schedule, #delete-schedule, #reset-schedule").hide();
+        scheduleForm.show();
+    });
+
+    $(".sched-block").click((event) => {
+        const prevClass = event.currentTarget;
+        $("#schedule-class-label").text("Change Class Schedule");
+        const [subj, faculty, mode, room] = $(prevClass).find(".subject, .faculty, .mode, .room");
+        console.log(prevClass.ariaValueMin, prevClass.ariaValueMax, prevClass.ariaValueNow);
+        $("#class-subject").text(subj.textContent).attr("aria-valuenow", subj.getAttribute("itemid"));
+        $("#class-start").val(prevClass.ariaValueMin);
+        $("#class-end").val(prevClass.ariaValueMax);
+        $("#class-hours").text(prevClass.ariaCurrent).attr("aria-valuemax", prevClass.ariaCurrent);
+
+        currentSched.faculty = faculty.getAttribute("itemid");
+        currentSched.subject = subj.getAttribute("itemid");
+        currentSched.day = prevClass.ariaValueNow;
+        currentSched.start_time = prevClass.ariaValueMin;
+        currentSched.end_time = prevClass.ariaValueMax;
+        currentSched.start = roundMinutes(prevClass.ariaValueMin);
+        currentSched.end = roundMinutes(prevClass.ariaValueMax);
+        currentSched.mode = mode.textContent;
+        currentSched.partial = prevClass.classList.contains("partial");
+        
+        $(`ul[aria-labelledby='class-day']>li:nth-child(${prevClass.ariaValueNow})>a.dropdown-item`).trigger("click");
+        $(`ul[aria-labelledby='class-mode']>li>a.dropdown-item:contains(${mode.textContent})`).trigger("click");
+
+        if (currentSched.partial) {
+            $("a.class-faculty").hide().attr("aria-valuenow", null);
+            $("span.class-faculty").text(faculty.textContent).attr("aria-valuenow", faculty.getAttribute("itemid")).show();
+        } else {
+            $("span.class-faculty").hide().attr("aria-valuenow", null);
+            $("a.class-faculty").show();
+            $(`ul[aria-labelledby='class-faculty']>li>a#${faculty.getAttribute("itemid")}.dropdown-item`).trigger("click");
+        }
+
+        if (room) {
+            $("#class-room").val(room.textContent);
+            currentSched.room_name = room.textContent;
+            currentSched.room_id = room.getAttribute("itemid");
+        } else {
+            delete currentSched.room_name;
+            delete currentSched.room_id;
+        }
+        
+        console.log(currentSched);
+        $("#add-schedule").hide();
+        $("#change-schedule, #delete-schedule, #reset-schedule").show();
+        scheduleForm.show();
     });
 
     $("[aria-labelledby='class-day'] > li > a.dropdown-item").click((event) => {
@@ -518,7 +608,10 @@
 
     $("[aria-labelledby='class-mode'] > li > a.dropdown-item").click((event) => {
         const modeIndex = event.currentTarget.getAttribute("data-cts-enum");
-        if (!modeIndex) return $("#class-room").attr("aria-valuenow", null);
+        if (!modeIndex) {
+            $("#class-room").val(null).prop("disabled", true);
+            return $("#class-room").attr("aria-valuenow", null);
+        }
 
         $("#class-mode").attr("aria-valuenow", modeIndex);
         if (modeIndex == 1) {
@@ -532,66 +625,110 @@
         $("a.dropdown-toggle.class-faculty")
             .attr("aria-valuenow", event.currentTarget.id)
             .text($(event.currentTarget).find(".faculty-name").text());
-        // TODO: get preferred subjects and schedule
     });
 
-    $("#confirm-alert").click((event) => {
-        event.currentTarget.removeAttribute("data-mdb-target");
+    $("#reset-schedule").click(async (event) => {
+        console.log(currentSched);
+        $("#class-end").val(currentSched.end_time);
+        $("#class-start").text(currentSched.start_time);
+        if (!currentSched.partial) {
+            $(`ul[aria-labelledby='class-faculty']>li>a#${currentSched.faculty}.dropdown-item`).trigger("click");
+        }
+        $(`ul[aria-labelledby='class-day']>li:nth-child(${currentSched.day})>a.dropdown-item`).trigger("click");
+        $(`ul[aria-labelledby='class-mode']>li>a.dropdown-item:contains(${currentSched.mode})`).trigger("click");
+        if (currentSched.room_id) {
+            $("#class-room").val(currentSched.room_name);
+        }
     });
 
-    $("#confirm-new-class").click(async (event) => {
-        const day = $("#class-day");
-        const start = $("#class-start");
-        const end = $("#class-end");
-        const hours = $("#class-hours");
-        const reqMinutes = parseFloat(hours.attr("aria-valuemax")) * 60;
-        if (day.val() == "Pick Day" || !start.val() || !end.val()) {
-            $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
-            alertModal.show(2, "Missing schedule input", "Fill in week day, start time and end time.");
-            return console.log("Missing schedule input.");
-        } else if (start.val() > end.val()) {
-            $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
-            alertModal.show(2, "Invalid time input", "End time is earlier than start time");
-            return console.log("Start time must be earlier than end time");
-        }
-        let startTime = roundMinutes(start.val(), 30);
-        if (startTime < 7 * 60) {
-            $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
-            alertModal.show(2, "Start time is too early", "Class must start on or later than 7AM");
-            return console.log("Class must start on or later than 7AM");
-        }
+    $("#change-schedule").click(async (event) => {
+        const validTime = validateScheduleInput();
+        if (!validTime) return;
         
-        let endTime = roundMinutes(end.val(), 30);
-        if (endTime > 22 * 60) {
-            $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
-            alertModal.show(2, "End time is too late", "Class must end on or before than 10PM");
-            return console.log("Class must end on or before 10PM");
-        } else if (endTime - startTime > reqMinutes) {
-            $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
-            alertModal.show(2, "Invalid time input", "Assigned time exceeds required hours.");
-            return console.log("Assigned time exceeds required hours.");
-        }
-        
-        const faculty = $(".class-faculty[aria-valuenow]:first");
-        if (faculty.text().trim() == "pick professor") {
-            $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
-            return alertModal.show(2, "Missing professor", "Choose faculty to assign.");
-        }
-        
-        const mode = $("#class-mode");
-        const room = $("#class-room");
-        const subject = $("#class-subject");
         try {
-            await addClass({
-                faculty: faculty.attr("aria-valuenow"),
-                subject: subject.attr("aria-valuenow"),
-                mode: mode.attr("aria-valuenow") || 1,
-                room: room.val().toLowerCase(),
+            // console.log({
+            //     faculty: $(".class-faculty[aria-valuenow]").attr("aria-valuenow"),
+            //     subject: $("#class-subject").attr("aria-valuenow"),
+            //     mode: $("#class-mode").attr("aria-valuenow") || 1,
+            //     room: $("#class-room").val().toLowerCase(),
+            //     block: "<%= current.id %>",
+            //     day: $("#class-day").attr("aria-valuenow"),
+            //     start: validTime.startTime,
+            //     end: validTime.endTime
+            // });
+            await manageClass("change", {
+                faculty: $(".class-faculty[aria-valuenow]").attr("aria-valuenow"),
+                subject: $("#class-subject").attr("aria-valuenow"),
+                mode: $("#class-mode").attr("aria-valuenow") || 1,
+                room: $("#class-room").val().toLowerCase(),
                 block: "<%= current.id %>",
-                day: day.attr("aria-valuenow"),
-                start: startTime,
-                end: endTime,
-                partial: parseFloat(hours.attr("aria-valuemin")) > 0 ? 1 : 0
+                day: $("#class-day").attr("aria-valuenow"),
+                start: validTime.startTime,
+                end: validTime.endTime
+            });
+        } catch (eResponse) {
+            console.log(eResponse);
+            if (eResponse) {
+                if (eResponse.redirect) {
+                    location.replace(eResponse.redirect);
+                }
+                if (eResponse.message) {
+                    console.log(eResponse.message);
+                    $("#confirm-alert").attr("data-mdb-target", "#schedule-class").attr("data-mdb-toggle", "modal");
+                    alertModal.show(...Object.values(eResponse.message));
+                }
+            } else {
+                $("#confirm-alert").attr("data-mdb-target", "#schedule-class").attr("data-mdb-toggle", "modal");
+                alertModal.show(0, "Server error", "Unexpected error occured, please try again later.");
+            }
+        }
+    });
+
+    $("#delete-schedule").click(async (event) => {
+        try {
+            await manageClass("delete");
+        } catch (eResponse) {
+            if (eResponse) {
+                if (eResponse.redirect) {
+                    location.replace(eResponse.redirect);
+                }
+                if (eResponse.message) {
+                    $("#confirm-alert").attr("data-mdb-target", "#schedule-class").attr("data-mdb-toggle", "modal");
+                    alertModal.show(...Object.values(eResponse.message));
+                }
+            } else {
+                $("#confirm-alert").attr("data-mdb-target", "#schedule-class").attr("data-mdb-toggle", "modal");
+                alertModal.show(0, "Server error", "Unexpected error occured, please try again later.");
+            }
+        }
+    });
+
+    $("#add-schedule").click(async (event) => {
+        const validTime = validateScheduleInput();
+        if (!validTime) return;
+
+        try {
+            console.log({
+                faculty: $(".class-faculty[aria-valuenow]").attr("aria-valuenow"),
+                subject: $("#class-subject").attr("aria-valuenow"),
+                mode: $("#class-mode").attr("aria-valuenow") || 1,
+                room: $("#class-room").val().toLowerCase(),
+                block: "<%= current.id %>",
+                day: $("#class-day").attr("aria-valuenow"),
+                start: validTime.startTime,
+                end: validTime.endTime,
+                partial: parseFloat($("#class-hours").attr("aria-valuemin")) > 0 ? 1 : 0
+            });
+            await addClass({
+                faculty: $(".class-faculty[aria-valuenow]").attr("aria-valuenow"),
+                subject: $("#class-subject").attr("aria-valuenow"),
+                mode: $("#class-mode").attr("aria-valuenow") || 1,
+                room: $("#class-room").val().toLowerCase(),
+                block: "<%= current.id %>",
+                day: $("#class-day").attr("aria-valuenow"),
+                start: validTime.startTime,
+                end: validTime.endTime,
+                partial: parseFloat($("#class-hours").attr("aria-valuemin")) > 0 ? 1 : 0
             });
             // $(".sched-body").append(
             //     `<div class="sched-block" title="${subject.text()}\n` +
@@ -603,22 +740,63 @@
             //         `Prof. ${faculty.text()}<br>${mode.text()} ` +
             //         `${schedule.room ? "@ " + schedule.room : ""}</small></p>`
             // );
-            location.reload();
+            // location.reload();
             // $(".main-view > div:last-child").scrollTop(0);
             // scrollToFirstSched(schedule.start);
             // alertModal.show(...Object.values(message));
             // $(`.menu-item#${subject.attr("aria-valuenow")}`).remove();
             // resetClassForm();
-        } catch (error) {
-            console.error(error);
-            const {redirect, message} = error;
-            if (redirect) {
-                return location.replace(redirect);
+        } catch (eResponse) {
+            if (eResponse) {
+                if (eResponse.redirect) {
+                    location.replace(eResponse.redirect);
+                }
+                if (eResponse.message) {
+                    $("#confirm-alert").attr("data-mdb-target", "#schedule-class").attr("data-mdb-toggle", "modal");
+                    alertModal.show(...Object.values(eResponse.message));
+                }
+            } else {
+                $("#confirm-alert").attr("data-mdb-target", "#schedule-class").attr("data-mdb-toggle", "modal");
+                alertModal.show(0, "Server error", "Unexpected error occured, please try again later.");
             }
-            $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
-            alertModal.show(...Object.values(message));
         }
     });
+
+    function validateScheduleInput() {
+        const day = $("#class-day");
+        const start = $("#class-start");
+        const end = $("#class-end");
+        const hours = $("#class-hours");
+        const reqMinutes = parseFloat(hours.attr("aria-valuemax")) * 60;
+        if (day.text() == "Pick Day" || !start.val() || !end.val()) {
+            $("#confirm-alert").attr("data-mdb-target", "#schedule-class").attr("data-mdb-toggle", "modal");
+            alertModal.show(2, "Missing schedule input", "Fill in week day, start time and end time.");
+            return false;
+        } else if (start.val() > end.val()) {
+            $("#confirm-alert").attr("data-mdb-target", "#schedule-class").attr("data-mdb-toggle", "modal");
+            alertModal.show(2, "Invalid time input", "End time is earlier than start time");
+            return false;
+        }
+        const startTime = roundMinutes(start.val(), 30);
+        if (startTime < 7 * 60) {
+            $("#confirm-alert").attr("data-mdb-target", "#schedule-class").attr("data-mdb-toggle", "modal");
+            alertModal.show(2, "Start time is too early", "Class must start on or later than 7AM");
+            return false;
+        }
+        
+        const endTime = roundMinutes(end.val(), 30);
+        if (endTime > 22 * 60) {
+            $("#confirm-alert").attr("data-mdb-target", "#schedule-class").attr("data-mdb-toggle", "modal");
+            alertModal.show(2, "End time is too late", "Class must end on or before than 10PM");
+            return false;
+        } else if (endTime - startTime > reqMinutes) {
+            $("#confirm-alert").attr("data-mdb-target", "#schedule-class").attr("data-mdb-toggle", "modal");
+            alertModal.show(2, "Invalid time input", "Assigned time exceeds required hours.");
+            return false;
+        }
+
+        return {startTime: startTime, endTime: endTime};
+    }
 
     function roundMinutes(time, nearestMinutes = 1) {
         let [hours, mins] = time.split(":");
@@ -640,3 +818,4 @@
     displayDropMenu($("#class-mode"), "Pick Mode");
     displayDropMenu($("#class-faculty"), "Pick Professor");
 </script>
+<% } %>
