@@ -631,7 +631,7 @@ router.post("/curriculum/:courseID", async (req, res) => { // adding a subject i
             `INSERT INTO Curricula VALUES ('${req.params.courseID}', '${subjID.id}', ${year}, '${semester}')`
         );
     }
-    // TODO: insert blank schedules into open terms
+
     await DB.executeQuery(
         `INSERT INTO Schedules (term_id, subj_id, block_id) SELECT t.id, '${subjID.id}', b.id ` +
         `FROM Blocks b INNER JOIN Terms t ON b.term_id = t.id INNER JOIN Courses co ON b.course_id = co.id LEFT JOIN ` +
@@ -723,7 +723,7 @@ router.post("/terms", async (req, res) => {
 });
 
 router.route("/schedules/:termID")
-    .get(async (req, res) => {
+    .get(async (req, res) => { // get faculty or block details per term schedule
         // check user credentials
         const user = req.account;
         if (!user && user.type != "chair") {
@@ -777,22 +777,31 @@ router.route("/schedules/:termID")
         );
         prefRooms = prefRooms ? prefRooms.room.split(",") : [];
 
-        // check if classroom exists
+        // check if classroom exists or is available
         let classroom;
+        let { day, start, end } = req.body.schedule;
         if (mode == 1 && (!room || room == "")) {
             [classroom] = await DB.executeQuery(
-                `SELECT r.id, r.name FROM ROOMS r INNER JOIN Buildings b ON r.bldg_id = b.id INNER JOIN ` +
-                    `Terms t ON b.school_id = t.school_id WHERE t.id = '${termID}'` +
-                    (prefRooms.length > 0) ? " AND r.name LIKE '%" +
-                    prefRooms.map(r => r.split(" ").join("%")).join("%' OR r.name LIKE '%") + "%'" : "" + ` LIMIT 1`
+                `SELECT r.id, r.name, SUM(sc.day = ${day} AND ((sc.start <= ${start} AND ${start} < sc.end) OR ` +
+                `(sc.start < ${end} AND ${end} <= sc.end) OR (${start} <= sc.start AND sc.start < ${end}) ` +
+                `OR (${start} < sc.end AND sc.end <= ${end}))) AS totalConflict FROM ROOMS r INNER JOIN Buildings b ON r.bldg_id = b.id INNER JOIN ` +
+                `Terms t ON b.school_id = t.school_id LEFT JOIN Schedules sc ON t.id = sc.term_id AND r.id = sc.room_id ` +
+                `WHERE t.id = '${termID}' ` +
+                ((prefRooms.length > 0) ?
+                    `AND r.name LIKE '%${prefRooms.map(r => r.split(" ").join("%")).join("%' OR r.name LIKE '%")}%'` 
+                    : ""
+                ) + "GROUP BY r.id HAVING totalConflict <= 0 LIMIT 1"
             );
             message = `Auto-assigned schedule into classroom ${classroom.name}`;
         } else if (mode == 1) {
             const regexRoom = room.split(" ");
             [classroom] = await DB.executeQuery(
-                `SELECT r.id, r.name FROM ROOMS r INNER JOIN Buildings b ON r.bldg_id = b.id INNER JOIN ` +
-                `Terms t ON b.school_id = t.school_id WHERE t.id = '${termID}' AND ` +
-                `r.name LIKE '%${regexRoom.join("%")}%' LIMIT 1`
+                `SELECT r.id, r.name, SUM(sc.day = ${day} AND ((sc.start <= ${start} AND ${start} < sc.end) OR ` +
+                `(sc.start < ${end} AND ${end} <= sc.end) OR (${start} <= sc.start AND sc.start < ${end}) ` +
+                `OR (${start} < sc.end AND sc.end <= ${end}))) AS totalConflict FROM ROOMS r INNER JOIN Buildings b ON r.bldg_id = b.id INNER JOIN ` +
+                `Terms t ON b.school_id = t.school_id LEFT JOIN Schedules sc ON t.id = sc.term_id AND r.id = sc.room_id ` +
+                `WHERE t.id = '${termID}' AND r.name LIKE '%${regexRoom.join("%")}%' GROUP BY r.id ` +
+                `HAVING totalConflict <= 0 ORDER BY r.name LIMIT 1`
             );
         }
         console.table(classroom);
@@ -808,7 +817,6 @@ router.route("/schedules/:termID")
         }
 
         const { faculty, block, partial } = req.body.schedule;
-        let { day, start, end } = req.body.schedule;
         const conflicts = await DB.executeQuery(
             `SELECT sc.faculty_id, sc.block_id, sc.room_id, sc.day, sc.start, sc.end FROM Schedules sc ` +
             `LEFT JOIN Rooms r ON sc.room_id = r.id WHERE sc.term_id = '${termID}' AND ` +
@@ -818,55 +826,29 @@ router.route("/schedules/:termID")
             `(sc.start < ${end} AND ${end} <= sc.end) OR (${start} <= sc.start AND sc.start < ${end}) ` +
             `OR (${start} < sc.end AND sc.end <= ${end})) ORDER BY sc.start, sc.day`
         );
+        console.log("Found conflicts:");
+        console.table(conflicts);
 
         let message;
         if (conflicts.length > 0) {
-            return res.status(409).json({
-                message: {
-                    mode: 0,
-                    title: "Conflicting schedule",
-                    body: "Unable to resolve faculty/block/room conflict, try changing time/room input."
-                }
-            });
-            console.log("Class schedule conflicts with existing class/es:");
-            console.table(conflicts);
-            let classHours = end - start;
-            const lastConflict = conflicts.at(-1);
-            if (lastConflict.end + classHours <= 22 * 60) {
-                start = lastConflict.end;
-                end = lastConflict.end + classHours;
+            let message = {
+                mode: 0,
+                title: "Conflicting schedule",
+                body: "To resolve faculty/block/room conflict, try changing time/room input."
+            };
 
-                message = "Resolved faculty/block/room schedule conflict to ";
-                if (start >= 780) {
-                    message += ('00' + Math.trunc((start - 720) / 60)).slice(-2) + ':' +
-                        ('00' + ((start - 720) % 60)).slice(-2);
-                } else {
-                    message += ('00' + Math.trunc(start / 60)).slice(-2) + ':' +
-                        ('00' + (start % 60)).slice(-2);
-                }
-                message += (start >= 720 ? 'PM - ' : 'AM - ');
-
-                if (end >= 780) {
-                    message += ('00' + Math.trunc((end - 720) / 60)).slice(-2) + ':' +
-                        ('00' + ((end - 720) % 60)).slice(-2);
-                } else {
-                    message += ('00' + Math.trunc(end / 60)).slice(-2) + ':' +
-                        ('00' + (end % 60)).slice(-2);
-                }
-                message += (end >= 720 ? 'PM' : 'AM');
-
-                console.log(message);
-                console.log(start, end);
-            } else {
-                console.log(`Unable to resolve schedule conflict.`);
-                return res.status(409).json({
-                    message: {
-                        mode: 0,
-                        title: "Conflicting schedule",
-                        body: "Unable to resolve faculty/block/room conflict, try changing time/room input."
-                    }
-                });
+            if ((!room || room != "") && conflicts.some(({ room_id }) => room_id == room)) {
+                message.title = "Conflicting room schedule";
+                message.title = "To resolve conflict, try changing the classroom.";
+            } else if (conflicts.some(({ block_id }) => block_id == block)) {
+                message.title = "Conflicting block schedule";
+                message.title = "To resolve conflict, try changing the time.";
+            } else if (conflicts.some(({ faculty_id }) => faculty_id == faculty)) {
+                message.title = "Conflicting faculty schedule";
+                message.title = "To resolve conflict, try changing the time.";
             }
+
+            return res.status(409).json({ message: message });
         }
 
         let query;
@@ -885,13 +867,6 @@ router.route("/schedules/:termID")
         };
 
         await DB.executeQuery(query);
-        const finalSched = {
-            start: Math.trunc((start / 60 - 7) * 2 + 1, 0),
-            end: Math.trunc((end / 60 - 7) * 2 + 1, 0),
-            day: day,
-            room: classroom ? classroom.name : null
-        };
-        console.log(finalSched);
         if (message) {
             res.cookie("serverMessage", {
                 mode: 1,
@@ -901,6 +876,173 @@ router.route("/schedules/:termID")
         }
         res.status(200).end();
     });
+
+router.post("/schedule/:termID", async (req, res) => { // changes or removes a class schedule
+    // check user credentials
+    const user = req.account;
+    if (!user && user.type != "chair") {
+        res.cookie("serverMessage", {
+            message: {
+                mode: 0,
+                title: "Unauthorized request",
+                body: "Please login before accessing chair dashboard."
+            }
+        })
+        return res.status(401).json({ redirect: "/logout" });
+    }
+
+    const { action, oldSched } = req.body;
+    const DB = req.app.locals.database;
+    const { termID } = req.params;
+
+    if (action == "change") {
+        const { faculty, block, partial } = req.body.newSched;
+        if (oldSched.faculty != faculty && partial) {
+            return res.status(409).json({
+                message: {
+                    mode: 0,
+                    title: "Cannot share classes",
+                    body: "Professors cannot teach the same block of the same subject."
+                }
+            });
+        }
+
+        console.log("Changing schedule...");
+        const { mode, room, subject } = req.body.newSched;
+        let [prefRooms] = await DB.executeQuery(
+            `SELECT pref_rooms AS room FROM Subjects WHERE id = '${subject}' LIMIT 1`
+        );
+        prefRooms = prefRooms ? prefRooms.room.split(",") : [];
+
+        // check if classroom exists
+        let classroom;
+        if (mode == 1 && (!room || room == "")) {
+            [classroom] = await DB.executeQuery(
+                `SELECT r.id, r.name FROM ROOMS r INNER JOIN Buildings b ON r.bldg_id = b.id INNER JOIN ` +
+                    `Terms t ON b.school_id = t.school_id WHERE t.id = '${termID}' ` +
+                    (prefRooms.length > 0) ? "AND r.name LIKE '%" +
+                    prefRooms.map(r => r.split(" ").join("%")).join("%' OR r.name LIKE '%") + "%'" : "" + "LIMIT 1"
+            );
+            message = `Auto-assigned schedule into classroom ${classroom.name}`;
+        } else if (mode == 1) {
+            const regexRoom = room.split(" ");
+            [classroom] = await DB.executeQuery(
+                `SELECT r.id, r.name FROM ROOMS r INNER JOIN Buildings b ON r.bldg_id = b.id INNER JOIN ` +
+                `Terms t ON b.school_id = t.school_id WHERE t.id = '${termID}' AND ` +
+                `r.name LIKE '%${regexRoom.join("%")}%' LIMIT 1`
+            );
+        }
+        console.table(classroom);
+
+        if (mode == 1 && !classroom) {
+            return res.status(404).json({
+                message: {
+                    mode: 0,
+                    title: "Classroom not found",
+                    body: "The classroom does not exist"
+                }
+            });
+        }
+
+        let { day, start, end } = req.body.newSched;
+        console.log(day, start, end, classroom);
+        let conflicts = await DB.executeQuery(
+            `SELECT sc.faculty_id, sc.subj_id, sc.block_id, sc.room_id, sc.day, sc.start, sc.end ` +
+            `FROM Schedules sc LEFT JOIN Rooms r ON sc.room_id = r.id WHERE sc.term_id = '${termID}' AND ` +
+            `(sc.faculty_id = '${faculty}' OR sc.block_id = '${block}'` +
+            (classroom ? ` OR sc.room_id = '${classroom.id}'` : "") +
+            `) AND sc.day = ${day} AND ((sc.start <= ${start} AND ${start} < sc.end) OR ` +
+            `(sc.start < ${end} AND ${end} <= sc.end) OR (${start} <= sc.start AND sc.start < ${end}) ` +
+            `OR (${start} < sc.end AND sc.end <= ${end})) ORDER BY sc.start, sc.day`
+        );
+        // remove old schedule as conflict candidate
+        conflicts = conflicts.filter(sched => {
+            return !(
+                oldSched.subject == sched.subj_id && oldSched.block == sched.block_id &&
+                oldSched.room_id == sched.room_id && oldSched.day == sched.day &&
+                oldSched.start == sched.start && oldSched.end == sched.end
+            );
+        });
+
+        console.log("Found conflicts:");
+        console.table(conflicts);
+        console.log(oldSched);
+
+        if (conflicts.length > 0) {
+            let message = {
+                mode: 0,
+                title: "Conflicting schedule",
+                body: "To resolve faculty/block/room conflict, try changing time/room input."
+            };
+
+            if ((!room || room != "") && conflicts.some(({ room_id }) => room_id == classroom.id)) {
+                message.title = "Conflicting room schedule";
+                message.body = "To resolve conflict, try changing the classroom.";
+            } else if (conflicts.some(({ block_id }) => block_id == block)) {
+                message.title = "Conflicting block schedule";
+                message.body = "To resolve conflict, try changing the time.";
+            } else if (conflicts.some(({ faculty_id }) => faculty_id == faculty)) {
+                message.title = "Conflicting faculty schedule";
+                message.body = "To resolve conflict, try changing the time.";
+            }
+
+            return res.status(409).json({ message: message });
+        }
+
+        await DB.executeQuery(
+            // if faculty is changed
+            ((!partial && oldSched.faculty != faculty) ? `UPDATE Preferences p INNER JOIN Terms t ON ` +
+                `p.term_id = t.id INNER JOIN Colleges col ON t.school_id = col.school_id INNER JOIN ` +
+                `Subjects s ON col.id = s.college_id SET p.assigned_load = (p.assigned_load - s.units) ` +
+                `WHERE p.term_id = '${termID}' AND s.id = '${subject}' AND p.faculty_id = '${oldSched.faculty}' ` +
+                `LIMIT 1; UPDATE Preferences p INNER JOIN Terms t ON p.term_id = t.id INNER JOIN ` +
+                `Colleges col ON t.school_id = col.school_id INNER JOIN Subjects s ON col.id = s.college_id ` +
+                `SET p.assigned_load = (p.assigned_load + s.units) WHERE p.term_id = '${termID}' AND ` +
+                `s.id = '${subject}' AND p.faculty_id = '${faculty}' LIMIT 1; ` : "") +
+
+            `UPDATE Schedules SET day = ${day}, start = ${start}, end = ${end}, mode = ${mode}, ` +
+            `faculty_id = '${faculty}', room_id = ${classroom ? `'${classroom.id}'` : "NULL"} ` +
+            `WHERE term_id = '${termID}' AND subj_id = '${subject}' AND block_id = '${block}' AND ` +
+            `faculty_id = '${oldSched.faculty}' AND room_id = '${oldSched.room_id}' AND ` +
+            `day = ${oldSched.day} AND start = ${oldSched.start} AND end = ${oldSched.end} LIMIT 1;`
+        );
+
+        return res.status(200).end();
+    } else if (action == "delete") {
+        const { subject, block, faculty, day, start, end } = oldSched;
+        const [{ sameClasses }] = await DB.executeQuery(
+            `SELECT COUNT(*) AS sameClasses FROM Schedules WHERE term_id = '${termID}' AND ` +
+            `subj_id = '${subject}' AND block_id = '${block}'`
+        );
+
+        if (sameClasses > 1) {
+            await DB.executeQuery(
+                `DELETE FROM Schedules WHERE term_id = '${termID}' AND (subj_id = '${subject}' AND ` +
+                `block_id = '${block}') AND faculty_id = '${faculty}' AND day = ${day} AND start = ${start} ` +
+                `AND end = ${end} ${oldSched.room_id ? `AND room_id = '${oldSched.room_id}' ` : ""}LIMIT 1`
+            );
+        } else {
+            await DB.executeQuery(
+                // remove schedule
+                `UPDATE FROM Schedules SET faculty_id = NULL, room_id = NULL, day = NULL, start = NULL, ` +
+                `end = NULL, mode = NULL WHERE term_id = '${termID}' AND (subj_id = '${subject}' AND ` +
+                `block_id = '${block}') AND faculty_id = '${faculty}' AND day = ${day} AND start = ${start} ` +
+                `AND end = ${end} ${oldSched.room_id ? `AND room_id = '${oldSched.room_id}' ` : ""}LIMIT 1; ` +
+
+                // subtract faculty
+                `UPDATE Preferences p INNER JOIN Terms t ON p.term_id = t.id INNER JOIN Colleges col ON ` +
+                `t.school_id = col.school_id INNER JOIN Subjects s ON col.id = s.college_id ` +
+                `SET p.assigned_load = p.assigned_load - s.units WHERE p.faculty_id = '${faculty}' AND ` +
+                `p.term_id = '${termID}' LIMIT 1;`
+            );
+        }
+
+        res.status(200).end();
+    } else {
+        console.log("Invalid action");
+        return res.status(400).end();
+    }
+})
 
 router.post("/blocks/:courseID", async (req, res) => {
     // check user credentials
@@ -918,13 +1060,13 @@ router.post("/blocks/:courseID", async (req, res) => {
 
     const DB = req.app.locals.database;
     const { termID, year, totalStudents } = req.body;
-    // TODO: check if input yeat is consistent with the curriculum
 
     let [newBlock] = await DB.executeQuery(
         `SELECT MAX(b.block_no) + 1 AS number FROM (SELECT block_no FROM Blocks WHERE year = ${year} ` +
         `AND course_id = '${req.params.courseID}' AND term_id = '${termID}' AND block_no IS NOT NULL) AS b `
     );
 
+    // checks if input year is consistent with the curriculum
     if (!newBlock || newBlock.number <= 1) {
         return res.status(409).json({
             message: {
