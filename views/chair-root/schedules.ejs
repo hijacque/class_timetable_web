@@ -35,19 +35,23 @@
         </div>
         <div class="panel-body pb-2 px-3">
             <hr>
-            <ul class="list-group panel-menu">
-                <% for (const term of terms) { %>
-                    <a type="button" class="list-group-item list-group-item-action menu-item"
-                        <% if (term.id != currentTerm.id) { %>
-                            href="/chair/schedules/<%= term.year %><%= term.term %>" 
-                        <% } %>
-                        title="<%= term.year %><%= term.term %>">
-                        <p class="text-truncate m-0">
-                            <%- term.term_ordinal %> Semester, <%= term.year %>-<%= term.year + 1 %>
-                        </p>
-                    </a>
-                <% } %>
-            </ul>
+            <% if (terms.length > 0) { %>
+                <ul class="list-group panel-menu">
+                    <% for (const term of terms) { %>
+                        <a type="button" class="list-group-item list-group-item-action menu-item"
+                            <% if (term.id != currentTerm.id) { %>
+                                href="/chair/schedules/<%= term.year %><%= term.term %>" 
+                            <% } %>
+                            title="<%= term.year %><%= term.term %>">
+                            <p class="text-truncate m-0">
+                                <%- term.term_ordinal %> Semester, <%= term.year %>-<%= term.year + 1 %>
+                            </p>
+                        </a>
+                    <% } %>
+                </ul>
+            <% } else { %>
+                No Academic Terms
+            <% } %>
         </div>
     </div>
     <div class="shadow-3 bg-white px-5 pt-4">

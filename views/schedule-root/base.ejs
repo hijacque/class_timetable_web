@@ -3,7 +3,13 @@
 
 <head>
     <%- include('../base') %>
-        <title>Plot Schedules</title>
+        <title>
+            <% if (schedule.current.sched_status == "open" || !schedule.current.isComplete) { %>
+                Plot Schedule
+            <% } else { %>
+                View Schedule
+            <% } %>
+        </title>
         <link rel="stylesheet" href="/styles/schedule-root.css">
         <script src="/lib/themed-alert.js"></script>
 </head>
@@ -42,7 +48,7 @@
     <% if (category == "faculty") { %>
         <%- include('faculty', {deptClasses:schedule.deptClasses, otherClasses:schedule.otherClasses}) %>
     <% } else { %>
-        <%- include('blocks', {data: schedule}) %>
+        <%- include('blocks', {data: schedule, status: term.status}) %>
     <% } %>
     
     <!-- MDB -->
