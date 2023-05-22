@@ -44,7 +44,7 @@
                     <tr>
                         <th table-cts-column="code text" style="width: 180px;">Code</th>
                         <th table-cts-column="title text">Title</th>
-                        <th table-cts-column="type dropdown [LEC,LAB,NULL,Cancel]" style="width: 90px;">Type</th>
+                        <th table-cts-column="type dropdown[LEC,LAB,NULL,Cancel]" style="width: 90px;">Type</th>
                         <th table-cts-column="units text" style="width: 90px;">Units</th>
                         <th table-cts-column="req_hours text" style="width: 90px;">Required<br>Hours</th>
                         <th table-cts-column="pref_rooms text" style="width: 250px;">Specialized Rooms</th>
@@ -59,7 +59,7 @@
                         <td>
                             <div class="dropdown">
                                 <button class="btn btn-secondary dropdown-toggle add-td-input optional" type="button"
-                                    data-mdb-toggle="dropdown" aria-expanded="false">Type</button>
+                                    data-mdb-toggle="dropdown" aria-expanded="false" title="Type">Type</button>
                                 <ul class="dropdown-menu">
                                     <li><a class="dropdown-item" role="button">LEC</a></li>
                                     <li><a class="dropdown-item" role="button">LAB</a></li>
@@ -74,7 +74,7 @@
                         </td>
                         <td><input type="number" class="form-control add-td-input text-center"></td>
                         <td><input type="number" class="form-control add-td-input reuse text-center"></td>
-                        <td><input type="text" class="form-control add-td-input optional reuse"></td>
+                        <td><input type="text" class="form-control add-td-input optional reuse" placeholder="room 1,room 2,..."></td>
                     </tr>
                 </tfoot>
             </table>

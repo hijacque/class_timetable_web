@@ -118,13 +118,19 @@
                         rTitle.textContent = newSubject.title;
                         rUnits.textContent = newSubject.units;
                     } catch (error) {
-                        if (error && error.redirect) {
-                            return location.replace(error.redirect);
+                        const eResponse = error.responseJSON;
+                        if (eResponse) {
+                            if (eResponse.redirect) {
+                                location.replace(eResponse.redirect);
+                            }
+                            if (eResponse.message) {
+                                alertModal.show(...Object.values(eResponse.message));
+                            }
+                        } else {
+                            alertModal.show(0, "Server error", "Unexpected error occured, please try again later.");
                         }
-                        if (error && error.message) {
-                            alertModal.show(...Object.values(error.message));
-                        }
-                        lastRow.remove();
+
+                        $(`${newSemTable.body}>tr:last-child`).remove();
                         newSemTable.data.pop();
                     }
                 }));

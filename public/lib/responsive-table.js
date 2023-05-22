@@ -129,7 +129,7 @@ class EditableTable extends ResponsiveTable {
         if (footer.length > 0) {
             this.addBtn = $(
                 `<a role="button"><i class="fas fa-plus-circle fa-2x"></i></a>`
-            ).appendTo(".add-row");
+            ).appendTo(`${id}>*>tr.add-data:not(.disabled)>td.add-row`);
             this.addBtn.click(() => {
                 $(this.addBtn).data("newRow", this.addNewRow());
             });
