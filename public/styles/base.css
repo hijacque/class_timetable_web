@@ -277,7 +277,7 @@ a#profile.task {
     /* grid-area: time; */
     /* width: 120px; */
     display: grid;
-    grid-template-rows: repeat(16, 100px);
+    grid-template-rows: repeat(16, 101px);
     text-align: center;
     /* background-color: #0f0d11; */
     color: #8673b4;
@@ -303,7 +303,7 @@ div.schedules>.sched-grid {
     display: grid;
     grid-template-rows: repeat(32, 50px);
     grid-template-columns: repeat(7, minmax(130px, 1fr));
-    row-gap: 0.5px;
+    row-gap: 1px;
     column-gap: 1px;
 }
 
@@ -318,7 +318,7 @@ div.schedules>.sched-body {
     top: 0;
     left: 0;
     display: grid;
-    grid-template-rows: repeat(32, 50px);
+    grid-template-rows: repeat(32, 50.5px);
     grid-template-columns: repeat(7, minmax(130px, 1fr));
     row-gap: 0.5px;
     column-gap: 1px;
