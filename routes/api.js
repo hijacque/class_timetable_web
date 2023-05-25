@@ -634,9 +634,10 @@ router.post("/curriculum/:courseID", async (req, res) => { // adding a subject i
 
     await DB.executeQuery(
         `INSERT INTO Schedules (term_id, subj_id, block_id) SELECT t.id, '${subjID.id}', b.id ` +
-        `FROM Blocks b INNER JOIN Terms t ON b.term_id = t.id INNER JOIN Courses co ON b.course_id = co.id LEFT JOIN ` +
-        `Departments d ON co.dept_id = d.id WHERE d.chair_id = '${user.id}' AND t.term = '${semester}'`
-    );
+        `FROM Blocks b INNER JOIN Terms t ON b.term_id = t.id INNER JOIN Courses co ON ` +
+        `b.course_id = co.id LEFT JOIN Departments d ON co.dept_id = d.id WHERE ` +
+        `d.chair_id = '${user.id}' AND t.term = '${semester}' AND b.year = ${year} ORDER BY b.year, b.block_no`
+    )
 
     res.status(200).json({
         newSubject: subjID,
