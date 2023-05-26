@@ -3,9 +3,10 @@ function exportToExcel(master = document, filename) {
     const tables = master.querySelectorAll("table");
 
     let workbook = XLSX.utils.book_new();
-    for (let i = 0; i < tables.length; i++) {
-        let newSheet = XLSX.utils.table_to_sheet(tables[i]);
-        XLSX.utils.book_append_sheet(workbook, newSheet, tables[i].id || `Sheet ${i + 1}`);
+    let i = 0;
+    for (const table of tables) {
+        let newSheet = XLSX.utils.table_to_sheet(table);
+        XLSX.utils.book_append_sheet(workbook, newSheet, tables[i].id || `Sheet ${i++}`);
     }
 
     /* Convert Excel to binary */
@@ -15,7 +16,7 @@ function exportToExcel(master = document, filename) {
     var xlsxBlob = new Blob([s2ab(binaryWorkbook)], { type: "application/octet-stream" });
 
     /* Save the Excel file */
-    saveAs(xlsxBlob, filename + ".xlsx" || "myFile.xlsx");
+    saveAs(xlsxBlob, (filename.slice(-5) == ".xlsx" ? filename : filename + ".xlsx") || "myFile.xlsx");
 }
 
 /* Utility function to convert a string to an ArrayBuffer */

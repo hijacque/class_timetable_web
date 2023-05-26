@@ -179,12 +179,12 @@
                 <div class="sched-grid">
                     <% let occupied = 0 %>
                     <% for (const {day, start, end} of current.pref_scheds) { %>
-                        <% for (let i = start; i <= end; i++) { %>
-                            <div class="bg-white" style="grid-column: <%= day %> / span 1; grid-row: <%= i %> / span 1;"></div>
+                        <% for (let i = start; i < end; i++) { %>
+                            <div class="bg-white" style="grid-column: <%= day %> / span 1; grid-row: <%= i %>;"></div>
                         <% } %>
                         <% occupied += end - start %>
                     <% } %>
-                    <% for (let i = 0; i < 221 - occupied; i++) { %>
+                    <% for (let i = 0; i < 224 - occupied; i++) { %>
                         <div></div>
                     <% } %>
                 </div>

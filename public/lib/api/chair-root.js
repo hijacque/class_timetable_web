@@ -1,6 +1,6 @@
 const addTerm = (year, semester) => new Promise((resolve, reject) => $.post(
     "/api/terms", { year: year, term: semester },
-    (data, status) => {
+    (data) => {
         resolve(data.termID);
     }).fail((data) => location.reload())
 );
@@ -15,7 +15,7 @@ const addBlock = (courseID, year, totalStudents, termID) => new Promise((resolve
 const getSchedules = (termID, category) => new Promise(
     (resolve, reject) => $.get(
         "/api/schedules/" + termID, {category: category}, 
-        (data, status) => resolve(data.schedules)
+        (data) => resolve(data.schedules)
     ).fail((error) => reject(error))
 );
 
@@ -32,7 +32,7 @@ const getCurriculum = (courseID) => new Promise((resolve, reject) => {
 
 const addSemester = (courseID, semData) => $.post(
     "/api/curricula/" + courseID, semData,
-    (data, status) => console.log(data)
+    (data) => console.log(data)
 ).fail((data) => console.log(data));
 
 const addCourseSubject = (courseID, subjData) => new Promise((resolve, reject) => {
