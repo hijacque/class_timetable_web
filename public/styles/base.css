@@ -107,6 +107,10 @@ div {
     /* Firefox */
 }
 
+.input-group-text {
+    height: 100%;
+}
+
 .img-body {
     position: relative;
     background-color: #0f0d11;
@@ -274,12 +278,9 @@ a#profile.task {
 }
 
 .scheduler>div.times {
-    /* grid-area: time; */
-    /* width: 120px; */
     display: grid;
     grid-template-rows: repeat(16, 101px);
     text-align: center;
-    /* background-color: #0f0d11; */
     color: #8673b4;
     row-gap: 1px;
     padding: 1px 0;
@@ -294,7 +295,7 @@ a#profile.task {
 
 div.days>*,
 div.times>* {
-    background-color: whitesmoke;
+    background-color: white;
 }
 
 div.schedules>.sched-grid {
@@ -308,7 +309,7 @@ div.schedules>.sched-grid {
 }
 
 .sched-grid>* {
-    background-color: white;
+    background-color: #FFFFFFCC;
 }
 
 div.schedules>.sched-body {
