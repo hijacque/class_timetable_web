@@ -4,7 +4,7 @@
 <head>
     <%- include('base') %>
     <title>OTP Verification</title>
-    <script src="/lib/themed-alert.js"></script>
+    <script src="/lib/themed-alert.min.js"></script>
 </head>
 
 <body>
@@ -32,7 +32,7 @@
             $.post("/help/<%- subHelp %>", { pin: $("#pin").val() }, (data) => {
                 console.log(data);
                 if (data.redirect) {
-                    window.location.href = "http://localhost:3000/" + data.redirect;
+                    window.location.href = data.redirect;
                 }
 
                 $("#alert-title").text(data.title);
@@ -52,6 +52,7 @@
                     $("#alert-title").addClass("text-warning");
                     alertModal.show();
                 }
+                $("#pin").val(null);
             });
         });
         
