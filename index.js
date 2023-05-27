@@ -3,7 +3,6 @@ const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const { AppDatabase } = require("./lib/app-database");
 const { AppMailer } = require("./lib/app-mailer");
-const ngrok = require("ngrok");
 require("dotenv").config();
 const config = process.env;
 
@@ -11,6 +10,7 @@ const app = express();
 app.set("view engine", "ejs");
 app.use(express.static("public"));
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 app.use(cookieParser(process.env.COOKIE_KEY));
 
 // routes
@@ -19,25 +19,29 @@ app.use("/help", require("./routes/help"));
 app.use("/api", require("./routes/api"));
 app.use("/schedule", require("./routes/schedule"));
 
+// debug route
 app.get("/test", (req, res) => {
-    res.status(200).json(req.signedCookies);
+    // res.status(200).json(req.signedCookies);
 });
 
+// 404 page
 app.get("*", (req, res) => res.status(404).send("You don't have to go back, but you can't stay here"));
 
 // initialize server
 const port = config.API_PORT || 3000;
-// app.listen()
 app.listen(port, () => {
     console.log("Server listening on port " + port);
 });
 
-// ngrok.connect({ proto: "http", addr: port }, (err, url) => {
-//     config.API_DOMAIN = url;
-//     if (err) {
-//         console.error('Error while connecting Ngrok',err);
-//         return new Error('Ngrok Failed');
-//     }
+// Test deployment
+// const lt = require("localtunnel");
+// lt({ port: 3000, subdomain: "class-scheduler" }).then((tunnel) => {
+//     console.log("The site is hosted on: " + tunnel.url);
+//     config.API_DOMAIN = tunnel.url;
+
+//     tunnel.on('close', () => {
+//         console.log("Tunnel is closing...");
+//     });
 // });
 
 // local app variables
