@@ -1,0 +1,1 @@
+html, body {overflow: hidden;}div.card {height: 100%;width: 50%;margin: 0 auto;overflow: scroll;}.dropdown-toggle:after {display: none;}@media (max-width: 920px) {div.card {width: 80%;}}@media (max-width: 430px) {div.card {width: 100%;}}
