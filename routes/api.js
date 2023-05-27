@@ -1,8 +1,7 @@
 const router = require("express").Router();
-const crypto = require("node:crypto");
+const crypto = require("crypto");
 const { verifySession } = require("./../lib/verification");
 const { createFaculty } = require("./../lib/account");
-const { log } = require("node:console");
 
 // for CRUD purposes, sub-directly controlled from client side
 router.use(verifySession);
