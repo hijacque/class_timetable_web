@@ -5,7 +5,7 @@
     <%- include('../base') %>
     <title>Chairperson Dashboard</title>
     <link rel="stylesheet" href="/styles/chair-root.css">
-    <script src="/lib/api/chair-root.min.js"></script>
+    <script src="/lib/api/chair-root.js"></script>
 </head>
 
 <body class="dashboard">
@@ -58,7 +58,7 @@
 
     <!-- MDB -->
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.0.0/mdb.min.js"></script>
-    <script src="/lib/themed-alert.min.js"></script>
+    <script src="/lib/themed-alert.js"></script>
     <script>
         const alertModal = new ThemedAlert(new mdb.Modal($("#alert-modal")), "alert-modal");
         <% if (serverAlert && Object.keys(serverAlert).length == 3) { %>
