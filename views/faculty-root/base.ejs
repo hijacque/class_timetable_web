@@ -28,6 +28,8 @@
             <i class="fas fa-calendar-day fa-2x mt-1"></i><br>Schedule</a>
         <a role="button" class="task btn btn-light" id="preference">
             <i class="fas fa-clipboard-check fa-2x mt-1"></i><br>Preference</a>
+        <a role="button" class="task btn btn-light" id="consultation">
+            <i class="fas fa-clock fa-2x mt-1"></i><br><small>Consultation Hours</small></a>
         <a role="button" class="task btn btn-light" id="profile">
             <i class="far fa-user-circle fa-2x mt-1"></i><br>Profile</a>
         <a role="button" class="task btn btn-light" id="logout">
@@ -38,6 +40,8 @@
         <%- include('schedule', {data: taskData}) %>
     <% } else if (section == "preference") { %>
         <%- include('preference', {data: taskData}) %> 
+    <% } else if (section == "consultation") { %>
+        <%- include('consultation', {data: taskData}) %> 
     <% } else { %>
         <%- include('profile') %> 
     <% } %>

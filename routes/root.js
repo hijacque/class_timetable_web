@@ -75,7 +75,7 @@ router.get("/admin/:task?/:current?", verifySession, getAdminData, (req, res) =>
 router.get("/chair/:task?/:current?", verifySession, getChairData, getFacultyData, (req, res) => {
     if (req.cookies.serverMessage) res.clearCookie("serverMessage");
     if (req.taskData) {
-        const tasks = ["schedules", "faculty", "courses", "schedule", "preference"];
+        const tasks = ["schedules", "faculty", "courses", "schedule", "preference", "consultation"];
         res.render("chair-root/base", {
             section: (tasks.includes(req.params.task)) ? req.params.task : "profile" || "profile",
             taskData: req.taskData,
@@ -89,8 +89,9 @@ router.get("/chair/:task?/:current?", verifySession, getChairData, getFacultyDat
 router.get("/faculty/:task?",verifySession, getFacultyData, (req, res) => {
     if (req.cookies.serverMessage) res.clearCookie("serverMessage");
     if (req.taskData) {
+        const tasks = ["schedule", "preference", "consultation"];
         res.render("faculty-root/base", {
-            section: req.params.task || "profile",
+            section: (tasks.includes(req.params.task)) ? req.params.task : "profile" || "profile",
             taskData: req.taskData,
             serverAlert: req.cookies.serverMessage
         });

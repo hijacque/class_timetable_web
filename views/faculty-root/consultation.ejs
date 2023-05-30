@@ -1,0 +1,99 @@
+<div class="bg-light task-view" id="consultation-view">
+    <h3 class="text-center my-4">Your Consultation Hours</h3>
+    <hr>
+    <div class="d-flex justify-content-center overflow-hidden align-items-start">
+        <table class="table table-bordered table-sm fw-bold mt-2 text-center w-50" id="consultation-hours">
+            <thead clas='text-center'>
+                <tr>
+                    <th table-cts-column="day">Day</th>
+                    <th table-cts-column="start time optional" style="width: 30%;">Time-in</th>
+                    <th table-cts-column="end time optional" style="width: 30%;">Time-out</th>
+                    <th table-cts-column="edit">Action</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<script src="/lib/responsive-table.js"></script>
+<script>
+    let totalHours;
+    const consultationTable = new EditableTable("#consultation-hours");
+    consultationTable.initData(<%- JSON.stringify(data.consultation) %>, false, () => {
+        $(`${consultationTable.body}>tr`).on("row:confirm-change", async (event) => {
+            const action = $(event.currentTarget).data("edit-action");
+            if (!action) {
+                return;
+            }
+            
+            const day = $(event.currentTarget).index() + 1;
+            let {start, end, unassigned} = consultationTable.data[day - 1];
+            if (!start && end || start && !end) {
+                return $(event.currentTarget).trigger("row:edit");
+            }
+            start = roundMinutes(start, 30);
+            end = roundMinutes(end, 30);
+
+            if (start > end) {
+                alertModal.show(2, "Invalid time input", "End time is earlier than start time");
+                return $(event.currentTarget).trigger("row:edit");
+            } if (start < 7 * 60) {
+                return alertModal.show(2, "Start time is too early", "Class must start on or later than 7AM");
+            } else if (end > 22 * 60) {
+                return alertModal.show(2, "End time is too late", "Class must end on or before than 10PM");
+            }
+
+            const totalHours = consultationTable.data.reduce(
+                (hours, sched) => hours += (sched.start && sched.end) ? roundMinutes(sched.end) - roundMinutes(sched.start) : 0
+            , 0);
+
+            if (end - start > 120) {
+                // consultation hours must last for only 2 hours a day
+                return alertModal.show(
+                    2, "Excessive consultation hours", 
+                    "Consultations must last for a maximum of 2 hours a day."
+                );
+            } else if (totalHours > 600) {
+                // total consultation hours must not exceed 10 hours a week
+                return alertModal.show(
+                    2, "Excessive consultation hours", 
+                    "Total consultation hours must not exceed 10 hours a week."
+                );
+            }
+
+            await submitConsultHours({
+                day: day, 
+                start: roundMinutes(start), 
+                end: roundMinutes(end),
+                update: !consultationTable.data[day-1].unassigned
+            });
+        });
+    });
+
+    const submitConsultHours = (schedule) => new Promise((resolve, reject) => $.post(
+        "http://localhost:3000/api/consultation/", schedule, (data) => resolve(data)
+    ).fail((error) => reject(error.responseJSON)));
+
+    function validateScheduleInput(day, start, end) {
+        const hours = $("#class-hours");
+        const reqMinutes = parseFloat(hours.attr("aria-valuemax")) * 60;
+        if (day.text() == "Pick Day" || !start.val() || !end.val()) {
+            $("#confirm-alert").attr("data-mdb-target", "#schedule-class").attr("data-mdb-toggle", "modal");
+            alertModal.show(2, "Missing schedule input", "Fill in week day, start time and end time.");
+            return false;
+        } else 
+
+        return {startTime: startTime, endTime: endTime};
+    }
+
+    function roundMinutes(time, nearestMinutes = 1) {
+        let [hours, mins] = time.split(":");
+        let toMins = parseInt(hours) * 60 + parseInt(mins);
+        const rounded = Math.round(toMins / nearestMinutes) * nearestMinutes;
+        const finalMins = rounded % 60;
+        const finalHours = (rounded - finalMins);
+        return finalHours + finalMins;
+    }
+
+</script>
