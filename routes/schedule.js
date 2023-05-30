@@ -10,20 +10,7 @@ const { verifySession } = require("./../lib/verification");
 router.use(verifySession);
 
 router.post("/generate", generateSchedule, (req, res) => {
-    res.status(200).redirect('/schedule/success/' + req.body.term);
-});
-
-router.get('/success/:term', (req, res) => {
-    res.send(
-        `Successfully generated schedule. Go back to <a href="/chair/schedules?term=${req.params.term}">Schedules Tab</a>`
-    );
-});
-
-router.get('/failed/:term', (req, res) => {
-    res.send(
-        `Oh no! Something went wrong on our end, please retry later.<br>` +
-        `Go back to <a href="/chair/schedules?term=${req.params.term}">Schedules Tab</a>`
-    );
+    res.status(200).redirect('/chair/schedules/' + req.body.term);
 });
 
 router.get("/faculty", getFacultySched, (req, res) => {
