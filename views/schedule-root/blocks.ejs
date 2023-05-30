@@ -399,9 +399,9 @@
                         <div data-mdb-toggle="tooltip" data-mdb-html="true"
                             class="sched-block<%= (schedule.departmental) ? ' dept-subj' : '' %><%= (schedule.partial) ? ' partial' : '' %>"
                             <% if (schedule.room) { %>
-                            title="<b><%= schedule.subject %></b><br><small>Prof. <%= schedule.faculty_name %><br><i><%= schedule.mode %> @ <%= schedule.room %></i></small>"
+                            title="<b><%= schedule.subject %></b><br><small><%= schedule.faculty %><br><i><%= schedule.mode %> @ <%= schedule.room %></i></small>"
                             <% } else { %>
-                            title="<b><%= schedule.subject %></b><br><small>Prof. <%= schedule.faculty_name %><br><i><%= schedule.mode %></i></small>"
+                            title="<b><%= schedule.subject %></b><br><small><%= schedule.faculty %><br><i><%= schedule.mode %></i></small>"
                             <% } %>
                             style="grid-column: <%= schedule.day %> / span 1; grid-row: <%= schedule.start_time %> / <%= schedule.end_time %>;"
                             aria-valuemin="<%= schedule.start %>" aria-valuemax="<%= schedule.end %>" 
@@ -410,8 +410,8 @@
                                 <%= schedule.subject %>
                             </h6>
                             <p class="text-truncate"><small>
-                                Prof. <span class="faculty" itemid="<%= schedule.faculty_id %>">
-                                    <%= schedule.faculty_name %>
+                                <span class="faculty" itemid="<%= schedule.faculty_id %>">
+                                    <%= schedule.faculty %>
                                 </span><br>
                                 <% if (schedule.room) { %>
                                     <i>
@@ -475,10 +475,10 @@
             <% if (otherClasses.length> 0) { %>
                 <div class="collapse show" id="other-classes">
                     <div>
-                        <ul class="list-group">
+                        <ul class="list-group panel-menu">
                             <% for (const {subj_id, subject, req_hours, assigned_time, faculty_id, faculty_name} of otherClasses) { %>
                                 <button type="button" title="<%= subject %>" id="<%= subj_id %>"
-                                    class="list-group-item list-group-item-action"
+                                    class="list-group-item list-group-item-action menu-item"
                                     <% if (faculty_id) { %>
                                         itemid="<%= faculty_id %>"
                                     <% } %>
@@ -488,6 +488,8 @@
                                         <%= subject %><br>
                                         <% if (faculty_id) { %>
                                             <small class="text-muted faculty-name">Professor: <%= faculty_name %></small>
+                                        <% } else if (assigned_time > 0) { %>
+                                            <small class="text-muted">Assigned hours: <%= assigned_time %> / <%= req_hours %></small>
                                         <% } %>
                                     </p>
                                 </button>
@@ -505,7 +507,7 @@
 </div>
 
 <% if (status == 'open') { %>
-<script src="/lib/display-dropdown.min.js"></script>
+<script src="/lib/display-dropdown.js"></script>
 <script>
     let currentSched = {block: "<%= current.id %>"}
     const addClass = (schedule) => new Promise((resolve, reject) => {
@@ -536,12 +538,15 @@
             .attr("aria-valuemin", assignedHours);
         
         const facultyID = newClass.getAttribute("itemid");
-        if (facultyID && facultyID != "") {
+        if ($(newClass).closest("div.collapse").attr("id") == "other-classes") {
+            $("span.class-faculty").html("<i>To be coordinated...</i>").attr("aria-valuenow", "pass").show();
+            $("a.dropdown-toggle.class-faculty").attr("aria-valuenow", null).hide();
+        } else if (facultyID && facultyID != "") {
             const facultyName = $(newClass).find(".faculty-name").text().slice(11);
-            $("span.class-faculty").text(facultyName).attr("aria-valuenow", facultyID);
-            $("a.dropdown-toggle.class-faculty").hide();
+            $("span.class-faculty").text(facultyName).attr("aria-valuenow", facultyID).show();
+            $("a.dropdown-toggle.class-faculty").attr("aria-valuenow", null).hide();
         } else {
-            $("span.class-faculty").empty();
+            $("span.class-faculty").attr("aria-valuenow", null).empty().show();
             $("a.dropdown-toggle.class-faculty").show();
         }
         
@@ -646,16 +651,6 @@
         if (!validTime) return;
         
         try {
-            // console.log({
-            //     faculty: $(".class-faculty[aria-valuenow]").attr("aria-valuenow"),
-            //     subject: $("#class-subject").attr("aria-valuenow"),
-            //     mode: $("#class-mode").attr("aria-valuenow") || 1,
-            //     room: $("#class-room").val().toLowerCase(),
-            //     block: "<%= current.id %>",
-            //     day: $("#class-day").attr("aria-valuenow"),
-            //     start: validTime.startTime,
-            //     end: validTime.endTime
-            // });
             await manageClass("change", {
                 faculty: $(".class-faculty[aria-valuenow]").attr("aria-valuenow"),
                 subject: $("#class-subject").attr("aria-valuenow"),
@@ -730,22 +725,6 @@
                 end: validTime.endTime,
                 partial: parseFloat($("#class-hours").attr("aria-valuemin")) > 0 ? 1 : 0
             });
-            // $(".sched-body").append(
-            //     `<div class="sched-block" title="${subject.text()}\n` +
-            //         `Prof. ${faculty.text()}\n${mode.text()} ${schedule.room ? "@ " + schedule.room : ""}"` +
-            //         `style="grid-column: ${schedule.day} / span 1; ` +
-            //         `grid-row: ${schedule.start} / ${schedule.end};">` +
-            //     `<h6 class="text-break">${subject.text()}</h6>` +
-            //     `<p class="text-truncate"><small>` +
-            //         `Prof. ${faculty.text()}<br>${mode.text()} ` +
-            //         `${schedule.room ? "@ " + schedule.room : ""}</small></p>`
-            // );
-            // location.reload();
-            // $(".main-view > div:last-child").scrollTop(0);
-            // scrollToFirstSched(schedule.start);
-            // alertModal.show(...Object.values(message));
-            // $(`.menu-item#${subject.attr("aria-valuenow")}`).remove();
-            // resetClassForm();
         } catch (eResponse) {
             if (eResponse) {
                 if (eResponse.redirect) {

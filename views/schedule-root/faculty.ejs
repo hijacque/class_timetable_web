@@ -192,7 +192,7 @@
                     <% for (const schedule of current.classes) { %>
                         <div class="sched-block" data-mdb-toggle="tooltip" data-mdb-html="true"
                             <% if (schedule.room) { %>
-                            title="<b><%= schedule.subject %></b><br><small><%= schedule.year %>-<%= schedule.block_no %> <%= schedule.course %><br><i><%= schedule.mode %> @ <%= schedule.room %></i></small>"
+                            title="<b><%= schedule.subject %></b><br><small><%= schedule.year %>-<%= schedule.block_no %> <%= schedule.course %><br><i><%= schedule.mode %> @ <%= schedule.room %>,<br><%= schedule.building %></i></small>"
                             <% } else { %>
                             title="<b><%= schedule.subject %></b><br><small><%= schedule.year %>-<%= schedule.block_no %> <%= schedule.course %><br><i><%= schedule.mode %></i></small>"
                             <% } %>
@@ -209,7 +209,8 @@
                                 <% if (schedule.room) { %>
                                     <i>
                                         <span class="mode"><%= schedule.mode %></span> @ 
-                                        <span class="room" itemid="<%= schedule.room_id %>"><%= schedule.room %></span>
+                                        <span class="room" itemid="<%= schedule.room_id %>"><%= schedule.room %></span>,
+                                        <br><%= schedule.building %>
                                     </i>
                                 <% } else { %>
                                     <i class="mode"><%= schedule.mode %></i>
@@ -319,7 +320,7 @@
         <% } %>
 </div>
 
-<script src="/lib/display-dropdown.min.js"></script>
+<script src="/lib/display-dropdown.js"></script>
 <script>
     let currentSched = { faculty: "<%= id %>" };
     displayDropMenu($("#class-day"), "Pick Day");
