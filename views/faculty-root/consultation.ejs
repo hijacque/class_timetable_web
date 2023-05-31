@@ -22,7 +22,7 @@
     const consultationTable = new EditableTable("#consultation-hours");
     consultationTable.initData(<%- JSON.stringify(data.consultation) %>, false, () => {
         $(`${consultationTable.body}>tr`).on("row:confirm-change", async (event) => {
-            const action = $(event.currentTarget).data("edit-action");
+            const action = $(event.currentTarget).data("action");
             if (!action) {
                 return;
             }
@@ -30,44 +30,67 @@
             const day = $(event.currentTarget).index() + 1;
             let {start, end, unassigned} = consultationTable.data[day - 1];
             if (!start && end || start && !end) {
+                alertModal.show(
+                    2, "Incomplete time input", 
+                    "Both start and end time must be filled to save consultation hours"
+                );
+                return $(event.currentTarget).trigger("row:edit");
+            } else if (start && end) {
+                start = roundMinutes(start, 30);
+                end = roundMinutes(end, 30);
+
+                if (start > end) {
+                    alertModal.show(2, "Invalid time input", "End time is earlier than start time");
+                    return $(event.currentTarget).trigger("row:edit");
+                } if (start < 7 * 60) {
+                    alertModal.show(2, "Start time is too early", "Class must start on or later than 7AM");
+                    return $(event.currentTarget).trigger("row:edit");
+                } else if (end > 22 * 60) {
+                    alertModal.show(2, "End time is too late", "Class must end on or before than 10PM");
+                    return $(event.currentTarget).trigger("row:edit");
+                }
+
+                const totalHours = consultationTable.data.reduce(
+                    (hours, sched) => hours += (sched.start && sched.end) ? roundMinutes(sched.end) - roundMinutes(sched.start) : 0
+                , 0);
+
+                if (end - start > 120) {
+                    // consultation hours must last for only 2 hours a day
+                    alertModal.show(
+                        2, "Excessive consultation hours", 
+                        "Consultations must last for a maximum of 2 hours a day."
+                    );
+                    return $(event.currentTarget).trigger("row:edit");
+                } else if (totalHours > 600) {
+                    // total consultation hours must not exceed 10 hours a week
+                    alertModal.show(
+                        2, "Excessive consultation hours", 
+                        "Total consultation hours must not exceed 10 hours a week."
+                    );
+                    return $(event.currentTarget).trigger("row:edit");
+                }
+            }
+            
+            try {
+                await submitConsultHours({ 
+                    day: day, start: start, end: end, 
+                    update: consultationTable.data[day-1].unassigned ? 0 : 1
+                });
+            } catch (error) {
+                console.log(error);
+                if (error) {
+                    if (error.redirect) {
+                        location.replace(error.redirect);
+                    }
+                    if (error.message) {
+                        alertModal.show(...Object.values(error.message));
+                    }
+                } else {
+                    alertModal.show(0, "Server error", "Unexpected error occured, please try again later.");
+                }
                 return $(event.currentTarget).trigger("row:edit");
             }
-            start = roundMinutes(start, 30);
-            end = roundMinutes(end, 30);
-
-            if (start > end) {
-                alertModal.show(2, "Invalid time input", "End time is earlier than start time");
-                return $(event.currentTarget).trigger("row:edit");
-            } if (start < 7 * 60) {
-                return alertModal.show(2, "Start time is too early", "Class must start on or later than 7AM");
-            } else if (end > 22 * 60) {
-                return alertModal.show(2, "End time is too late", "Class must end on or before than 10PM");
-            }
-
-            const totalHours = consultationTable.data.reduce(
-                (hours, sched) => hours += (sched.start && sched.end) ? roundMinutes(sched.end) - roundMinutes(sched.start) : 0
-            , 0);
-
-            if (end - start > 120) {
-                // consultation hours must last for only 2 hours a day
-                return alertModal.show(
-                    2, "Excessive consultation hours", 
-                    "Consultations must last for a maximum of 2 hours a day."
-                );
-            } else if (totalHours > 600) {
-                // total consultation hours must not exceed 10 hours a week
-                return alertModal.show(
-                    2, "Excessive consultation hours", 
-                    "Total consultation hours must not exceed 10 hours a week."
-                );
-            }
-
-            await submitConsultHours({
-                day: day, 
-                start: roundMinutes(start), 
-                end: roundMinutes(end),
-                update: !consultationTable.data[day-1].unassigned
-            });
+            consultationTable.data[day-1].unassigned = false;
         });
     });
 
@@ -88,6 +111,10 @@
     }
 
     function roundMinutes(time, nearestMinutes = 1) {
+        console.log(time);
+        if (!time) {
+            return 0;
+        }
         let [hours, mins] = time.split(":");
         let toMins = parseInt(hours) * 60 + parseInt(mins);
         const rounded = Math.round(toMins / nearestMinutes) * nearestMinutes;
