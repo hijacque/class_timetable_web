@@ -1,8 +1,8 @@
--- MySQL dump 10.13  Distrib 8.0.31, for macos12.6 (arm64)
+-- MySQL dump 10.13  Distrib 8.0.33, for macos13.3 (arm64)
 --
 -- Host: localhost    Database: class_sched_sys
 -- ------------------------------------------------------
--- Server version	8.0.31
+-- Server version	8.0.33
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -69,6 +69,23 @@ CREATE TABLE `Colleges` (
   PRIMARY KEY (`id`),
   KEY `school_id` (`school_id`),
   CONSTRAINT `colleges_ibfk_1` FOREIGN KEY (`school_id`) REFERENCES `Schools` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `ConsultationHours`
+--
+
+DROP TABLE IF EXISTS `ConsultationHours`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `ConsultationHours` (
+  `faculty_id` varchar(12) DEFAULT NULL,
+  `day` int DEFAULT NULL,
+  `start` int DEFAULT NULL,
+  `end` int DEFAULT NULL,
+  KEY `faculty_id` (`faculty_id`),
+  CONSTRAINT `consultationhours_ibfk_1` FOREIGN KEY (`faculty_id`) REFERENCES `Faculty` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -357,4 +374,4 @@ CREATE TABLE `Users` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2023-05-18 18:36:36
+-- Dump completed on 2023-05-31 20:10:23
