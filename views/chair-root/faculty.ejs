@@ -2,26 +2,31 @@
     <div class="px-5 pt-4">
         <h2 style="color: #8673b4;" id="table-title">Faculty in <%= data.department.name %> Department</h2>
         <br>
-        <button class="btn btn-primary btn-rounded" data-cts-toggle="table" data-cts-target="#faculty-table">
-            <i class="fas fa-edit fa-lg me-2"></i>edit table</button>
-        <button class="btn btn-success btn-rounded" data-cts-dismiss="table" data-cts-target="#faculty-table"
-            aria-hidden="true">save changes</button>
-        <table class="table table-bordered table-sm fw-bold my-4" id="faculty-table">
+        <div>
+            <a class="btn btn-primary btn-rounded btn-top" data-cts-toggle="table" data-cts-target="#faculty-table"
+                href="#add-faculty"><i class="fas fa-edit fa-lg me-2"></i>edit table</a>
+            <button class="btn btn-success btn-rounded btn-top" data-cts-dismiss="table" data-cts-target="#faculty-table"
+                aria-hidden="true"><i class="fas fa-check-double fa-lg me-2"></i>save table</button>
+        </div>
+        <table class="table table-bordered table-sm fw-bold mb-4" id="faculty-table">
             <thead class="text-center">
                 <tr>
-                    <th table-cts-column="faculty_id text" style="width: 140px;">ID</th>
-                    <th table-cts-column="status text" style="width: 140px;">Employment Status</th>
+                    <th table-cts-column="faculty_id text">ID</th>
+                    <th table-cts-column="status dropdown [part-time,full-time]" title="Status" style="width: 140px;">
+                        Employment Status
+                    </th>
                     <th table-cts-column="teach_load number" style="width: 90px;">Teach<br>Load</th>
                     <th table-cts-column="last_name text">Surname</th>
                     <th table-cts-column="first_name text">First Name</th>
                     <th table-cts-column="middle_name text">Middle Name</th>
-                    <th table-cts-column="email text" style="width: 280px;">E-mail</th>
-                    <td table-cts-column="edit">Action</td>
+                    <th table-cts-column="email email">E-mail</th>
+                    <th table-cts-column="consultation optional">Consultation Hours</th>
+                    <td table-cts-column="edit delete">Action</td>
                 </tr>
             </thead>
             <tbody></tbody>
             <tfoot>
-                <tr class="add-data">
+                <tr class="add-data" id="add-faculty">
                     <td><input type="text" class="form-control add-td-input unique"></td>
                     <td>
                         <div class="dropdown">
@@ -37,7 +42,9 @@
                     <td><input type="text" class="form-control add-td-input" placeholder="Dela Cruz"></td>
                     <td><input type="text" class="form-control add-td-input" placeholder="Juan"></td>
                     <td><input type="text" class="form-control add-td-input" placeholder="Antonio"></td>
-                    <td><input type="email" class="form-control add-td-input unique" placeholder="jadelacruz@school.edu.ph"></td>
+                    <td><input type="email" class="form-control add-td-input unique"
+                            placeholder="jadelacruz@school.edu.ph"></td>
+                    <td><span class="add-td-input optional"></span></td>
                 </tr>
             </tfoot>
         </table>

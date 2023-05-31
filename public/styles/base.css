@@ -146,14 +146,13 @@ div {
     background-color: #8673b4;
 }
 
-[table-cts-column='edit'] {
+[table-cts-column='edit'], [table-cts-column='delete'], [table-cts-column='edit delete'] {
     vertical-align: middle;
     font-weight: bold;
-    width: 85px;
+    width: 100px;
 }
 
 td.edit-action {
-    /* width: 90px; */
     padding-left: 16px;
     padding-right: 16px;
     vertical-align: middle;
@@ -162,7 +161,7 @@ td.edit-action {
 td.edit-action>div {
     width: 100%;
     display: flex;
-    justify-content: space-between;
+    justify-content: space-around;
 }
 
 .add-td-input:not(.dropdown-toggle),
@@ -172,7 +171,7 @@ td.edit-action>div {
 
 .dashboard {
     display: grid;
-    grid-template-columns: 90px auto;
+    grid-template-columns: 95px auto;
     grid-template-rows: auto;
     height: 100%;
     overflow-x: hidden;

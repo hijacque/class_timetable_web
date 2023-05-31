@@ -59,8 +59,7 @@
             <% const {year, term, term_ordinal} = currentTerm %>
             <% if (!currentTerm.isPosted) { %>
                 <% if (!currentTerm.isSaved) { %>
-                    <form method="post" target="auto_schedule" action="/schedule/generate"
-                        onsubmit="window.open('_blank','auto_schedule');">
+                    <form method="post" action="/schedule/generate">
                         <button name="term" type="submit" title="Autogenerate Schedule" id="generate-sched"
                             class="btn btn-primary btn-lg btn-rounded btn-top" value="<%= year + term %>">
                             generate schedule<i class="fas fa-star fa-lg ms-3"></i>
@@ -195,7 +194,7 @@
                 `<th table-cts-column="block_no" style="width: 120px;">Block</th>` +
                 `<th table-cts-column="total_students number" style="width: 160px;">No. of Students</th>` +
                 `<th table-cts-column="sched_status" style="width: 120px;">Schedule<br>Status</th>` +
-                `<th table-cts-column="edit">Action</th></tr></thead><tbody></tbody>` +
+                `<th table-cts-column="edit delete">Action</th></tr></thead><tbody></tbody>` +
                 `<tfoot id='add-block'><tr class='add-data'>` +
                     `<td><input type="number" class="form-control add-td-input reuse text-center"></td>` +
                     `<td><label class="add-td-input optional"></label></td>` +

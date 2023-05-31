@@ -13,3 +13,9 @@
 td:has(.td-input) {
     text-align: center;
 }
+
+#faculty-table>tbody>tr>td:nth-child(8) {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}

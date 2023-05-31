@@ -1,5 +1,5 @@
 <% const {current, subjOptions, forms, type} = data %>
-<div class="bg-light task-view pt-4" id="preference-view">
+<div class="bg-light task-view" id="preference-view">
     <div class="side-panel px-3">
         <h4>Pending<br>Preference Forms</h4>
         <div class="panel-body">
@@ -21,7 +21,7 @@
             <% } %>
         </div>
     </div>
-    <div class="bg-white">
+    <div class="bg-white pt-4">
         <% if (current && forms) { %>
         <div>
             <a class="btn btn-primary btn-lg btn-rounded btn-top mt-2" title="Submit preference form" 
@@ -30,16 +30,16 @@
             </a>
         </div>
         <% const {pref_id, year, ordinal_term, term} = current %>
-        <h3 class="text-center mb-4">
-            Faculty Schedule Preference Form<br>
-            <small class="text-muted">
-                <%= year %>-<%= year + 1 %>, <%- ordinal_term %> Semester
-            </small>
-        </h3>
-        <hr>
-        <div class="px-5">
-            <label class="table-title fw-bold">Your Subject Expertises:</label>
-            <div class="mb-4 mt-2 w-75 stack-list" id="subjects-list">
+            <h3 class="text-center mb-4">
+                Faculty Schedule Preference Form<br>
+                <small class="text-muted">
+                    <%= year %>-<%= year + 1 %>, <%- ordinal_term %> Semester
+                </small>
+            </h3>
+            <hr>
+            <div class="px-5">
+                <label class="table-title fw-bold">Your Subject Expertises:</label>
+                <div class="mb-4 mt-2 w-75 stack-list" id="subjects-list">
                     <div class="dropdown">
                         <button class="btn btn-secondary dropdown-toggle btn-rounded mt-1" type="button" id="pref-subj"
                             data-mdb-toggle="dropdown" aria-expanded="false">Add Field</button>
