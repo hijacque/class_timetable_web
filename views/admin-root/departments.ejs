@@ -42,12 +42,14 @@
         <% if (colleges.length > 0 && currentCollege) { %>
             <h2 style="color: #8673b4;" class="table-title">Departments in <%= currentCollege.name %></h2>
             <br>
-            <a class="btn btn-primary btn-rounded" data-cts-toggle="table" href="#add-dept"
-                type="button" data-cts-target="#departments-table">
-                <i class="fas fa-edit fa-lg me-2"></i>edit table
-            </a>
-            <a class="btn btn-success btn-rounded" data-cts-dismiss="table" data-cts-target="#departments-table"
-                aria-hidden="true">save changes</a>
+            <div>
+                <a class="btn btn-primary btn-rounded btn-top" data-cts-toggle="table" href="#add-dept"
+                    type="button" data-cts-target="#departments-table">
+                    <i class="fas fa-edit fa-lg me-2"></i>edit table
+                </a>
+                <a class="btn btn-success btn-rounded btn-top" data-cts-dismiss="table" data-cts-target="#departments-table"
+                    aria-hidden="true"><i class="fas fa-check-double fa-lg me-2"></i>save table</a>
+            </div>
             <table class="table table-bordered table-sm fw-bold my-4" id="departments-table">
                 <thead class="text-center">
                     <tr>

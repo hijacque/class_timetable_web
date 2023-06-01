@@ -4,9 +4,13 @@
         <br>
         <div>
             <a class="btn btn-primary btn-rounded btn-top" data-cts-toggle="table" data-cts-target="#faculty-table"
-                href="#add-faculty"><i class="fas fa-edit fa-lg me-2"></i>edit table</a>
+                href="#add-faculty">
+                <i class="fas fa-edit fa-lg me-2"></i>edit table
+            </a>
             <button class="btn btn-success btn-rounded btn-top" data-cts-dismiss="table" data-cts-target="#faculty-table"
-                aria-hidden="true"><i class="fas fa-check-double fa-lg me-2"></i>save table</button>
+                aria-hidden="true">
+                <i class="fas fa-check-double fa-lg me-2"></i>save table
+            </button>
         </div>
         <table class="table table-bordered table-sm fw-bold mb-4" id="faculty-table">
             <thead class="text-center">
@@ -25,8 +29,8 @@
                 </tr>
             </thead>
             <tbody></tbody>
-            <tfoot>
-                <tr class="add-data" id="add-faculty">
+            <tfoot id="add-faculty">
+                <tr class="add-data">
                     <td><input type="text" class="form-control add-td-input unique"></td>
                     <td>
                         <div class="dropdown">
@@ -82,6 +86,14 @@
 
             facultyTable.data.pop();
             $(`${facultyTable.body} > tr:last-child`).remove();
+            const [id, status, load, lname, fname, mname, email] = facultyTable.footer.find(".add-td-input").get();
+            id.value = newFaculty.faculty_id;
+            status.textContent = newFaculty.status;
+            load.value = newFaculty.teach_load;
+            lname.value = newFaculty.last_name;
+            fname.value = newFaculty.first_name;
+            mname.value = newFaculty.middle_name;
+            email.value = newFaculty.email;
         }
         $(event.currentTarget).removeData("newRow");
     });

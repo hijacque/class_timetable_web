@@ -1,3 +1,10 @@
+$("a[href^='#']").click((event) => {
+    event.preventDefault();
+    document.querySelector(event.currentTarget.getAttribute('href')).scrollIntoView({
+        behavior: 'smooth'
+    });
+});
+
 $("body").append(
     `<div class="modal fade" id="table-alert" tabindex="-1" aria-labelledby="table-alert-title" ` +
     `aria-hidden="true"><div class="modal-dialog"><div class="modal-content">` +
@@ -185,9 +192,13 @@ class EditableTable extends ResponsiveTable {
             $(this.body).append(
                 `<tr><td colspan='${colSpan}' class="text-muted no-data">No data to present</td></tr>`
             );
-            return;
+            return callback();
         } else if (data.length == 0) {
-            return;
+            const colSpan = (this.#alwaysOnEdit) ? this.headers.length + 1 : this.headers.length;
+            $(this.body).append(
+                `<tr><td colspan='${colSpan}' class="text-muted no-data">No data to present</td></tr>`
+            );
+            return callback();
         }
 
         $(this.body).empty();
