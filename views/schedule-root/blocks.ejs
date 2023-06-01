@@ -18,7 +18,7 @@
                     <label for="class-faculty" class="fw-bold me-2">Faculty:</label>
                     <span class="class-faculty"></span>
                     <div class="dropdown">
-                        <a class="btn btn-secondary dropdown-toggle class-faculty" type="button"
+                        <a class="btn btn-secondary dropdown-toggle class-faculty" type="button" id="class-faculty"
                             data-mdb-toggle="dropdown" aria-expanded="false">pick professor</a>
                         <ul class="dropdown-menu" aria-labelledby="class-faculty">
                             <% for (const prof of faculty) { %>
@@ -435,7 +435,7 @@
         <div class="panel-body">
             <a type="button" class="collapse-btn" data-mdb-toggle="collapse" data-mdb-target="#department-classes"
                 aria-expanded="false">
-                <i class="fas fa-caret-down me-2"></i><text>Departmental Classes</text>
+                <i class="fas fa-caret-down me-2"></i><text>Major Classes</text>
             </a>
             <% if (deptClasses.length> 0 && status == 'open') { %>
                 <div class="collapse show" id="department-classes">
@@ -470,7 +470,7 @@
                 </div>
             <% } %>
             <a type="button" class="collapse-btn" data-mdb-toggle="collapse" data-mdb-target="#other-classes" 
-                aria-expanded="false"><i class="fas fa-caret-down me-2"></i><text>Other Classes</text>
+                aria-expanded="false"><i class="fas fa-caret-down me-2"></i><text>Minor Classes</text>
             </a>
             <% if (otherClasses.length> 0) { %>
                 <div class="collapse show" id="other-classes">
@@ -509,7 +509,11 @@
 <% if (status == 'open') { %>
 <script src="/lib/display-dropdown.js"></script>
 <script>
-    let currentSched = {block: "<%= current.id %>"}
+    let currentSched = {block: "<%= current.id %>"};
+    displayDropMenu($("#class-day"), "Pick Day");
+    displayDropMenu($("#class-mode"), "Pick Mode");
+    displayDropMenu($("#class-faculty"), "Pick Professor");
+
     const addClass = (schedule) => new Promise((resolve, reject) => {
         $.post(
             "/api/schedules/<%= term.id %>", { schedule: schedule }, () => location.reload()
@@ -540,14 +544,14 @@
         const facultyID = newClass.getAttribute("itemid");
         if ($(newClass).closest("div.collapse").attr("id") == "other-classes") {
             $("span.class-faculty").html("<i>To be coordinated...</i>").attr("aria-valuenow", "pass").show();
-            $("a.dropdown-toggle.class-faculty").attr("aria-valuenow", null).hide();
+            $("#class-faculty").attr("aria-valuenow", null).hide();
         } else if (facultyID && facultyID != "") {
             const facultyName = $(newClass).find(".faculty-name").text().slice(11);
             $("span.class-faculty").text(facultyName).attr("aria-valuenow", facultyID).show();
-            $("a.dropdown-toggle.class-faculty").attr("aria-valuenow", null).hide();
+            $("#class-faculty").attr("aria-valuenow", null).hide();
         } else {
             $("span.class-faculty").attr("aria-valuenow", null).empty().show();
-            $("a.dropdown-toggle.class-faculty").show();
+            $("#class-faculty").show();
         }
         
         $("#schedule-class-label").text("Assign New Class");
@@ -580,11 +584,11 @@
         $(`ul[aria-labelledby='class-mode']>li>a.dropdown-item:contains(${mode.textContent})`).trigger("click");
 
         if (currentSched.partial) {
-            $("a.class-faculty").hide().attr("aria-valuenow", null);
+            $("#class-faculty").hide().attr("aria-valuenow", null);
             $("span.class-faculty").text(faculty.textContent).attr("aria-valuenow", faculty.getAttribute("itemid")).show();
         } else {
             $("span.class-faculty").hide().attr("aria-valuenow", null);
-            $("a.class-faculty").show();
+            $("#class-faculty").show();
             $(`ul[aria-labelledby='class-faculty']>li>a#${faculty.getAttribute("itemid")}.dropdown-item`).trigger("click");
         }
 
@@ -627,9 +631,11 @@
     });
 
     $("[aria-labelledby='class-faculty'] > li > a.dropdown-item").click((event) => {
-        $("a.dropdown-toggle.class-faculty")
-            .attr("aria-valuenow", event.currentTarget.id)
-            .text($(event.currentTarget).find(".faculty-name").text());
+        if (event.currentTarget.textContent != "Cancel") {
+            $("#class-faculty")
+                .attr("aria-valuenow", event.currentTarget.id)
+                .text($(event.currentTarget).find(".faculty-name").text());
+        }
     });
 
     $("#reset-schedule").click(async (event) => {
@@ -792,9 +798,5 @@
             $(".main-view>div:last-child").stop().animate({scrollTop: startHeight * 50 + 107}, 1000, 'swing');
         }
     }, 300));
-    
-    displayDropMenu($("#class-day"), "Pick Day");
-    displayDropMenu($("#class-mode"), "Pick Mode");
-    displayDropMenu($("#class-faculty"), "Pick Professor");
 </script>
 <% } %>
