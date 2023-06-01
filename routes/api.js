@@ -2,6 +2,7 @@ const router = require("express").Router();
 const crypto = require("crypto");
 const { verifySession } = require("./../lib/verification");
 const { createFaculty } = require("./../lib/account");
+const { convertMinutesTime, toWeekDay } = require("./../lib/time-conversion");
 
 // for CRUD purposes, sub-directly controlled from client side
 router.use(verifySession);
@@ -188,53 +189,6 @@ router.post("/colleges", async (req, res) => { // creates new college
     });
 });
 
-function convertMinutesTime(time, military = true) {
-    let hours = Math.trunc(time / 60);
-    if (!military) {
-        hours = hours >= 13 ? hours - 12 : hours;
-    }
-
-    hours = ("00" + hours).slice(-2);
-    let minutes = ("00" + Math.trunc(time % 60)).slice(-2);
-    return `${hours}:${minutes}`;
-}
-
-function toWeekDay(day, short = false) {
-    day = typeof (day) == "string" ? day.toLowerCase() : day;
-    switch (day) {
-        case 1:
-            return short ? "Mon" : "Monday";
-        case 2:
-            return short ? "Tue" : "Tuesday";
-        case 3:
-            return short ? "Wed" : "Wednesday";
-        case 4:
-            return short ? "Thu" : "Thursday";
-        case 5:
-            return short ? "Fri" : "Friday";
-        case 6:
-            return short ? "Sat" : "Saturday";
-        case 7:
-            return short ? "Sun" : "Sunday";
-        case "mon" || "monday":
-            return 1;
-        case "tue" || "tuesday":
-            return 2;
-        case "wed" || "wednesday":
-            return 3;
-        case "thu" || "thursday":
-            return 4;
-        case "fri" || "friday":
-            return 5;
-        case "sat" || "saturday":
-            return 6;
-        case "sun" || "sunday":
-            return 7;
-        default:
-            return day;
-    }
-}
-
 router.route("/faculty/:deptID?")
     .get(async (req, res) => { // gets faculty per department
         // check user credentials
@@ -285,17 +239,19 @@ router.route("/faculty/:deptID?")
                 if (current.faculty == consult.faculty_id) {
                     delete consult.faculty_id;
                     current.hours.push(
-                        `${toWeekDay(consult.day, true).toUpperCase()} ${convertMinutesTime(consult.start, false)} ` +
-                        `${consult.start >= 720 ? 'PM' : 'AM'} - ${convertMinutesTime(consult.end, false)} ` +
+                        `${toWeekDay(consult.day, true).toUpperCase()} ${convertMinutesTime(consult.start, false)}` +
+                        `${consult.start >= 720 ? 'PM' : 'AM'} - ${convertMinutesTime(consult.end, false)}` +
                         `${consult.end >= 720 ? 'PM' : 'AM'}`
                     );
                 } else {
                     consultHours.push(current);
-                    current = { faculty: consult.faculty_id, hours: [
-                        `${toWeekDay(consult.day, true).toUpperCase()} ${convertMinutesTime(consult.start, false)} ` +
-                        `${consult.start >= 720 ? 'PM' : 'AM'} - ${convertMinutesTime(consult.end, false)} ` +
-                        `${consult.end >= 720 ? 'PM' : 'AM'}`
-                    ] };
+                    current = {
+                        faculty: consult.faculty_id, hours: [
+                            `${toWeekDay(consult.day, true).toUpperCase()} ${convertMinutesTime(consult.start, false)}` +
+                            `${consult.start >= 720 ? 'PM' : 'AM'} - ${convertMinutesTime(consult.end, false)}` +
+                            `${consult.end >= 720 ? 'PM' : 'AM'}`
+                        ]
+                    };
                 }
             }
             consultHours.push(current);
@@ -1239,9 +1195,10 @@ router.post("/consultation", async (req, res) => {
         await DB.executeQuery(
             `DELETE FROM ConsultationHours WHERE faculty_id = '${user.id}' AND day = ${day} LIMIT 1`
         );
+        return res.status(200).end();
     } else if (update == 1) {
         await DB.executeQuery(
-            `UPDATE ConsultationHours start = ${start}, end = ${end} WHERE faculty_id = '${user.id}' AND ` +
+            `UPDATE ConsultationHours SET start = ${start}, end = ${end} WHERE faculty_id = '${user.id}' AND ` +
             `day = ${day} LIMIT 1`
         );
     } else if (update == 0) {
@@ -1256,7 +1213,10 @@ router.post("/consultation", async (req, res) => {
         });
     }
 
-    res.status(200).end();
+    res.status(200).json({
+        start: `${convertMinutesTime(start, false)} ${(start >= 720 ? 'PM' : 'AM')}`,
+        end: `${convertMinutesTime(end, false)} ${(end >= 720 ? 'PM' : 'AM')}`,
+    });
 });
 
 module.exports = router;

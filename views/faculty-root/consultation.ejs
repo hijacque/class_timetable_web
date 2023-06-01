@@ -72,10 +72,15 @@
             }
             
             try {
-                await submitConsultHours({ 
+                const validTime = await submitConsultHours({ 
                     day: day, start: start, end: end, 
                     update: consultationTable.data[day-1].unassigned ? 0 : 1
                 });
+                if (validTime) {
+                    const [timeIn, timeOut] = $(event.currentTarget).children().get().slice(1);
+                    timeIn.textContent = validTime.start;
+                    timeOut.textContent = validTime.end;
+                }
             } catch (error) {
                 console.log(error);
                 if (error) {
