@@ -70,3 +70,8 @@ nav { padding: 0 12px; }
     font-weight: bold;
     margin-right: 6px;
 }
+
+#class-subject {
+    white-space: break-spaces;
+    text-overflow: ellipsis;
+}

@@ -100,7 +100,7 @@
                 <% } %>
             </ul>
         </nav>
-        <% const {faculty_id, status, sched_status, pref_status, new_pref_subjs, old_pref_subjs, teach_load} = current %>
+        <% const {faculty_id, status, sched_status, pref_status, new_pref_subjs, old_pref_subjs, teach_load, consultation} = current %>
         <div class="about">
             <div class="d-flex">
                 <h4 class="page-title">
@@ -133,16 +133,23 @@
             <h6 class="text-muted"><%= faculty_id %></h6>
             <p>
                 <b>Employment Status:</b> <%= status %><br>
+                <% if (consultation) { %>
+                    <b>Consultation Hours:</b> <%- consultation %><br>
+                <% } %>
                 <b>Faculty Load:</b> <%= teach_load %><br>
-                <b>Schedule Status:</b> <%= sched_status %><br>
-                <% if (pref_status == 'submitted' && new_pref_subjs) { %>
-                <small>* preferred schedules are in white *</small><br>
-                <b>Currently Preferred Subjects:</b> <%= new_pref_subjs.join(", ") %>
+                <b>Schedule Status:</b> <%= sched_status %>
+            </p>
+            <hr>
+            <b>PREFERENCE</b>
+            <p>
+                <% if (pref_status == 'submitted') { %>
+                    <b>Form Status:</b> <span class="text-success"><%= pref_status %></span><br>
+                    <b>Subjects:</b> <%= new_pref_subjs.join(", ") %>
                 <% } else { %>
-                <b>Preference status:</b> <%= pref_status %>
+                    <b>Form Status:</b> <%= pref_status %></span><br>
                 <% } %>
                 <% if (old_pref_subjs.length > 0) { %>
-                    <br><b>Previously Preferred Subjects:</b> <%= old_pref_subjs.join(", ") %>
+                    <br><b>Previous Subjects:</b> <%= old_pref_subjs.join(", ") %>
                 <% } %>
             </p>
         </div>
@@ -282,7 +289,8 @@
                             <h6 class="block-title"><small><%= otherClasses[0].course %></small><br>
                                 Year <%= otherClasses[0].year %> - Block <%= otherClasses[0].block_no %>
                             </h6>
-                            <ul class="list-group panel-menu">
+                            <ul class="list-group panel-menu" id="<%= otherClasses[0].block_id %>"
+                                title="<%= otherClasses[0].course %> <%= otherClasses[0].year %> - <%= otherClasses[0].block_no %>">
                             <% for (let i=0; i < otherClasses.length; i++) { %>
                                 <% if (i> 0 && otherClasses[i].year != otherClasses[i-1].year) { %>
                                     </ul>
