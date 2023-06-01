@@ -100,7 +100,7 @@
     });
 
     const submitConsultHours = (schedule) => new Promise((resolve, reject) => $.post(
-        "http://localhost:3000/api/consultation/", schedule, (data) => resolve(data)
+        "/api/consultation/", schedule, (data) => resolve(data)
     ).fail((error) => reject(error.responseJSON)));
 
     function validateScheduleInput(day, start, end) {
