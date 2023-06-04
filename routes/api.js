@@ -98,6 +98,7 @@ router.post("/department/:deptID?", async (req, res) => { // updates department 
         let [lastName, chairID] = req.body.chair.split("(");
         lastName = lastName.split(",")[0];
         chairID = chairID.slice(0, -1);
+        console.log(lastName, chairID);
         [newChairID] = await DB.executeQuery(
             `SELECT id FROM Faculty WHERE faculty_id = '${chairID}' AND last_name = '${lastName}' ` +
             `AND dept_id = '${req.params.deptID}' LIMIT 1;`
@@ -441,8 +442,8 @@ router.post("/courses", async (req, res) => {
 
     const DB = req.app.locals.database;
     const [{ totalDuplicates }] = await DB.executeQuery(
-        `SELECT COUNT(*) AS totalDuplicates FROM (SELECT s.id FROM Departments d INNER JOIN Colleges col ON d.college_id = col.id ` +
-        `INNER JOIN Schools s ON col.school_id = s.id WHERE d.chair_id = '${user.id}') AS school INNER JOIN ` +
+        `SELECT COUNT(*) AS totalDuplicates FROM (SELECT col.school_id AS id FROM Departments d INNER JOIN ` +
+        `Colleges col ON d.college_id = col.id WHERE d.chair_id = '${user.id}' LIMIT 1) AS school INNER JOIN ` +
         `Colleges col ON school.id = col.school_id INNER JOIN Departments d ON col.id = d.college_id INNER JOIN ` +
         `Courses co ON d.id = co.dept_id WHERE co.title = '${req.body.name}'`
     );
@@ -859,9 +860,9 @@ router.route("/schedules/:termID")
             `CONCAT(co.title, ' ', b.year, ' - block ', b.block_no) AS block, CONCAT(f.last_name, ', ', f.first_name, ` +
             `' ', f.middle_name) AS faculty FROM Schedules sc LEFT JOIN Rooms r ON sc.room_id = r.id ` +
             `INNER JOIN Blocks b ON sc.block_id = b.id LEFT JOIN Courses co ON b.course_id = co.id LEFT JOIN ` +
-            `Faculty f ON sc.faculty_id = f.id WHERE sc.term_id = '${termID}' AND (sc.block_id = '${block}'` +
-            (faculty != "pass" ? ` sc.faculty_id = '${faculty}' OR` : "") +
-            (classroom ? ` OR sc.room_id = '${classroom.id}'` : "") +
+            `Faculty f ON sc.faculty_id = f.id WHERE sc.term_id = '${termID}' AND (sc.block_id = '${block}' ` +
+            (faculty != "pass" ? `OR sc.faculty_id = '${faculty}' ` : "") +
+            (classroom ? `OR sc.room_id = '${classroom.id}'` : "") +
             `) AND sc.day = ${day} AND ((sc.start <= ${start} AND ${start} < sc.end) OR ` +
             `(sc.start < ${end} AND ${end} <= sc.end) OR (${start} <= sc.start AND sc.start < ${end}) ` +
             `OR (${start} < sc.end AND sc.end <= ${end})) ORDER BY sc.start, sc.day`
@@ -895,7 +896,7 @@ router.route("/schedules/:termID")
         if (partial == 1) {
             query = `INSERT INTO Schedules VALUES ('${termID}', '${subject}', '${block}', ` +
                 (faculty != "pass" ? `'${faculty}',` : "NULL, ") +
-                (classroom ? `'${classroom.id}'` : "NULL, ") + `${day}, ${start}, ${end}, ${mode})`;
+                (classroom ? `'${classroom.id}',` : "NULL, ") + ` ${day}, ${start}, ${end}, ${mode})`;
         } else {
             query = `UPDATE Schedules SET faculty_id = ${faculty != "pass" ? `'${faculty}'` : "NULL"}, ` +
                 `room_id = ${classroom ? `'${classroom.id}'` : "NULL"}, ` +
@@ -911,7 +912,7 @@ router.route("/schedules/:termID")
             }
         };
 
-        await DB.executeQuery(query);
+        console.log(await DB.executeQuery(query));
         res.status(200).end();
     });
 
@@ -985,16 +986,23 @@ router.post("/schedule/:termID", async (req, res) => { // changes or removes a c
         let { day, start, end } = req.body.newSched;
         let conflicts = await DB.executeQuery(
             `SELECT sc.faculty_id, sc.subj_id, sc.block_id, sc.room_id, sc.day, sc.start, sc.end, r.name, ` +
-            `CONCAT(co.title, ' ', b.year, ' - block ', b.block_no) AS block, CONCAT(f.last_name, ', ', f.first_name, ` +
-            `' ', f.middle_name) AS faculty FROM Schedules sc LEFT JOIN Rooms r ON sc.room_id = r.id ` +
-            `INNER JOIN Blocks b ON sc.block_id = b.id LEFT JOIN Courses co ON b.course_id = co.id LEFT JOIN ` +
-            `Faculty f ON sc.faculty_id = f.id WHERE sc.term_id = '${termID}' AND (sc.block_id = '${block}'` +
-            (faculty != "pass" ? ` sc.faculty_id = '${faculty}' OR` : "") +
-            (classroom ? ` OR sc.room_id = '${classroom.id}'` : "") +
+            `CONCAT(co.title, ' ', b.year, ' - block ', b.block_no) AS block, CONCAT(f.last_name, ', ', ` +
+            `f.first_name, ' ', f.middle_name) AS faculty, CASE WHEN s.type IS NULL THEN s.title ELSE ` +
+            `CONCAT(s.title, ' (', s.type, ')') END AS subject FROM Schedules sc LEFT JOIN Rooms r ON ` +
+            `sc.room_id = r.id INNER JOIN Blocks b ON sc.block_id = b.id INNER JOIN Subjects s ON ` +
+            `sc.subj_id = s.id LEFT JOIN Courses co ON b.course_id = co.id LEFT JOIN Faculty f ON ` +
+            `sc.faculty_id = f.id WHERE sc.term_id = '${termID}' AND (sc.block_id = '${block}' ` +
+            (faculty != "pass" ? `OR sc.faculty_id = '${faculty}' ` : "") +
+            (classroom ? `OR sc.room_id = '${classroom.id}'` : "") +
             `) AND sc.day = ${day} AND ((sc.start <= ${start} AND ${start} < sc.end) OR ` +
             `(sc.start < ${end} AND ${end} <= sc.end) OR (${start} <= sc.start AND sc.start < ${end}) ` +
             `OR (${start} < sc.end AND sc.end <= ${end})) ORDER BY sc.start, sc.day`
         );
+        conflicts = conflicts.filter(
+            (con) => con.subj_id != oldSched.subject && con.block_id != oldSched.block &&
+                con.mode != oldSched.mode && con.day != oldSched.day && con.start != oldSched.start && 
+                con.end != oldSched.end && con.faculty_id != oldSched.faculty
+        )
 
         console.log("Found conflicts:");
         console.table(conflicts);
@@ -1006,12 +1014,13 @@ router.post("/schedule/:termID", async (req, res) => { // changes or removes a c
                 body: "Could not specify faculty/block/room conflict, try changing time/room input."
             };
 
-            if (conflicts.some(({ block_id }) => block_id == block)) {
-                message.title = "Conflicting block schedule";
-                message.body = `<b>${conflicts[0].block}</b> has class taking place at the time.<br>Try changing time input.`;
-            } else if (conflicts.some(({ faculty_id }) => faculty_id == faculty)) {
+            if (conflicts.some(({ faculty_id }) => faculty_id == faculty)) {
                 message.title = "Conflicting faculty schedule";
-                message.body = `<b>Prof. ${conflicts[0].faculty}</b> has class taking place at the time.<br>Try changing time input.`;
+                message.body = `<b>Prof. ${conflicts[0].faculty}</b> has "${conflicts[0].subject}" class with ` +
+                    `${conflicts[0].block} at the time.<br>Try changing time input.`;
+            } else if (conflicts.some(({ block_id }) => block_id == block)) {
+                message.title = "Conflicting block schedule";
+                message.body = `<b>${conflicts[0].block}</b> has "${conflicts[0].subject}" class at the time.<br>Try changing time input.`;
             } else if (mode == 1 && conflicts.some(({ room_id }) => room_id == classroom.id)) {
                 message.title = "Conflicting room schedule";
                 message.body = `<b>${conflicts[0].name}</b> is already taken at the time.<br>Try changing classroom input.`;
@@ -1030,22 +1039,24 @@ router.post("/schedule/:termID", async (req, res) => { // changes or removes a c
                     `LIMIT 1; UPDATE Preferences p INNER JOIN Terms t ON p.term_id = t.id INNER JOIN ` +
                     `Colleges col ON t.school_id = col.school_id INNER JOIN Subjects s ON col.id = s.college_id ` +
                     `SET p.assigned_load = (p.assigned_load + s.units) WHERE p.term_id = '${termID}' AND ` +
-                    `s.id = '${subject}' AND p.faculty_id = '${faculty}' LIMIT 1; ` : ""
+                    `s.id = '${subject}' AND p.faculty_id = ${!faculty || faculty == "pass" ? "NULL" : `'${faculty}'`} ` +
+                    `LIMIT 1; ` : ""
             ) +
 
             `UPDATE Schedules SET day = ${day}, start = ${start}, end = ${end}, mode = ${mode}, ` +
-            `faculty_id = '${faculty}', room_id = ${classroom ? `'${classroom.id}'` : "NULL"} ` +
+            `faculty_id = ${!faculty || faculty == "pass" ? "NULL" : `'${faculty}'`}, room_id = ${classroom ? `'${classroom.id}'` : "NULL"} ` +
             `WHERE term_id = '${termID}' AND subj_id = '${subject}' AND block_id = '${block}' AND ` +
-            `faculty_id = '${oldSched.faculty}' AND room_id = '${oldSched.room_id}' AND ` +
-            `day = ${oldSched.day} AND start = ${oldSched.start} AND end = ${oldSched.end} LIMIT 1;`
+            `faculty_id ${!oldSched.faculty ? "IS NULL" : `= '${oldSched.faculty}'`} AND room_id = ` +
+            `'${oldSched.room_id}' AND day = ${oldSched.day} AND start = ${oldSched.start} AND end = ${oldSched.end} LIMIT 1;`
         );
 
         return res.status(200).end();
     } else if (action == "delete") {
         const { subject, block, faculty, day, start, end } = oldSched;
-        const [{ sameClasses }] = await DB.executeQuery(
+        const [[{ sameClasses }], [{ units }]] = await DB.executeQuery(
             `SELECT COUNT(*) AS sameClasses FROM Schedules WHERE term_id = '${termID}' AND ` +
-            `subj_id = '${subject}' AND block_id = '${block}'`
+            `subj_id = '${subject}' AND block_id = '${block}';` +
+            `SELECT units FROM Subjects WHERE id = '${subject}' LIMIT 1;`
         );
 
         if (sameClasses > 1) {
@@ -1063,10 +1074,8 @@ router.post("/schedule/:termID", async (req, res) => { // changes or removes a c
                 `AND end = ${end} ${oldSched.room_id ? `AND room_id = '${oldSched.room_id}' ` : ""}LIMIT 1; ` +
 
                 // subtract faculty load
-                `UPDATE Preferences p INNER JOIN Terms t ON p.term_id = t.id INNER JOIN Colleges col ON ` +
-                `t.school_id = col.school_id INNER JOIN Subjects s ON col.id = s.college_id ` +
-                `SET p.assigned_load = p.assigned_load - s.units WHERE p.faculty_id = '${faculty}' AND ` +
-                `p.term_id = '${termID}' LIMIT 1;`
+                `UPDATE Preferences SET assigned_load = assigned_load - ${units} ` +
+                `WHERE faculty_id = '${faculty}' AND term_id = '${termID}' LIMIT 1;`
             );
         }
 
