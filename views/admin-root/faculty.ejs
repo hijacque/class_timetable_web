@@ -108,14 +108,44 @@
 <script src="/lib/responsive-table.js"></script>
 <% if (currentDept) { %>
     <script>
-        function confirmFacultyEdit(event) {
-            const action = $(event.currentTarget).data("action-edit");
+        const updateFaculty = (prevData, changes) => new Promise((resolve, reject) => {
+            $.post(
+                "/api/update_faculty", {old: prevData, new: changes}, 
+                (data) => resolve(data)
+            ).fail((error) => reject(error.responseJSON))
+        });
+        async function confirmFacultyEdit(event) {
+            const action = $(event.currentTarget).data("action");
+            if (!action) {
+                return console.log("Deleting from db...");
+            }
+
+            let newData, oldData;
             try {
-                const newData = $(event.currentTarget).data("updatedData");
-                // TODO: create api call for updating faculty data
+                newData = $(event.currentTarget).data("updated-data");
+                oldData = $(event.currentTarget).data("prev-data");
+                console.log(oldData);
                 console.log(newData);
             } catch (error) {
+                $(event.currentTarget).trigger("row:edit");
+                return console.log(error);
+            }
+
+            try {
+                await updateFaculty(oldData, newData);
+            } catch (error) {
+                if (error) {
+                    if (error.redirect) {
+                        location.replace(error.redirect);
+                    }
+                    if (error.message) {
+                        alertModal.show(...Object.values(error.message));
+                    }
+                } else {
+                    alertModal.show(0, "Server error", "Unexpected error occured, please try again later.");
+                }
                 console.log(error);
+                $(event.currentTarget).trigger("row:edit");
             }
         }
         const departments = $(".panel-menu > .menu-item").get();
@@ -131,7 +161,7 @@
                         "automatically assigned as the chairperson *</small>"
                     );
                 }
-                $(`${facultyTable.body}>tr`).on("row:confirm-change", confirmFacultyEdit)
+                $(`${facultyTable.body}>tr`).on("row:confirm-change", confirmFacultyEdit);
             });
     
             $(facultyTable.addBtn).click(async (event) => {
@@ -143,9 +173,12 @@
                 }
                 
                 try {
-                    await addFaculty("<%= currentDept.id %>", newFaculty);
+                    const result = await addFaculty("<%= currentDept.id %>", newFaculty);
                     if (facultyTable.data.length == 1) {
                         $("#chair-note").remove();
+                    }
+                    if (result) {
+                        alertModal.show(...Object.values(result.message));
                     }
                 } catch (eResponse) {
                     console.log(eResponse);

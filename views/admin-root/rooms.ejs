@@ -83,7 +83,11 @@
         if (buildings.length > 0) {
             let openBuilding = buildings.find(bldg => bldg.title == "<%= currentBldg.name || buildings[0].name %>");
             $(openBuilding).addClass("active");
-            roomsTable.initData(getRooms("<%= currentBldg.id || buildings[0].name %>"), true);
+            roomsTable.initData(getRooms("<%= currentBldg.id || buildings[0].name %>"), true, () => {
+                $(`${roomsTable.body}>tr`).click((event) => {
+                    const action = $(event.currentTarget).data("action");
+                });
+            });
             
             $(roomsTable.addBtn).click(async (event) => {
                 let newRoom;

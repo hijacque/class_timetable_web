@@ -192,7 +192,7 @@
     }
 
     async function confirmDeptEdit(event) {
-        const action = $(event.currentTarget).data("edit-action");
+        const action = $(event.currentTarget).data("action");
         if (!action) {
             console.log($(event.currentTarget).data("deletedData"));
             console.log("Deleting from db...");
