@@ -109,7 +109,7 @@
 <script>
     const expertises = [];
     const submitPreference = (schedules = []) => new Promise((resolve, reject) => $.post(
-        "http://localhost:3000/api/preferences/<%= current.pref_id %>",
+        "/api/preferences/<%= current.pref_id %>",
         {subjects: expertises, schedules: schedules}, 
         (data) => resolve(data), "json",
     ).fail((data) => reject(data)));

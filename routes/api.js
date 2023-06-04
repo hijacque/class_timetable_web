@@ -857,10 +857,12 @@ router.route("/schedules/:termID")
         let { day, start, end } = req.body.schedule;
         let conflicts = await DB.executeQuery(
             `SELECT sc.faculty_id, sc.subj_id, sc.block_id, sc.room_id, sc.day, sc.start, sc.end, r.name, ` +
-            `CONCAT(co.title, ' ', b.year, ' - block ', b.block_no) AS block, CONCAT(f.last_name, ', ', f.first_name, ` +
-            `' ', f.middle_name) AS faculty FROM Schedules sc LEFT JOIN Rooms r ON sc.room_id = r.id ` +
-            `INNER JOIN Blocks b ON sc.block_id = b.id LEFT JOIN Courses co ON b.course_id = co.id LEFT JOIN ` +
-            `Faculty f ON sc.faculty_id = f.id WHERE sc.term_id = '${termID}' AND (sc.block_id = '${block}' ` +
+            `CONCAT(co.title, ' ', b.year, ' - block ', b.block_no) AS block, CONCAT(f.last_name, ', ', ` +
+            `f.first_name, ' ', f.middle_name) AS faculty, CASE WHEN s.type IS NULL THEN s.title ELSE ` +
+            `CONCAT(s.title, ' (', s.type, ')') END AS subject FROM Schedules sc LEFT JOIN Rooms r ON ` +
+            `sc.room_id = r.id INNER JOIN Blocks b ON sc.block_id = b.id INNER JOIN Subjects s ON ` +
+            `sc.subj_id = s.id LEFT JOIN Courses co ON b.course_id = co.id LEFT JOIN Faculty f ON ` +
+            `sc.faculty_id = f.id WHERE sc.term_id = '${termID}' AND (sc.block_id = '${block}' ` +
             (faculty != "pass" ? `OR sc.faculty_id = '${faculty}' ` : "") +
             (classroom ? `OR sc.room_id = '${classroom.id}'` : "") +
             `) AND sc.day = ${day} AND ((sc.start <= ${start} AND ${start} < sc.end) OR ` +
@@ -878,15 +880,16 @@ router.route("/schedules/:termID")
                 body: "Could not specify faculty/block/room conflict, try changing time/room input."
             };
 
-            if (mode == 1 && conflicts.some(({ room_id }) => room_id == classroom.id)) {
-                message.title = "Conflicting room schedule";
-                message.body = `<b>${conflicts[0].name}</b> is already taken at the time.<br>Try changing classroom input.`;
+            if (conflicts.some(({ faculty_id }) => faculty_id == faculty)) {
+                message.title = "Conflicting faculty schedule";
+                message.body = `<b>Prof. ${conflicts[0].faculty}</b> has "${conflicts[0].subject}" class with ` +
+                    `${conflicts[0].block} at the time.<br>Try changing time input.`;
             } else if (conflicts.some(({ block_id }) => block_id == block)) {
                 message.title = "Conflicting block schedule";
-                message.body = `<b>${conflicts[0].block}</b> has class taking place at the time.<br>Try changing time input.`;
-            } else if (conflicts.some(({ faculty_id }) => faculty_id == faculty)) {
-                message.title = "Conflicting faculty schedule";
-                message.body = `<b>Prof. ${conflicts[0].faculty}</b> has class taking place at the time.<br>Try changing time input.`;
+                message.body = `<b>${conflicts[0].block}</b> has "${conflicts[0].subject}" class at the time.<br>Try changing time input.`;
+            } else if (mode == 1 && conflicts.some(({ room_id }) => room_id == classroom.id)) {
+                message.title = "Conflicting room schedule";
+                message.body = `<b>${conflicts[0].name}</b> is already taken at the time.<br>Try changing classroom input.`;
             }
 
             return res.status(409).json({ message: message });
@@ -971,7 +974,6 @@ router.post("/schedule/:termID", async (req, res) => { // changes or removes a c
                 `r.name LIKE '%${regexRoom.join("%")}%' LIMIT 1`
             );
         }
-        console.table(classroom);
 
         if (mode == 1 && !classroom) {
             return res.status(404).json({
@@ -1028,7 +1030,7 @@ router.post("/schedule/:termID", async (req, res) => { // changes or removes a c
 
             return res.status(409).json({ message: message });
         }
-
+        
         await DB.executeQuery(
             // if faculty is changed
             (
@@ -1042,12 +1044,13 @@ router.post("/schedule/:termID", async (req, res) => { // changes or removes a c
                     `s.id = '${subject}' AND p.faculty_id = ${!faculty || faculty == "pass" ? "NULL" : `'${faculty}'`} ` +
                     `LIMIT 1; ` : ""
             ) +
-
+    
             `UPDATE Schedules SET day = ${day}, start = ${start}, end = ${end}, mode = ${mode}, ` +
             `faculty_id = ${!faculty || faculty == "pass" ? "NULL" : `'${faculty}'`}, room_id = ${classroom ? `'${classroom.id}'` : "NULL"} ` +
             `WHERE term_id = '${termID}' AND subj_id = '${subject}' AND block_id = '${block}' AND ` +
-            `faculty_id ${!oldSched.faculty ? "IS NULL" : `= '${oldSched.faculty}'`} AND room_id = ` +
-            `'${oldSched.room_id}' AND day = ${oldSched.day} AND start = ${oldSched.start} AND end = ${oldSched.end} LIMIT 1;`
+            `faculty_id ${!oldSched.faculty ? "IS NULL" : `= '${oldSched.faculty}'`} AND room_id ` +
+            `${oldSched.room_id ? `= '${oldSched.room}' ` : "IS NULL "}AND day = ${oldSched.day} AND ` +
+            `start = ${oldSched.start} AND end = ${oldSched.end} LIMIT 1;`
         );
 
         return res.status(200).end();
@@ -1228,9 +1231,9 @@ router.post("/consultation", async (req, res) => {
     });
 });
 
-router.post("/update_faculty/:id", async (req, res) => {
+router.post("/update_faculty", async (req, res, next) => {
     const user = req.account;
-    if (!user || user.type != "admin") {
+    if (!user || (user.type != "admin" && user.type != "chair")) {
         res.cookie("serverMessage", {
             message: {
                 mode: 0,
@@ -1242,13 +1245,34 @@ router.post("/update_faculty/:id", async (req, res) => {
     }
 
     const DB = req.app.locals.database;
-    const { id, status, load, lname, fname, mname, email } = req.body;
+    const { id, status, teach_load, last_name, first_name, middle_name, email } = req.body.new;
+    console.log(req.body.old);
+    console.log(req.body.new);
 
+    if (email != req.body.old.email) {
+        const [{totalDuplicates}] = await DB.executeQuery(
+            `SELECT COUNT(*) AS totalDuplicates FROM Users WHERE email = '${email}'`
+        );
+    
+        if (totalDuplicates > 0) {
+            return res.status(409).json({
+                message: {
+                    mode: 0,
+                    title: "Duplicate e-mail",
+                    body: "Could not save the changes you requested"
+                }
+            });
+        }
+    }
+    
     await DB.executeQuery(
-        `UPDATE Faculty ` +
-        `SET dept_id = '${id}', status = '${status}', load = '${load}', lname = '${lname}', fname = '${fname}', mname = '${mname}', email = '${email}'` +
-        `WHERE id = '${req.params.id}'`
+        `UPDATE Faculty f INNER JOIN Departments d ON f.dept_id = d.id INNER JOIN Colleges col ON ` +
+        `d.college_id = col.id INNER JOIN Users u ON f.id = u.id SET f.status = '${status}', ` +
+        `f.teach_load = ${teach_load}, f.last_name = '${last_name}', f.first_name = '${first_name}', ` +
+        `f.middle_name = '${middle_name}', u.email = '${email}' WHERE (d.chair_id = '${user.id}' OR ` +
+        `col.school_id = '${user.id}') AND f.id = '${id}'`
     );
+    res.status(200).end();
 });
 
 router.post("/update_room/:id", async (req, res) => {
