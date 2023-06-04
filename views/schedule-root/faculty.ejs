@@ -100,7 +100,7 @@
                 <% } %>
             </ul>
         </nav>
-        <% const {faculty_id, status, sched_status, pref_status, new_pref_subjs, old_pref_subjs, teach_load, consultation} = current %>
+        <% const {faculty_id, status, sched_status, pref_status, new_pref_subjs, old_pref_subjs, teach_load, assigned_load, consultation} = current %>
         <div class="about">
             <div class="d-flex">
                 <h4 class="page-title">
@@ -136,7 +136,13 @@
                 <% if (consultation) { %>
                     <b>Consultation Hours:</b> <%- consultation %><br>
                 <% } %>
-                <b>Faculty Load:</b> <%= teach_load %><br>
+                <b>Faculty Load:</b> 
+                <% if (assigned_load > teach_load) { %>
+                    <span class="text-danger"><%= assigned_load %> / <%= teach_load %></span>
+                <% } else { %>
+                    <span><%= assigned_load %> / <%= teach_load %></span>
+                <% } %>
+                <br>
                 <b>Schedule Status:</b> <%= sched_status %>
             </p>
             <hr>
@@ -206,10 +212,36 @@
                             style="grid-column: <%= schedule.day %> / span 1; grid-row: <%= schedule.start_time %> / <%= schedule.end_time %>;"
                             aria-valuemin="<%= schedule.start %>" aria-valuemax="<%= schedule.end %>" 
                             aria-valuenow="<%= schedule.day %>" aria-current="<%= schedule.duration %>">
-                            <h6 class="text-break subject" itemid="<%= schedule.subj_id %>">
-                                <%= schedule.subject %>
-                            </h6>
+                            <h6 class="text-break subject" itemid="<%= schedule.subj_id %>"><%= schedule.subject %></h6>
                             <p class="text-truncate"><small>
+                                <span class="block" itemid="<%= schedule.block_id %>">
+                                    <%= schedule.year %>-<%= schedule.block_no %> <%= schedule.course %>
+                                </span><br>
+                                <% if (schedule.room) { %>
+                                    <i>
+                                        <span class="mode"><%= schedule.mode %></span> @ 
+                                        <span class="room" itemid="<%= schedule.room_id %>"><%= schedule.room %></span>,
+                                        <br><%= schedule.building %>
+                                    </i>
+                                <% } else { %>
+                                    <i class="mode"><%= schedule.mode %></i>
+                                <% } %>
+                            </small></p>
+                        </div>
+                    <% } %>
+                    <% for (const schedule of current.partialClasses) { %>
+                        <div class="sched-block bg-light text-secondary partial" data-mdb-toggle="tooltip" data-mdb-html="true"
+                            <% if (schedule.room) { %>
+                            title="<b><%= schedule.subject %></b><br><small><%= schedule.year %>-<%= schedule.block_no %> <%= schedule.course %><br>No professor yet<br><i><%= schedule.mode %> @ <%= schedule.room %>,<br><%= schedule.building %></i></small>"
+                            <% } else { %>
+                            title="<b><%= schedule.subject %></b><br><small><%= schedule.year %>-<%= schedule.block_no %> <%= schedule.course %><br>No professor yet<br><i><%= schedule.mode %></i></small>"
+                            <% } %>
+                            style="grid-column: <%= schedule.day %> / span 1; grid-row: <%= schedule.start_time %> / <%= schedule.end_time %>;"
+                            aria-valuemin="<%= schedule.start %>" aria-valuemax="<%= schedule.end %>" 
+                            aria-valuenow="<%= schedule.day %>" aria-current="<%= schedule.duration %>">
+                            <h6 class="text-break subject" itemid="<%= schedule.subj_id %>"><%= schedule.subject %></h6>
+                            <p class="text-truncate"><small>
+                                <span class="text-danger faculty">No professor yet</span><br>
                                 <span class="block" itemid="<%= schedule.block_id %>">
                                     <%= schedule.year %>-<%= schedule.block_no %> <%= schedule.course %>
                                 </span><br>
@@ -249,7 +281,7 @@
                             <ul class="list-group panel-menu" id="<%= deptClasses[0].block_id %>"
                                 title="<%= deptClasses[0].course %> <%= deptClasses[0].year %> - <%= deptClasses[0].block_no %>">
                             <% for (let i=0; i < deptClasses.length; i++) { %>
-                                <% if ((i > 0 && deptClasses[i].year != deptClasses[i-1].year) || (i > 0 && deptClasses[i].block_no != deptClasses[i-1].block_no)) { %>
+                                <% if (i > 0 && deptClasses[i].block_id != deptClasses[i-1].block_id) { %>
                                     </ul>
                                     <hr>
                                     <h6 class="block-title">
@@ -276,7 +308,7 @@
                         </div>
                     </div>
                 <% } else { %>
-                    <div class="collapse" id="department-classes">
+                    <div class="collapse show" id="department-classes">
                         <p>No more classes to assign</p>
                     </div>
                 <% } %>
@@ -284,7 +316,7 @@
                     aria-expanded="false"><i class="fas fa-caret-down me-2"></i><text>Other Classes</text>
                 </a>
                 <% if (otherClasses.length> 0) { %>
-                    <div class="collapse" id="other-classes">
+                    <div class="collapse show" id="other-classes">
                         <div>
                             <h6 class="block-title"><small><%= otherClasses[0].course %></small><br>
                                 Year <%= otherClasses[0].year %> - Block <%= otherClasses[0].block_no %>
@@ -292,7 +324,7 @@
                             <ul class="list-group panel-menu" id="<%= otherClasses[0].block_id %>"
                                 title="<%= otherClasses[0].course %> <%= otherClasses[0].year %> - <%= otherClasses[0].block_no %>">
                             <% for (let i=0; i < otherClasses.length; i++) { %>
-                                <% if (i> 0 && otherClasses[i].year != otherClasses[i-1].year) { %>
+                                <% if (i> 0 && otherClasses[i].block_id != otherClasses[i-1].block_id) { %>
                                     </ul>
                                     <hr>
                                     <h6 class="block-title"><small><%= otherClasses[i].course %></small><br>
@@ -302,14 +334,14 @@
                                         title="<%= otherClasses[i].course %> <%= otherClasses[i].year %> - <%= otherClasses[i].block_no %>">
                                 <% } %>
                                 <button type="button" class="list-group-item list-group-item-action menu-item"
-                                    itemid="<%= otherClasses[i].id %>"
-                                    title="<%= otherClasses[i].subject %>" id="<%= otherClasses[i].id %>"
+                                    itemid="<%= otherClasses[i].subj_id %>"
+                                    title="<%= otherClasses[i].subject %>"
                                     aria-valuemax="<%= otherClasses[i].req_hours || 0 %>"
                                     aria-valuenow="<%= otherClasses[i].assigned_time || 0 %>">
                                     <p class="text-truncate m-0">
                                         <%= otherClasses[i].subject %><br>
                                         <% if (otherClasses[i].assigned_time > 0) { %>
-                                            <small class="text-muted">Assigned hours: <%= otherClasses[i].assigned_time %> / <%= deptClasses[i].req_hours %></small>
+                                            <small class="text-muted">Assigned hours: <%= otherClasses[i].assigned_time %> / <%= otherClasses[i].req_hours %></small>
                                         <% } %>
                                         <small></small>
                                     </p>
@@ -379,6 +411,8 @@
         $("#class-end").val(prevClass.ariaValueMax);
         $("#class-hours").text(prevClass.ariaCurrent).attr("aria-valuemax", prevClass.ariaCurrent);
 
+        console.log(prevClass.classList);
+        currentSched.faculty = prevClass.classList.contains("partial") ? null : "<%= id %>";
         currentSched.block = block.getAttribute("itemid");
         currentSched.subject = subj.getAttribute("itemid");
         currentSched.day = prevClass.ariaValueNow;
@@ -482,7 +516,7 @@
         if (!validTime) return;
         
         try {
-            await manageClass("change", currentSched,{
+            await manageClass("change", currentSched, {
                 faculty: "<%= id %>",
                 subject: $("#class-subject").attr("aria-valuenow"),
                 mode: $("#class-mode").attr("aria-valuenow") || 1,

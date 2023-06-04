@@ -406,9 +406,7 @@
                             style="grid-column: <%= schedule.day %> / span 1; grid-row: <%= schedule.start_time %> / <%= schedule.end_time %>;"
                             aria-valuemin="<%= schedule.start %>" aria-valuemax="<%= schedule.end %>" 
                             aria-valuenow="<%= schedule.day %>" aria-current="<%= schedule.duration %>">
-                            <h6 class="text-break subject" itemid="<%= schedule.subj_id %>">
-                                <%= schedule.subject %>
-                            </h6>
+                            <h6 class="text-break subject" itemid="<%= schedule.subj_id %>"><%= schedule.subject %></h6>
                             <p class="text-truncate"><small>
                                 <span class="faculty" itemid="<%= schedule.faculty_id %>">
                                     <%= schedule.faculty %>
