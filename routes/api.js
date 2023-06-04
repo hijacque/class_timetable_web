@@ -1228,4 +1228,73 @@ router.post("/consultation", async (req, res) => {
     });
 });
 
+router.post("/update_faculty/:id", async (req, res) => {
+    const user = req.account;
+    if (!user || user.type != "admin") {
+        res.cookie("serverMessage", {
+            message: {
+                mode: 0,
+                title: "Unauthorized request",
+                body: "Please login before updating department name or chairperson."
+            }
+        });
+        return res.status(401).json({ redirect: "/logout" });
+    }
+
+    const DB = req.app.locals.database;
+    const { id, status, load, lname, fname, mname, email } = req.body;
+
+    await DB.executeQuery(
+        `UPDATE Faculty ` +
+        `SET dept_id = '${id}', status = '${status}', load = '${load}', lname = '${lname}', fname = '${fname}', mname = '${mname}', email = '${email}'` +
+        `WHERE id = '${req.params.id}'`
+    );
+});
+
+router.post("/update_room/:id", async (req, res) => {
+    const user = req.account;
+    if (!user || user.type != "admin") {
+        res.cookie("serverMessage", {
+            message: {
+                mode: 0,
+                title: "Unauthorized request",
+                body: "Please login before updating department name or chairperson."
+            }
+        });
+        return res.status(401).json({ redirect: "/logout" });
+    }
+
+    const DB = req.app.locals.database;
+    const { name, level, capacity } = req.body;
+
+    await DB.executeQuery(
+        `UPDATE Rooms ` +
+        `SET name = '${name}', level = '${level}', capacity = '${capacity}' ` +
+        `WHERE id = '${req.params.id}'`
+    );
+});
+
+router.post("/update_subject/:id", async (req, res) => {
+    const user = req.account;
+    if (!user || user.type != "admin") {
+        res.cookie("serverMessage", {
+            message: {
+                mode: 0,
+                title: "Unauthorized request",
+                body: "Please login before updating department name or chairperson."
+            }
+        });
+        return res.status(401).json({ redirect: "/logout" });
+    }
+
+    const DB = req.app.locals.database;
+    const { code, title, type, units, req_hours, pref_rooms} = req.body;
+
+    await DB.executeQuery(
+        `UPDATE Subjects ` +
+        `SET code = '${code}', title = '${title}', type = '${type}', units = '${units}', req_hours = '${req_hours}', pref_rooms = '${pref_rooms}' ` +
+        `WHERE id = '${req.params.id}'`
+    );
+});
+
 module.exports = router;
