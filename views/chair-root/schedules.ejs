@@ -112,12 +112,6 @@
                             <i class="fas fa-times fa-lg me-2"></i>unpost
                         </button>
                     </form>
-                    <form action="/schedule/delete/<%= year + term %>" method="post">
-                        <button type="submit" class="ms-2 btn btn-danger btn-rounded" id="delete-schedules"
-                            title="delete schedules">
-                            <i class="fas fa-trash fa-lg me-2"></i>delete
-                        </button>
-                    </form>
                 </div>
                 <label for="term-title">Status: <span id="term-status" class="text-primary">POSTED</span></label>
                 <hr>
@@ -194,7 +188,7 @@
                 `<th table-cts-column="block_no" style="width: 120px;">Block</th>` +
                 `<th table-cts-column="total_students number" style="width: 160px;">No. of Students</th>` +
                 `<th table-cts-column="sched_status" style="width: 120px;">Schedule<br>Status</th>` +
-                `<th table-cts-column="edit delete">Action</th></tr></thead><tbody></tbody>` +
+                `<th table-cts-column="delete">Action</th></tr></thead><tbody></tbody>` +
                 `<tfoot id='add-block'><tr class='add-data'>` +
                     `<td><input type="number" class="form-control add-td-input reuse text-center"></td>` +
                     `<td><label class="add-td-input optional"></label></td>` +
@@ -253,10 +247,9 @@
         if (tableID == "faculty") {
             window.location.href = `/schedule/faculty?term=${openTerm.title}&` +
                 `id=${row.firstChild.textContent}`;    
-        } else {
+        } else if (!$(rowEvent.target).is("td.edit-action") && !$(rowEvent.target).closest("td").hasClass("edit-action")) {
             const [year, block] = row.children;
-            window.location.href = `/schedule/${tableID}?term=${openTerm.title}&` +
-                `year=${year.textContent}&block=${block.textContent}`;
+            window.location.href = `/schedule/${tableID}?term=${openTerm.title}&year=${year.textContent}&block=${block.textContent}`;
         }
     }
 
@@ -304,7 +297,7 @@
         
         const newTermID = await addTerm(year, semester[0]);
         if (newTermID) {
-            location.replace("http://localhost:3000/chair/schedules/" + year + semester[0]);
+            location.replace("/chair/schedules/" + year + semester[0]);
         }
     });
 </script>

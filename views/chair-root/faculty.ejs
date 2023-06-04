@@ -23,9 +23,9 @@
                     <th table-cts-column="last_name text">Surname</th>
                     <th table-cts-column="first_name text">First Name</th>
                     <th table-cts-column="middle_name text">Middle Name</th>
-                    <th table-cts-column="email email">E-mail</th>
+                    <th table-cts-column="email">E-mail</th>
                     <th table-cts-column="consultation optional">Consultation Hours</th>
-                    <td table-cts-column="edit delete">Action</td>
+                    <td table-cts-column="edit">Action</td>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -58,9 +58,51 @@
 <!-- reuse faculty api calls -->
 <script src="/lib/api/admin-root.js"></script>
 <script>
+    const updateFaculty = (prevData, changes) => new Promise((resolve, reject) => {
+        $.post(
+            "/api/update_faculty", { old: prevData, new: changes },
+            (data) => resolve(data)
+        ).fail((error) => reject(error.responseJSON))
+    });
+    async function confirmFacultyEdit(event) {
+        const action = $(event.currentTarget).data("action");
+        if (!action) {
+            return console.log("Deleting from db...");
+        }
+
+        let newData, oldData;
+        try {
+            newData = $(event.currentTarget).data("updated-data");
+            oldData = $(event.currentTarget).data("prev-data");
+            console.log(oldData);
+            console.log(newData);
+        } catch (error) {
+            $(event.currentTarget).trigger("row:edit");
+            return console.log(error);
+        }
+
+        try {
+            await updateFaculty(oldData, newData);
+        } catch (error) {
+            if (error) {
+                if (error.redirect) {
+                    location.replace(error.redirect);
+                }
+                if (error.message) {
+                    alertModal.show(...Object.values(error.message));
+                }
+            } else {
+                alertModal.show(0, "Server error", "Unexpected error occured, please try again later.");
+            }
+            console.log(error);
+            $(event.currentTarget).trigger("row:edit");
+        }
+    }
     const deptID = "<%= data.department.id %>";
     const facultyTable = new EditableTable("#faculty-table");
-    facultyTable.initData(getFaculty(deptID), true);
+    facultyTable.initData(getFaculty(deptID), true, () => {
+        $(`${facultyTable.body}>tr`).on("row:confirm-change", confirmFacultyEdit);
+    });
     $(facultyTable.addBtn).click(async (event) => {
         let newFaculty;
         try {
