@@ -344,9 +344,10 @@ class EditableTable extends ResponsiveTable {
             }
         }
 
-        const actionCol = $("<td class='edit-action'><div class='edit-options'><a class='edit' role='button'>" +
-            "<i class='fas fa-edit fa-lg'>" +
-            "</i></a><a class='delete' role='button'><i class='far fa-trash-alt fa-lg'></i></a></div></td>"
+        const actionCol = $("<td class='edit-action'><div class='edit-options'>" +
+            (this.editButtons ? "<a class='edit' role='button'><i class='fas fa-edit fa-lg'></i></a>" : "") +
+            (this.deleteButtons ? "<a class='delete' role='button'><i class='far fa-trash-alt fa-lg'></i></a>" : "") +
+            "</div></td>"
         ).appendTo(newRow);
 
         const confirmOptions = $("<div class='confirm-options'><a class='confirm' role='button'>" +
@@ -361,8 +362,14 @@ class EditableTable extends ResponsiveTable {
             .on("row:delete", (event) => this.#deleteRow(event.currentTarget))
             .on("row:confirm-change", (event) => this.#confirmRowChange(event.currentTarget))
             .on("row:cancel-change", (event) => this.#cancelRowChange(event.currentTarget));
-        $(newRow).find("a.edit").click((event) => $(event.currentTarget).closest("tr").trigger("row:edit"));
-        $(newRow).find("a.delete").click((event) => $(event.currentTarget).closest("tr").trigger("row:delete"));
+
+        if (this.editButtons) {
+            $(newRow).find("a.edit").click((event) => $(event.currentTarget).closest("tr").trigger("row:edit"));
+        }
+        if (this.deleteButtons) {
+            $(newRow).find("a.delete").click((event) => $(event.currentTarget).closest("tr").trigger("row:delete"));
+        }
+        
         $(confirmOptions).find("a.confirm").click((event) => $(event.currentTarget).closest("tr").trigger("row:confirm-change"));
         $(confirmOptions).find("a.cancel").click((event) => $(event.currentTarget).closest("tr").trigger("row:cancel-change"));
     });
@@ -451,7 +458,7 @@ class EditableTable extends ResponsiveTable {
                     ) +
                     "</ul></div>";
             } else if (!type || this.#inputOptions.includes(type)) {
-                input = `<span class='td-input'>${value}</span>`
+                continue;
             } else if (!value) {
                 input = `<input type='${type}' class='form-control td-input'>`;
             } else {
@@ -462,7 +469,7 @@ class EditableTable extends ResponsiveTable {
         this.initMenuInputs(row);
 
         $(row).find(".td-input:first").focus();
-        this.initMenuInputs($(row).data("prev-data", oldData));
+        this.initMenuInputs($(row).data("prev-data", ({...oldData})));
     }
 
     #deleteRow(row) {
@@ -489,12 +496,13 @@ class EditableTable extends ResponsiveTable {
             let validEdit = true;
             for (let i = 0; i < inputs.length; i++) {
                 let newValue = inputs[i].value || inputs[i].textContent;
-                const title = headers[i].textContent;
-                const [key, type, about] = $(headers[i]).attr("table-cts-column").split(" ", 3);
-                
+                const title = headers[i].title || headers[i].textContent;
+                const about = $(headers[i]).attr("table-cts-column");
+                const [key, type] = about.split(" ", 3);
+
                 if (type == "link") {
                     continue;
-                } else if (about && about.includes("optional") && (!newValue || newValue == "" || title == newValue)) {
+                } else if (about.includes("optional") && (!newValue || newValue == "" || title == newValue)) {
                     newValue = null;
                 } else if (type == "email" && (!newValue.includes("@") || !newValue.includes("."))) {
                     this.showTableAlert(`Input must include '@' and '.' for column <b>${title}</b>.`);
@@ -505,7 +513,7 @@ class EditableTable extends ResponsiveTable {
                 } else if (title == newValue) {
                     this.showTableAlert(`Pick from the menu in <b>${title}</b> column.`);
                     validEdit = false;
-                } else if (about && about.includes("unique")) {
+                } else if (about.includes("unique")) {
                     let found = false;
                     for (let j = 0; j < this.data.length; j++) {
                         if (this.data[j][key].toLowerCase() === newValue.toLowerCase()) {
@@ -538,7 +546,7 @@ class EditableTable extends ResponsiveTable {
                     } else if (type == "dropdown" || inputs[i].classList.contains("dropdown-toggle")) {
                         $(inputs[i]).parent("div").before(newValue);
                         inputs[i] = $(inputs[i]).closest(".dropdown");
-                    } else {
+                    } else if (newValue && newValue != "") {
                         $(inputs[i]).before(newValue);
                     }
                     $(inputs[i]).remove();
@@ -557,7 +565,7 @@ class EditableTable extends ResponsiveTable {
                 $(this.addBtn).prop("disabled", false).show();
                 $(`${this.body} >tr >td:not(.edit-action) >a`).show();
 
-                $(updateRow).data("updated-data", updateData);
+                $(updateRow).data("updated-data", ({...this.data[rowIndex]}));
                 $(this.table).addClass("table-hover");
             }
         } else if (action == 0) {
