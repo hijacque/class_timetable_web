@@ -1030,6 +1030,9 @@ router.post("/schedule/:termID", async (req, res) => { // changes or removes a c
 
             return res.status(409).json({ message: message });
         }
+
+        console.log(oldSched);
+        console.log(req.body.newSched);
         
         await DB.executeQuery(
             // if faculty is changed
@@ -1047,10 +1050,7 @@ router.post("/schedule/:termID", async (req, res) => { // changes or removes a c
     
             `UPDATE Schedules SET day = ${day}, start = ${start}, end = ${end}, mode = ${mode}, ` +
             `faculty_id = ${!faculty || faculty == "pass" ? "NULL" : `'${faculty}'`}, room_id = ${classroom ? `'${classroom.id}'` : "NULL"} ` +
-            `WHERE term_id = '${termID}' AND subj_id = '${subject}' AND block_id = '${block}' AND ` +
-            `faculty_id ${!oldSched.faculty ? "IS NULL" : `= '${oldSched.faculty}'`} AND room_id ` +
-            `${oldSched.room_id ? `= '${oldSched.room}' ` : "IS NULL "}AND day = ${oldSched.day} AND ` +
-            `start = ${oldSched.start} AND end = ${oldSched.end} LIMIT 1;`
+            `WHERE term_id = '${termID}' AND subj_id = '${subject}' AND block_id = '${block}' LIMIT 1;`
         );
 
         return res.status(200).end();
