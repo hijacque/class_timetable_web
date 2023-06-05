@@ -1072,9 +1072,8 @@ router.post("/schedule/:termID", async (req, res) => { // changes or removes a c
             await DB.executeQuery(
                 // remove schedule
                 `UPDATE Schedules SET faculty_id = NULL, room_id = NULL, day = NULL, start = NULL, ` +
-                `end = NULL, mode = NULL WHERE term_id = '${termID}' AND (subj_id = '${subject}' AND ` +
-                `block_id = '${block}') AND faculty_id = '${faculty}' AND day = ${day} AND start = ${start} ` +
-                `AND end = ${end} ${oldSched.room_id ? `AND room_id = '${oldSched.room_id}' ` : ""}LIMIT 1; ` +
+                `end = NULL, mode = NULL WHERE term_id = '${termID}' AND subj_id = '${subject}' AND ` +
+                `block_id = '${block}' LIMIT 1; ` +
 
                 // subtract faculty load
                 `UPDATE Preferences SET assigned_load = assigned_load - ${units} ` +
