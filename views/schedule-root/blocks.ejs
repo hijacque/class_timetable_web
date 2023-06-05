@@ -397,7 +397,7 @@
                 <div class="sched-body">
                     <% for (const schedule of classes) { %>
                         <div data-mdb-toggle="tooltip" data-mdb-html="true"
-                            class="sched-block<%= (schedule.departmental) ? ' dept-subj' : '' %><%= (schedule.partial) ? ' partial' : '' %>"
+                            class="sched-block<%= (schedule.departmental) ? ' dept-subj' : '' %><%= (schedule.partial == 1) ? ' partial' : '' %>"
                             <% if (schedule.room) { %>
                             title="<b><%= schedule.subject %></b><br><small><%= schedule.faculty %><br><i><%= schedule.mode %> @ <%= schedule.room %></i></small>"
                             <% } else { %>
@@ -568,7 +568,8 @@
         $("#class-end").val(prevClass.ariaValueMax);
         $("#class-hours").text(prevClass.ariaCurrent).attr("aria-valuemax", prevClass.ariaCurrent);
 
-        currentSched.faculty = faculty.getAttribute("itemid");
+        let newFaculty = faculty.getAttribute("itemid");
+        currentSched.faculty = newFaculty;
         currentSched.subject = subj.getAttribute("itemid");
         currentSched.day = prevClass.ariaValueNow;
         currentSched.start_time = prevClass.ariaValueMin;
@@ -587,7 +588,9 @@
         } else {
             $("span.class-faculty").hide().attr("aria-valuenow", null);
             $("#class-faculty").show();
-            $(`ul[aria-labelledby='class-faculty']>li>a#${faculty.getAttribute("itemid")}.dropdown-item`).trigger("click");
+            if (newFaculty) {
+                $(`ul[aria-labelledby='class-faculty']>li>a#${newFaculty}.dropdown-item`).trigger("click");
+            } else {}
         }
 
         if (room) {
