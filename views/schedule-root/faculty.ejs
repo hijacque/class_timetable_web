@@ -371,10 +371,6 @@
 
 <script src="/lib/display-dropdown.js"></script>
 <script>
-    $(document).ready(() => setTimeout(
-        () => $(".sched-block:first-child").get(0).scrollIntoView({behavior:"smooth"}), 500
-    ));
-
     let currentSched = { faculty: "<%= id %>" };
     displayDropMenu($("#class-day"), "Pick Day");
     displayDropMenu($("#class-mode"), "Pick Mode");
