@@ -46,7 +46,7 @@
         <div></div>
     </div>
     <% if (category == "faculty") { %>
-        <%- include('faculty', {deptClasses:schedule.deptClasses, otherClasses:schedule.otherClasses}) %>
+        <%- include('faculty', {deptClasses:schedule.deptClasses, otherClasses:schedule.otherClasses, classrooms:schedule.classrooms }) %>
     <% } else { %>
         <%- include('blocks', {data: schedule, status: term.status}) %>
     <% } %>

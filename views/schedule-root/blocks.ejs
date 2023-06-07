@@ -1,4 +1,4 @@
-<% const {classes, deptClasses, otherClasses, current, courseID, prevBlock, nextBlock, faculty} = data %>
+<% const {classes, partialClasses, deptClasses, otherClasses, current, courseID, prevBlock, nextBlock, faculty, classrooms} = data %>
 <% if (status == 'open') { %>
 <div class="modal fade" id="schedule-class" data-mdb-backdrop="static" data-mdb-keyboard="false"
     tabindex="-1" aria-labelledby="add-class-label" aria-hidden="true">
@@ -72,7 +72,15 @@
                             <li><a class="dropdown-item text-danger cancel" type="button">Cancel</a></li>
                         </ul>
                     </div>
-                    <input type="text" id="class-room" class="form-control" placeholder="Room no." disabled>
+                    <div class="dropdown w-100">
+                        <input type="text" id="class-room" class="text-start form-control input-group-text rounded-0 rounded-end" placeholder="Room no."
+                            data-mdb-toggle="dropdown" aria-expanded="false" autocomplete="off" disabled>
+                        <ul class="dropdown-menu" aria-labelledby="class-room">
+                            <% for (const {id, name, bldg} of classrooms) { %>
+                                <li><a class="dropdown-item" role="button" itemid="<%= id %>"><%= name %>, <%= bldg %></a></li>
+                            <% } %>
+                        </ul>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer d-flex justify-content-between">
@@ -414,7 +422,33 @@
                                 <% if (schedule.room) { %>
                                     <i>
                                         <span class="mode"><%= schedule.mode %></span> @ 
-                                        <span class="room" itemid="<%= schedule.room_id %>"><%= schedule.room %></span>
+                                        <span class="room" itemid="<%= schedule.room_id %>"><%= schedule.room %></span>,<br>
+                                        <span class="building"><%= schedule.building %></span>
+                                    </i>
+                                <% } else { %>
+                                    <i class="mode"><%= schedule.mode %></i>
+                                <% } %>
+                            </small></p>
+                        </div>
+                    <% } %>
+                    <% for (const schedule of partialClasses) { %>
+                        <div class="sched-block bg-light text-secondary partial" data-mdb-toggle="tooltip" data-mdb-html="true"
+                            <% if (schedule.room) { %>
+                            title="<b><%= schedule.subject %></b><br><small>No professor<br><i><%= schedule.mode %> @ <%= schedule.room %>,<br><%= schedule.building %></i></small>"
+                            <% } else { %>
+                            title="<b><%= schedule.subject %></b><br><small>No professor<br><i><%= schedule.mode %></i></small>"
+                            <% } %>
+                            style="grid-column: <%= schedule.day %> / span 1; grid-row: <%= schedule.start_time %> / <%= schedule.end_time %>;"
+                            aria-valuemin="<%= schedule.start %>" aria-valuemax="<%= schedule.end %>" 
+                            aria-valuenow="<%= schedule.day %>" aria-current="<%= schedule.duration %>">
+                            <h6 class="text-break subject" itemid="<%= schedule.subj_id %>"><%= schedule.subject %></h6>
+                            <p class="text-truncate"><small>
+                                <span class="faculty text-danger">No professor</span><br>
+                                <% if (schedule.room) { %>
+                                    <i>
+                                        <span class="mode"><%= schedule.mode %></span> @ 
+                                        <span class="room" itemid="<%= schedule.room_id %>"><%= schedule.room %></span>,
+                                        <br><span class="building"><%= schedule.building %></span>
                                     </i>
                                 <% } else { %>
                                     <i class="mode"><%= schedule.mode %></i>
@@ -496,7 +530,7 @@
                     </div>
                 </div>
             <% } else { %>
-                <div class="collapse" id="other-classes">
+                <div class="collapse show" id="other-classes">
                     <p>No more classes to assign</p>
                 </div>
             <% } %>
@@ -530,6 +564,7 @@
     });
     
     $(".menu-item").click((event) => {
+        currentSched = {};
         const newClass = event.currentTarget;
         $("#class-subject").text(newClass.title).attr("aria-valuenow", newClass.id);
         const assignedHours = parseFloat(newClass.ariaValueNow);
@@ -538,6 +573,11 @@
             .text(`${assignedHours} / ${reqHours}`)
             .attr("aria-valuemax", reqHours - assignedHours)
             .attr("aria-valuemin", assignedHours);
+
+        $("#class-start").val(null);
+        $("#class-end").val(null);
+        $(`ul[aria-labelledby='class-day']>li>a.dropdown-item.cancel`).trigger("click");
+        $(`ul[aria-labelledby='class-mode']>li>a.dropdown-item.cancel`).trigger("click");
         
         const facultyID = newClass.getAttribute("itemid");
         if ($(newClass).closest("div.collapse").attr("id") == "other-classes") {
@@ -561,7 +601,7 @@
     $(".sched-block").click((event) => {
         const prevClass = event.currentTarget;
         $("#schedule-class-label").text("Change Class Schedule");
-        const [subj, faculty, mode, room] = $(prevClass).find(".subject, .faculty, .mode, .room");
+        const [subj, faculty, mode, room, bldg] = $(prevClass).find(".subject, .faculty, .mode, .room, .building");
         console.log(prevClass.ariaValueMin, prevClass.ariaValueMax, prevClass.ariaValueNow);
         $("#class-subject").text(subj.textContent).attr("aria-valuenow", subj.getAttribute("itemid"));
         $("#class-start").val(prevClass.ariaValueMin);
@@ -593,10 +633,12 @@
             } else {}
         }
 
-        if (room) {
-            $("#class-room").val(room.textContent);
-            currentSched.room_name = room.textContent;
+        if (room && bldg) {
+            currentSched.room_name = `${room.textContent}, ${bldg.textContent}`;
             currentSched.room_id = room.getAttribute("itemid");
+            $("#class-room")
+                .val(`${room.textContent}, ${bldg.textContent}`)
+                .attr("aria-valuenow", currentSched.room_id);
         } else {
             delete currentSched.room_name;
             delete currentSched.room_id;
@@ -606,6 +648,13 @@
         $("#add-schedule").hide();
         $("#change-schedule, #delete-schedule, #reset-schedule").show();
         scheduleForm.show();
+    });
+
+    $("[aria-labelledby='class-room'] > li > a.dropdown-item").click((event) => {
+        const classroom = event.currentTarget;
+        $("#class-room")
+            .val(classroom.textContent)
+            .attr("aria-valuenow", classroom.getAttribute("itemid"));
     });
 
     $("[aria-labelledby='class-day'] > li > a.dropdown-item").click((event) => {
@@ -639,6 +688,31 @@
         }
     });
 
+    function filterRooms(roomSearch) {
+        const rooms = $("ul[aria-labelledby='class-room'] > li > a.dropdown-item").hide().get();
+        const totalRooms = Math.min(6, rooms.length);
+        
+        rooms.sort(
+            (a, b) => b.textContent.localeCompare(roomSearch, undefined, {sensitivity:"accent"}) - a.textContent.localeCompare(roomSearch, undefined, {sensitivity:"accent"})
+        );
+        rooms.splice(totalRooms, rooms.length - totalRooms);
+
+        $(rooms).show();
+    }
+
+    $("#class-room")
+        .focusin((event) => filterRooms(event.currentTarget.value))
+        .focusout((event) => {
+            if (!event.currentTarget.getAttribute("itemid")) {
+                $("#class-room")
+                .val(currentSched.room_name)
+                .attr("aria-valuenow", currentSched.room_id);
+            }
+        })
+        .on("input", (event) => {
+            filterRooms(event.currentTarget.value);
+        });
+
     $("#reset-schedule").click(async (event) => {
         console.log(currentSched);
         $("#class-end").val(currentSched.end_time);
@@ -649,20 +723,36 @@
         $(`ul[aria-labelledby='class-day']>li:nth-child(${currentSched.day})>a.dropdown-item`).trigger("click");
         $(`ul[aria-labelledby='class-mode']>li>a.dropdown-item:contains(${currentSched.mode})`).trigger("click");
         if (currentSched.room_id) {
-            $("#class-room").val(currentSched.room_name);
+            $("#class-room")
+                .val(currentSched.room_name)
+                .attr("aria-valuenow", currentSched.room_id);
         }
     });
 
     $("#change-schedule").click(async (event) => {
         const validTime = validateScheduleInput();
         if (!validTime) return;
+
+        let mode = $("#class-mode").attr("aria-valuenow");
+        if (!mode) {
+            $(`ul[aria-labelledby='class-mode']>li:nth-child(1)>a.dropdown-item`).trigger("click");
+            mode = 1;
+        }
+        const classroom = $("#class-room").attr("aria-valuenow");
+        if (!classroom && mode == 1) {
+            $("#confirm-alert").attr("data-mdb-target", "#schedule-class").attr("data-mdb-toggle", "modal");
+            return alertModal.show(
+                2, "Missing room input",
+                "Please choose a classroom for F2F class."
+            );
+        }
         
         try {
             await manageClass("change", {
                 faculty: $(".class-faculty[aria-valuenow]").attr("aria-valuenow"),
                 subject: $("#class-subject").attr("aria-valuenow"),
-                mode: $("#class-mode").attr("aria-valuenow") || 1,
-                room: $("#class-room").val().toLowerCase(),
+                mode: mode,
+                room: classroom,
                 block: "<%= current.id %>",
                 day: $("#class-day").attr("aria-valuenow"),
                 start: validTime.startTime,
@@ -709,23 +799,26 @@
         const validTime = validateScheduleInput();
         if (!validTime) return;
 
+        let mode = $("#class-mode").attr("aria-valuenow");
+        if (!mode) {
+            $(`ul[aria-labelledby='class-day']>li:nth-child(1)>a.dropdown-item`).trigger("click");
+            mode = 1;
+        }
+        const classroom = $("#class-room").attr("aria-valuenow") || currentSched.room_id;
+        if (!classroom && mode == 1) {
+            $("#confirm-alert").attr("data-mdb-target", "#schedule-class").attr("data-mdb-toggle", "modal");
+            return alertModal.show(
+                2, "Missing room input",
+                "Please choose a classroom for F2F class."
+            );
+        };
+
         try {
-            console.log({
-                faculty: $(".class-faculty[aria-valuenow]").attr("aria-valuenow"),
-                subject: $("#class-subject").attr("aria-valuenow"),
-                mode: $("#class-mode").attr("aria-valuenow") || 1,
-                room: $("#class-room").val().toLowerCase(),
-                block: "<%= current.id %>",
-                day: $("#class-day").attr("aria-valuenow"),
-                start: validTime.startTime,
-                end: validTime.endTime,
-                partial: parseFloat($("#class-hours").attr("aria-valuemin")) > 0 ? 1 : 0
-            });
             await addClass({
                 faculty: $(".class-faculty[aria-valuenow]").attr("aria-valuenow"),
                 subject: $("#class-subject").attr("aria-valuenow"),
-                mode: $("#class-mode").attr("aria-valuenow") || 1,
-                room: $("#class-room").val().toLowerCase(),
+                mode: mode,
+                room: classroom,
                 block: "<%= current.id %>",
                 day: $("#class-day").attr("aria-valuenow"),
                 start: validTime.startTime,
@@ -792,12 +885,5 @@
         const finalHours = (rounded - finalMins);
         return finalHours + finalMins;
     }
-
-    $(document).ready(() => setTimeout(() => {
-        const startHeight = <%- JSON.stringify(Math.min(...classes.map(c => c.start)) || 0) %>;
-        if (startHeight > 9) {
-            $(".main-view>div:last-child").stop().animate({scrollTop: startHeight * 50 + 107}, 1000, 'swing');
-        }
-    }, 300));
 </script>
 <% } %>

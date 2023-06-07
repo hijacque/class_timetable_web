@@ -31,7 +31,7 @@
                             <li><a class="dropdown-item" role="button" data-cts-enum="6">SATURDAY</a></li>
                             <li><a class="dropdown-item" role="button" data-cts-enum="7">SUNDAY</a></li>
                             <li><hr class="dropdown-divider m-0"></li>
-                            <li><a class="dropdown-item text-danger" role="button">Cancel</a></li>
+                            <li><a class="dropdown-item text-danger cancel" role="button">Cancel</a></li>
                         </ul>
                     </div>
                     <span class="input-group-text"><i class="fas fa-at"></i></span>
@@ -47,11 +47,21 @@
                             <li><a class="dropdown-item" role="button" data-cts-enum="1">F2F</a></li>
                             <li><a class="dropdown-item" role="button" data-cts-enum="2">Online</a></li>
                             <li><a class="dropdown-item" role="button" data-cts-enum="3">Blended</a></li>
-                            <li><hr class="dropdown-divider m-0"></li>
-                            <li><a class="dropdown-item text-danger" role="button">Cancel</a></li>
+                            <li>
+                                <hr class="dropdown-divider m-0">
+                            </li>
+                            <li><a class="dropdown-item text-danger cancel" role="button">Cancel</a></li>
                         </ul>
                     </div>
-                    <input type="text" id="class-room" class="form-control" placeholder="Room no." disabled>
+                    <div class="dropdown w-100">
+                        <input type="text" id="class-room" class="text-start form-control input-group-text rounded-0 rounded-end" placeholder="Room no."
+                            data-mdb-toggle="dropdown" aria-expanded="false" autocomplete="off" disabled>
+                        <ul class="dropdown-menu" aria-labelledby="class-room">
+                            <% for (const {id, name, bldg} of classrooms) { %>
+                                <li><a class="dropdown-item" role="button" itemid="<%= id %>"><%= name %>, <%= bldg %></a></li>
+                            <% } %>
+                        </ul>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer d-flex justify-content-between">
@@ -85,7 +95,6 @@
                         <p class="prev page-label"></p>
                     </li>
                 <% } %>
-
                 <% if (nextFaculty) { %>
                     <li class="justify-content-end page-item" id="<%= nextFaculty.id %>">
                         <p class="next page-label"><%= nextFaculty.name %></p>
@@ -150,12 +159,12 @@
             <p>
                 <% if (pref_status == 'submitted') { %>
                     <b>Form Status:</b> <span class="text-success"><%= pref_status %></span><br>
-                    <b>Subjects:</b> <%= new_pref_subjs.join(", ") %>
+                    <b>Subjects:</b> <%= new_pref_subjs.join(", ") %><br>
                 <% } else { %>
                     <b>Form Status:</b> <%= pref_status %></span><br>
                 <% } %>
                 <% if (old_pref_subjs.length > 0) { %>
-                    <br><b>Previous Subjects:</b> <%= old_pref_subjs.join(", ") %>
+                    <b>Previously Subjects:</b> <%= old_pref_subjs.join(", ") %>
                 <% } %>
             </p>
         </div>
@@ -193,7 +202,7 @@
                     <% let occupied = 0 %>
                     <% for (const {day, start, end} of current.pref_scheds) { %>
                         <% for (let i = start; i < end; i++) { %>
-                            <div class="bg-white" style="grid-column: <%= day %> / span 1; grid-row: <%= i %>;"></div>
+                            <div class="bg-white" style="grid-column: <%= day %>/<%= day + 1 %>; grid-row: <%= i %>/<%= i + 1 %>;"></div>
                         <% } %>
                         <% occupied += end - start %>
                     <% } %>
@@ -221,7 +230,7 @@
                                     <i>
                                         <span class="mode"><%= schedule.mode %></span> @ 
                                         <span class="room" itemid="<%= schedule.room_id %>"><%= schedule.room %></span>,
-                                        <br><%= schedule.building %>
+                                        <br><span class="building"><%= schedule.building %></span>
                                     </i>
                                 <% } else { %>
                                     <i class="mode"><%= schedule.mode %></i>
@@ -249,7 +258,7 @@
                                     <i>
                                         <span class="mode"><%= schedule.mode %></span> @ 
                                         <span class="room" itemid="<%= schedule.room_id %>"><%= schedule.room %></span>,
-                                        <br><%= schedule.building %>
+                                        <br><span class="building"><%= schedule.building %></span>
                                     </i>
                                 <% } else { %>
                                     <i class="mode"><%= schedule.mode %></i>
@@ -316,7 +325,7 @@
                     aria-expanded="false"><i class="fas fa-caret-down me-2"></i><text>Other Classes</text>
                 </a>
                 <% if (otherClasses.length> 0) { %>
-                    <div class="collapse show" id="other-classes">
+                    <div class="collapse<%= deptClasses.length > 0 ? '' : ' show'%>" id="other-classes">
                         <div>
                             <h6 class="block-title"><small><%= otherClasses[0].course %></small><br>
                                 Year <%= otherClasses[0].year %> - Block <%= otherClasses[0].block_no %>
@@ -351,7 +360,7 @@
                         </div>
                     </div>
                 <% } else { %>
-                    <div class="collapse" id="other-classes">
+                    <div class="collapse show" id="other-classes">
                         <p>No more classes to assign</p>
                     </div>
                 <% } %>
@@ -362,6 +371,10 @@
 
 <script src="/lib/display-dropdown.js"></script>
 <script>
+    $(document).ready(() => setTimeout(
+        () => $(".sched-block:first-child").get(0).scrollIntoView({behavior:"smooth"}), 500
+    ));
+
     let currentSched = { faculty: "<%= id %>" };
     displayDropMenu($("#class-day"), "Pick Day");
     displayDropMenu($("#class-mode"), "Pick Mode");
@@ -372,17 +385,17 @@
         ).fail((error) => reject(error.responseJSON));
     });
 
-    const manageClass = (action, oldSchedule, newSchedule = {}) => new Promise((resolve, reject) => {
+    const manageClass = (action, newSchedule = {}) => new Promise((resolve, reject) => {
         $.post(
             "/api/schedule/<%= term.id %>",
-            { oldSched: oldSchedule, newSched: newSchedule, action: action }, 
+            { oldSched: currentSched, newSched: newSchedule, action: action }, 
             () => resolve(location.reload())
         ).fail((error) => reject(error.responseJSON));
     });
     
     $(".menu-item").click((event) => {
+        currentSched = {};
         const newClass = event.currentTarget;
-        console.log(newClass);
         $("#schedule-class-label").text("Assign New Class");
         $("#class-subject").text(newClass.title).attr("aria-valuenow", newClass.getAttribute("itemid"));
         const assignedHours = parseFloat(newClass.ariaValueNow);
@@ -392,6 +405,11 @@
             .attr("aria-valuemax", reqHours - assignedHours)
             .attr("aria-valuemin", assignedHours);
         
+        $("#class-start").val(null);
+        $("#class-end").val(null);
+        $(`ul[aria-labelledby='class-day']>li>a.dropdown-item.cancel`).trigger("click");
+        $(`ul[aria-labelledby='class-mode']>li>a.dropdown-item.cancel`).trigger("click");
+
         const block = $(newClass).closest(".panel-menu");
         $("#class-block").text(block.attr("title")).attr("aria-valuenow", block.attr("id"));
 
@@ -399,19 +417,17 @@
         $("#change-schedule, #delete-schedule, #reset-schedule").hide();
         scheduleForm.show();
     });
-
+    
     $(".sched-block").click((event) => {
         const prevClass = event.currentTarget;
         $("#schedule-class-label").text("Change Class Schedule");
-        const [subj, block, mode, room] = $(prevClass).find(".subject, .block, .mode, .room");
-        console.log(prevClass.ariaValueMin, prevClass.ariaValueMax, prevClass.ariaValueNow);
+        const [subj, block, mode, room, bldg] = $(prevClass).find(".subject, .block, .mode, .room, .building").get();
         $("#class-subject").text(subj.textContent).attr("aria-valuenow", subj.getAttribute("itemid"));
         $("#class-block").text(block.textContent).attr("aria-valuenow", block.getAttribute("itemid"));
         $("#class-start").val(prevClass.ariaValueMin);
         $("#class-end").val(prevClass.ariaValueMax);
         $("#class-hours").text(prevClass.ariaCurrent).attr("aria-valuemax", prevClass.ariaCurrent);
 
-        console.log(prevClass.classList);
         currentSched.faculty = prevClass.classList.contains("partial") ? null : "<%= id %>";
         currentSched.block = block.getAttribute("itemid");
         currentSched.subject = subj.getAttribute("itemid");
@@ -424,21 +440,29 @@
         $(`ul[aria-labelledby='class-day']>li:nth-child(${prevClass.ariaValueNow})>a.dropdown-item`).trigger("click");
         $(`ul[aria-labelledby='class-mode']>li>a.dropdown-item:contains(${mode.textContent})`).trigger("click");
 
-        if (room) {
-            $("#class-room").val(room.textContent);
-            currentSched.room_name = room.textContent;
+        if (room && bldg) {
+            currentSched.room_name = `${room.textContent}, ${bldg.textContent}`;
             currentSched.room_id = room.getAttribute("itemid");
+            $("#class-room")
+                .val(`${room.textContent}, ${bldg.textContent}`)
+                .attr("aria-valuenow", currentSched.room_id);
         } else {
             delete currentSched.room_name;
             delete currentSched.room_id;
         }
-        
-        console.log(currentSched);
+
         $("#add-schedule").hide();
         $("#change-schedule, #delete-schedule, #reset-schedule").show();
         scheduleForm.show();
     });
 
+    $("[aria-labelledby='class-room'] > li > a.dropdown-item").click((event) => {
+        const classroom = event.currentTarget;
+        $("#class-room")
+            .val(classroom.textContent)
+            .attr("aria-valuenow", classroom.getAttribute("itemid"));
+    });
+    
     $("[aria-labelledby='class-day'] > li > a.dropdown-item").click((event) => {
         const dayIndex = event.currentTarget.getAttribute("data-cts-enum");
         if (!dayIndex) return $("#class-day").attr("aria-valuenow", null);
@@ -456,11 +480,36 @@
 
         $("#class-mode").attr("aria-valuenow", modeIndex);
         if (modeIndex == 1) {
-            $("#class-room").prop("disabled", false).focus();
+            $("#class-room").prop("disabled", false);
         } else {
             $("#class-room").val(null).prop("disabled", true);
         }
     });
+
+    function filterRooms(roomSearch) {
+        const rooms = $("ul[aria-labelledby='class-room'] > li > a.dropdown-item").hide().get();
+        const totalRooms = Math.min(6, rooms.length);
+        
+        rooms.sort(
+            (a, b) => b.textContent.localeCompare(roomSearch, undefined, {sensitivity:"accent"}) - a.textContent.localeCompare(roomSearch, undefined, {sensitivity:"accent"})
+        );
+        rooms.splice(totalRooms, rooms.length - totalRooms);
+
+        $(rooms).show();
+    }
+
+    $("#class-room")
+        .focusin((event) => filterRooms(event.currentTarget.value))
+        .focusout((event) => {
+            if (!event.currentTarget.getAttribute("itemid")) {
+                $("#class-room")
+                .val(currentSched.room_name)
+                .attr("aria-valuenow", currentSched.room_id);
+            }
+        })
+        .on("input", (event) => {
+            filterRooms(event.currentTarget.value);
+        });
 
     $("#confirm-alert").click((event) => {
         event.currentTarget.removeAttribute("data-mdb-target")
@@ -474,7 +523,9 @@
         $(`ul[aria-labelledby='class-day']>li:nth-child(${currentSched.day})>a.dropdown-item`).trigger("click");
         $(`ul[aria-labelledby='class-mode']>li>a.dropdown-item:contains(${currentSched.mode})`).trigger("click");
         if (currentSched.room_id) {
-            $("#class-room").val(currentSched.room_name);
+            $("#class-room")
+                .val(currentSched.room_name)
+                .attr("aria-valuenow", currentSched.room_id);
         }
     });
 
@@ -482,12 +533,26 @@
         const validTime = validateScheduleInput();
         if (!validTime) return;
 
+        let mode = $("#class-mode").attr("aria-valuenow");
+        if (!mode) {
+            $(`ul[aria-labelledby='class-mode']>li:nth-child(1)>a.dropdown-item`).trigger("click");
+            mode = 1;
+        }
+        const classroom = $("#class-room").attr("aria-valuenow");
+        if (!classroom && mode == 1) {
+            $("#confirm-alert").attr("data-mdb-target", "#schedule-class").attr("data-mdb-toggle", "modal");
+            return alertModal.show(
+                2, "Missing room input",
+                "Please choose a classroom for F2F class."
+            );
+        }
+        
         try {
             await addClass({
                 faculty: "<%= id %>",
                 subject: $("#class-subject").attr("aria-valuenow"),
-                mode: $("#class-mode").attr("aria-valuenow") || 1,
-                room: $("#class-room").val().toLowerCase(),
+                mode: mode,
+                room: classroom,
                 block: $("#class-block").attr("aria-valuenow"),
                 day: $("#class-day").attr("aria-valuenow"),
                 start: validTime.startTime,
@@ -514,13 +579,27 @@
     $("#change-schedule").click(async (event) => {
         const validTime = validateScheduleInput();
         if (!validTime) return;
+
+        let mode = $("#class-mode").attr("aria-valuenow");
+        if (!mode) {
+            $(`ul[aria-labelledby='class-day']>li:nth-child(1)>a.dropdown-item`).trigger("click");
+            mode = 1;
+        }
+        const classroom = $("#class-room").attr("aria-valuenow") || currentSched.room_id;
+        if (!classroom && mode == 1) {
+            $("#confirm-alert").attr("data-mdb-target", "#schedule-class").attr("data-mdb-toggle", "modal");
+            return alertModal.show(
+                2, "Missing room input",
+                "Please choose a classroom for F2F class."
+            );
+        };
         
         try {
-            await manageClass("change", currentSched, {
+            await manageClass("change", {
                 faculty: "<%= id %>",
                 subject: $("#class-subject").attr("aria-valuenow"),
-                mode: $("#class-mode").attr("aria-valuenow") || 1,
-                room: $("#class-room").val().toLowerCase(),
+                mode: mode,
+                room: classroom,
                 block: $("#class-block").attr("aria-valuenow"),
                 day: $("#class-day").attr("aria-valuenow"),
                 start: validTime.startTime,
@@ -545,7 +624,7 @@
 
     $("#delete-schedule").click(async (event) => {
         try {
-            await manageClass("delete", currentSched);
+            await manageClass("delete");
         } catch (eResponse) {
             if (eResponse) {
                 if (eResponse.redirect) {
