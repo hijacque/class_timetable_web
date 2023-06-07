@@ -828,7 +828,7 @@ router.route("/schedules/:termID")
         let classroom;
         if (mode == 1 && (!room || room == "")) {
             [classroom] = await DB.executeQuery(
-                `SELECT r.id, r.name FROM ROOMS r INNER JOIN Buildings b ON r.bldg_id = b.id INNER JOIN ` +
+                `SELECT r.id, r.name FROM Rooms r INNER JOIN Buildings b ON r.bldg_id = b.id INNER JOIN ` +
                     `Terms t ON b.school_id = t.school_id WHERE t.id = '${termID}' ` +
                     (prefRooms.length > 0) ? "OR r.name LIKE '%" +
                     prefRooms.map(r => r.split(" ").join("%")).join("%' OR r.name LIKE '%") + "%'" : "" + "LIMIT 1"
@@ -836,7 +836,7 @@ router.route("/schedules/:termID")
             message = `Auto-assigned schedule into classroom ${classroom.name}`;
         } else if (mode == 1) {
             [classroom] = await DB.executeQuery(
-                `SELECT r.id, r.name FROM ROOMS r INNER JOIN Buildings b ON r.bldg_id = b.id INNER JOIN ` +
+                `SELECT r.id, r.name FROM Rooms r INNER JOIN Buildings b ON r.bldg_id = b.id INNER JOIN ` +
                 `Terms t ON b.school_id = t.school_id WHERE t.id = '${termID}' AND r.id = '${room}' LIMIT 1`
             );
         }
