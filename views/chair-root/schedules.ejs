@@ -159,6 +159,7 @@
 <script src="/lib/display-dropdown.js"></script>
 <script>
     <% if (currentTerm) { %>
+    
     function initScheduleTable(table) {
         const {id} = table;
         const termID = "<%= currentTerm.id %>";
@@ -188,18 +189,17 @@
                 `<th table-cts-column="block_no" style="width: 120px;">Block</th>` +
                 `<th table-cts-column="total_students number" style="width: 160px;">No. of Students</th>` +
                 `<th table-cts-column="sched_status" style="width: 120px;">Schedule<br>Status</th>` +
-                `<th table-cts-column="delete">Action</th></tr></thead><tbody></tbody>` +
-                `<tfoot id='add-block'><tr class='add-data'>` +
+                `<th table-cts-column="${$("#generate-sched").get().length > 0 ? "delete" : ""}">Action</th></tr><tr class='add-data'>` +
                     `<td><input type="number" class="form-control add-td-input reuse text-center"></td>` +
                     `<td><label class="add-td-input optional"></label></td>` +
                     `<td><input type="number" class="form-control add-td-input optional text-center" min="1" max="100"></td>` +
                     `<td><label class="add-td-input optional"></label></td>` +
-                `</tr></tfoot>`
+                `</tr></thead><tbody></tbody>`
             );
 
             const blocksTable = new EditableTable("#blocks-schedule");
             blocksTable.initData(getSchedules(termID, id), true, () => {
-                $(blocksTable.addBtn).attr("href", "#add-block").click(async (event) => {
+                $(blocksTable.addBtn).click(async (event) => {
                     let block;
                     try {
                         block = await $(event.currentTarget).data("newRow");
@@ -235,10 +235,42 @@
                         $(`${blocksTable.body}>tr:last-child`).remove();
                     }
                 });
-                $(`${blocksTable.body}>tr`).click((event) => openSchedule(id, event))
+                $(`${blocksTable.body}>tr`)
+                    .click((event) => openSchedule(id, event))
+                    .on("row:confirm-change", removeBlock)
                     .find("td:contains('COMPLETE')").addClass("text-success");
             });
         }
+    }
+
+    const deleteBlock = (oldBlock) => new Promise((resolve, reject) => {
+        $.post(
+            "/api/delete_block/<%= currentTerm.id %>", oldBlock, () => location.reload()
+        ).fail((error) => reject(error.responseJSON))
+    });
+
+    const removeBlock = async (event) => {
+        if (event.currentTarget.isConnected) {
+            return;
+        }
+
+        try {
+            const [year, block_no] = $(event.currentTarget).children("td").get();
+            await deleteBlock({year: year.textContent, block: block_no.textContent});
+        } catch (error) {
+            if (error) {
+                if (error.redirect) {
+                    location.replace(error.redirect);
+                }
+                if (error.message) {
+                    alertModal.show(...Object.values(error.message));
+                }
+                console.log(error);
+            } else {
+                alertModal.show(0, "Server error", "Unexpected error occured, please try again later.");
+            }
+        }
+        console.log("deleting block...");
     }
 
     const openSchedule = (tableID, rowEvent) => {

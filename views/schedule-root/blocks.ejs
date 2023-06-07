@@ -1,5 +1,4 @@
 <% const {classes, partialClasses, deptClasses, otherClasses, current, courseID, prevBlock, nextBlock, faculty, classrooms} = data %>
-<% if (status == 'open') { %>
 <div class="modal fade" id="schedule-class" data-mdb-backdrop="static" data-mdb-keyboard="false"
     tabindex="-1" aria-labelledby="add-class-label" aria-hidden="true">
     <div class="modal-dialog">
@@ -98,7 +97,6 @@
         </div>
     </div>
 </div>
-<% } %>
 <div class="main-view">
     <div>
         <nav aria-label="Schedule Navigation for Blocks">   
@@ -538,7 +536,6 @@
     </div>
 </div>
 
-<% if (status == 'open') { %>
 <script src="/lib/display-dropdown.js"></script>
 <script>
     let currentSched = {block: "<%= current.id %>"};
@@ -886,4 +883,3 @@
         return finalHours + finalMins;
     }
 </script>
-<% } %>

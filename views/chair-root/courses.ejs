@@ -149,7 +149,7 @@
             console.log(data);
             $("#total-units").text(data.totalUnits || 0);
             addTermTables(data.curriculum);
-            if (latestSem == "s") {
+            if (latestTerm == "s") {
                 $("li:has('#new-summer')").hide();
             }
         }
@@ -169,7 +169,7 @@
         }
         const totalTermsPerYear = <%- JSON.stringify(data.totalTerms || 0) %>;
         const semesterTables = [];
-        let latestTerm, latestSem, latestYear = 0;
+        let latestTerm, latestYear = 0;
         let openCourse;
         if (courses.length > 0) {
             openCourse = courses.find(co => co.title == "<%= currentCourse.title %>");
