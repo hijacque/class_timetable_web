@@ -167,7 +167,7 @@ class EditableTable extends ResponsiveTable {
 
         this.#editOptions = `${id}>tbody>tr>td.edit-action> div.edit-options`;
         this.#changeOptions = `${id}>tbody>tr>td.edit-action> div.confirm-options`;
-        const actions = $(`${id}>thead>tr> *:last-child`).attr("table-cts-column").split(" ");
+        const actions = $(`${id}>thead>tr> *:last-child:contains(ction)`).attr("table-cts-column").split(" ");
         if (actions.includes("edit")) {
             this.editButtons = `${this.#editOptions}>a.edit`;
         }
@@ -220,16 +220,18 @@ class EditableTable extends ResponsiveTable {
                     newRow += "<td></td>";
                 }
             }
-            newRow += "<td class='edit-action'><div class='edit-options'>";
-            if (this.editButtons) {
-                newRow += "<a class='edit' role='button'><i class='fas fa-edit fa-lg'></i></a>";
+            if (this.editButtons || this.deleteButtons) {
+                newRow += "<td class='edit-action'><div class='edit-options'>";
+                if (this.editButtons) {
+                    newRow += "<a class='edit' role='button'><i class='fas fa-edit fa-lg'></i></a>";
+                }
+                if (this.deleteButtons) {
+                    newRow += "<a class='delete' role='button'><i class='far fa-trash-can fa-lg'></i></a>";
+                }
+                newRow += "</div><div class='confirm-options'><a class='confirm' role='button'>" +
+                    "<i class='fas fa-check-circle fa-lg'></i></a><a class='cancel' role='button'>" +
+                    "<i class='fas fa-times-circle fa-lg'></i></a></td></tr>";
             }
-            if (this.deleteButtons) {
-                newRow += "<a class='delete' role='button'><i class='far fa-trash-can fa-lg'></i></a>";
-            }
-            newRow += "</div><div class='confirm-options'><a class='confirm' role='button'>" +
-                "<i class='fas fa-check-circle fa-lg'></i></a><a class='cancel' role='button'>" +
-                "<i class='fas fa-times-circle fa-lg'></i></a></td></tr>";
 
             $(this.body).append(newRow);
         }
@@ -441,8 +443,7 @@ class EditableTable extends ResponsiveTable {
                 let [list, options] = about.split(" ", 2);
                 list = list.trim().split(/[\[,\]]/);
                 const items = list.filter((val) => val != "" && val.toLowerCase() != "cancel");
-
-                // input = $(inputs[i]).clone().toggleClass("add-td-input td-input").text(value || headers[i].textContent);
+                
                 input = `<div class='dropdown'><button data-mdb-toggle="dropdown" aria-expanded="false" ` +
                     `class="btn btn-secondary dropdown-toggle td-input ${options ? options : ''}" ` +
                     `title='${headers[i].title}' type='button'>${value ? value : headers[i].title}</button>` +
@@ -458,7 +459,7 @@ class EditableTable extends ResponsiveTable {
                     ) +
                     "</ul></div>";
             } else if (!type || this.#inputOptions.includes(type)) {
-                continue;
+                input = `<span class="td-input${about ? about : ""}">${value}</span>`;
             } else if (!value) {
                 input = `<input type='${type}' class='form-control td-input'>`;
             } else {
@@ -478,7 +479,7 @@ class EditableTable extends ResponsiveTable {
         $(`${this.table}>tbody>tr`).not(row).addClass("text-muted");
         $(`${this.table}>thead>tr> *:last-child[table-cts-column]`).text("Delete");
         $(row).addClass("text-danger table-active").data("action", 0).find("div.confirm-options").show();
-        $(this.footer).find(".add-row").prop("disabled", true).hide();
+        $(this.addBtn).prop("disabled", true).hide();
         $(`${this.body}>tr>td>a`).hide();
 
         $(this.footer).find(".add-td-input").prop("disabled", true);
@@ -571,7 +572,8 @@ class EditableTable extends ResponsiveTable {
         } else if (action == 0) {
             $(`${this.table}>tbody>tr`).not(updateRow).removeClass("text-muted").css("background-color", "unset");
             $(this.#editOptions).show();
-            $(this.footer).find(".add-td-input, .add-row").prop("disabled", false).show();
+            $(this.addBtn).prop("disabled", false).show();
+            $(this.footer).find(".add-td-input").prop("disabled", false).show();
             const rowIndex = $(updateRow).index();
             this.data.splice(rowIndex, 1);
             $(updateRow).remove();

@@ -24,12 +24,12 @@ const getFaculty = (departmentID, columns) => new Promise((resolve, reject) => {
 
 const updateDepartment = (deptID, newDeptData) => new Promise((resolve, reject) => $.post(
     "/api/department/" + deptID, newDeptData,
-    (data) => resolve(data.message)
+    (data) => resolve(data)
 ).fail(error => reject(error.responseJSON)));
 
 const addFaculty = (deptID, facultyData) => new Promise((resolve, reject) => $.post(
     "/api/faculty/" + deptID, facultyData,
-    (data) => resolve(data.message)
+    (data) => resolve(data)
 ).fail(error => reject(error.responseJSON)));
 
 const getSubjects = (collegeID) => new Promise((resolve, reject) => $.get(

@@ -3,7 +3,6 @@ function displayDropMenu(dropMenuBtn, origLabel) {
     let dropItems = dropList.find(".dropdown-item");
     
     dropItems.click((event) => {
-        console.log(dropMenuBtn, origLabel);
         const value = event.currentTarget.textContent.trim();
         if (value.toLowerCase() == "cancel" || $(event.currentTarget).hasClass("cancel")) {
             dropMenuBtn.val(null).text(origLabel);
