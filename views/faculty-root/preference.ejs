@@ -110,7 +110,7 @@
     const expertises = [];
     const submitPreference = (schedules = []) => new Promise((resolve, reject) => $.post(
         "/api/preferences/<%= current.pref_id %>",
-        {subjects: expertises, schedules: schedules}, 
+        {subjects: expertises || [], schedules: schedules}, 
         (data) => resolve(data), "json",
     ).fail((data) => reject(data)));
 
@@ -144,17 +144,19 @@
     });
 
     $("#submit-pref").click(async () => {
-        let prefSchedules = $("#pref-schedule>tbody>tr").get();
+        let prefSchedules = $("#pref-schedule>tbody>tr").get() || [];
         for (let i = 0; i < prefSchedules.length; i++) {
             const start = $(prefSchedules[i]).find(".start-time").val();
             const end = $(prefSchedules[i]).find(".end-time").val();
+            const day = $(`tbody>tr:nth-child(${i+1})>td:first-child`).text();
             
             prefSchedules[i] = { day: i + 1 };
+            console.log(start, end);
             if (start && end) {
                 let startTime = roundMinutes(start, 30);
                 if (startTime < 7 * 60) {
                     $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
-                    alertModal.show(2, $(sched).first().text() + " start time is too early", "Class must start on or later than 7AM");
+                    alertModal.show(2, "Start time is too early on " + day, "Class must start on or later than 7AM");
                     return console.log("Class must start on or later than 7AM");
                 }
                 prefSchedules[i].start = startTime;
@@ -162,7 +164,7 @@
                 let endTime = roundMinutes(end, 30);
                 if (endTime > 22 * 60) {
                     $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
-                    alertModal.show(2, $(sched).first().text() + " end time is too late", "Class must end on or before than 10PM");
+                    alertModal.show(2, "End time is too late on " + day, "Class must end on or before than 10PM");
                     return console.log("Class must end on or before 10PM");
                 }
                 prefSchedules[i].end = endTime;
