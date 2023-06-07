@@ -79,7 +79,7 @@ A web-based class schedule and faculty loading system for the Computer Science D
     DB_NAME="class_sched_sys"
 
     API_PORT=3000
-    API_DOMAIN="localhost"
+    API_DOMAIN=localhost:$API_PORT
     API_KEY="RANDOM_32LENGTH_STRING1"
 
     SMTP_PORT=587

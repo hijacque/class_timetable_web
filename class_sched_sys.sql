@@ -85,7 +85,7 @@ CREATE TABLE `ConsultationHours` (
   `start` int DEFAULT NULL,
   `end` int DEFAULT NULL,
   KEY `faculty_id` (`faculty_id`),
-  CONSTRAINT `consultationhours_ibfk_1` FOREIGN KEY (`faculty_id`) REFERENCES `Faculty` (`id`)
+  CONSTRAINT `consultationhours_ibfk_1` FOREIGN KEY (`faculty_id`) REFERENCES `Faculty` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -121,7 +121,7 @@ CREATE TABLE `Curricula` (
   KEY `course_id` (`course_id`),
   KEY `subj_id` (`subj_id`),
   CONSTRAINT `curricula_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `Courses` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `curricula_ibfk_2` FOREIGN KEY (`subj_id`) REFERENCES `Subjects` (`id`)
+  CONSTRAINT `curricula_ibfk_2` FOREIGN KEY (`subj_id`) REFERENCES `Subjects` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -200,7 +200,7 @@ CREATE TABLE `Preferences` (
   PRIMARY KEY (`id`),
   KEY `term_id` (`term_id`),
   KEY `faculty_id` (`faculty_id`),
-  CONSTRAINT `preferences_ibfk_1` FOREIGN KEY (`term_id`) REFERENCES `Terms` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `preferences_ibfk_1` FOREIGN KEY (`term_id`) REFERENCES `Terms` (`id`) ON DELETE SET NULL,
   CONSTRAINT `preferences_ibfk_2` FOREIGN KEY (`faculty_id`) REFERENCES `Faculty` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -235,7 +235,7 @@ CREATE TABLE `PrefSubjects` (
   KEY `pref_id` (`pref_id`),
   KEY `subj_id` (`subj_id`),
   CONSTRAINT `prefsubjects_ibfk_1` FOREIGN KEY (`pref_id`) REFERENCES `Preferences` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `prefsubjects_ibfk_2` FOREIGN KEY (`subj_id`) REFERENCES `Subjects` (`id`)
+  CONSTRAINT `prefsubjects_ibfk_2` FOREIGN KEY (`subj_id`) REFERENCES `Subjects` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -281,10 +281,10 @@ CREATE TABLE `Schedules` (
   KEY `faculty_id` (`faculty_id`),
   KEY `room_id` (`room_id`),
   CONSTRAINT `schedules_ibfk_1` FOREIGN KEY (`term_id`) REFERENCES `Terms` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `schedules_ibfk_2` FOREIGN KEY (`subj_id`) REFERENCES `Subjects` (`id`),
-  CONSTRAINT `schedules_ibfk_3` FOREIGN KEY (`block_id`) REFERENCES `Blocks` (`id`),
-  CONSTRAINT `schedules_ibfk_4` FOREIGN KEY (`faculty_id`) REFERENCES `Faculty` (`id`),
-  CONSTRAINT `schedules_ibfk_5` FOREIGN KEY (`room_id`) REFERENCES `Rooms` (`id`)
+  CONSTRAINT `schedules_ibfk_2` FOREIGN KEY (`subj_id`) REFERENCES `Subjects` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `schedules_ibfk_3` FOREIGN KEY (`block_id`) REFERENCES `Blocks` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `schedules_ibfk_4` FOREIGN KEY (`faculty_id`) REFERENCES `Faculty` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `schedules_ibfk_5` FOREIGN KEY (`room_id`) REFERENCES `Rooms` (`id`) ON DELETE SET NULL,
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -300,7 +300,7 @@ CREATE TABLE `Schools` (
   `name` varchar(120) NOT NULL,
   `total_terms_yearly` int DEFAULT NULL,
   UNIQUE KEY `id` (`id`),
-  CONSTRAINT `schools_ibfk_1` FOREIGN KEY (`id`) REFERENCES `Users` (`id`) ON UPDATE CASCADE
+  CONSTRAINT `schools_ibfk_1` FOREIGN KEY (`id`) REFERENCES `Users` (`id`) ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
