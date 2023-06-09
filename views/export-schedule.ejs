@@ -24,10 +24,13 @@
 <body>
     <% for (let i = 0; i < workbooks.length; i++) { %>
         <div class="workbook" id="<%= workbooks[i].id %>">
-        <% for (const {id, body} of workbooks[i].tables) { %>
+        <% for (const {id, title, body} of workbooks[i].tables) { %>
             <h3><%= id %></h3>
             <table id="<%= id %>">
                 <thead>
+                    <tr>
+                        <th colspan="8"><h3><%- title %></h3></th>
+                    </tr>
                     <tr>
                         <th>Time</th>
                         <th>Monday</th>

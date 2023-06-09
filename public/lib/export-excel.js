@@ -3,9 +3,8 @@ function exportToExcel(master = document, filename) {
     const tables = master.querySelectorAll("table");
 
     let workbook = XLSX.utils.book_new();
-    let i = 0;
-    for (const table of tables) {
-        let newSheet = XLSX.utils.table_to_sheet(table);
+    for (let i = 0; i < tables.length; i++) {
+        let newSheet = XLSX.utils.table_to_sheet(tables[i]);
         XLSX.utils.book_append_sheet(workbook, newSheet, tables[i].id || `Sheet ${i++}`);
     }
 
