@@ -5,7 +5,8 @@ function exportToExcel(master = document, filename) {
     let workbook = XLSX.utils.book_new();
     for (let i = 0; i < tables.length; i++) {
         let newSheet = XLSX.utils.table_to_sheet(tables[i]);
-        XLSX.utils.book_append_sheet(workbook, newSheet, tables[i].id || `Sheet ${i++}`);
+        const title = [...tables].slice(i + 1).some((t) => t.id == tables[i].id) ? `Sheet ${i + 1}` : tables[i].id; 
+        XLSX.utils.book_append_sheet(workbook, newSheet, title);
     }
 
     /* Convert Excel to binary */
