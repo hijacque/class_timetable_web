@@ -325,7 +325,7 @@ div.schedules>.sched-body {
 }
 
 div.sched-body>div.sched-block {
-    background-color: #b9aadc;
+    background-color: transparent;
     padding: 8px 12px 8px 12px;
     margin: 2px 8px 4px 8px;
     border-radius: 12px;

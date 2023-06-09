@@ -409,7 +409,7 @@
                             <% } else { %>
                             title="<b><%= schedule.subject %></b><br><small><%= schedule.faculty %><br><i><%= schedule.mode %></i></small>"
                             <% } %>
-                            style="grid-column: <%= schedule.day %> / span 1; grid-row: <%= schedule.start_time %> / <%= schedule.end_time %>;"
+                            style="grid-column: <%= schedule.day %> / span 1; grid-row: <%= schedule.start_time %> / <%= schedule.end_time %>; background-color: <%= schedule.color %>;"
                             aria-valuemin="<%= schedule.start %>" aria-valuemax="<%= schedule.end %>" 
                             aria-valuenow="<%= schedule.day %>" aria-current="<%= schedule.duration %>">
                             <h6 class="text-break subject" itemid="<%= schedule.subj_id %>"><%= schedule.subject %></h6>
