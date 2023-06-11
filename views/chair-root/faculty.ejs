@@ -15,14 +15,13 @@
         <table class="table table-bordered table-sm fw-bold mb-4" id="faculty-table">
             <thead class="text-center">
                 <tr>
-                    <th table-cts-column="faculty_id text">ID</th>
+                    <th table-cts-column="last_name text">Surname</th>
+                    <th table-cts-column="first_name text">First Name</th>
+                    <th table-cts-column="middle_name text">Middle Name</th>
                     <th table-cts-column="status dropdown [part-time,full-time]" title="Status" style="width: 140px;">
                         Employment Status
                     </th>
                     <th table-cts-column="teach_load number" style="width: 90px;">Teach<br>Load</th>
-                    <th table-cts-column="last_name text">Surname</th>
-                    <th table-cts-column="first_name text">First Name</th>
-                    <th table-cts-column="middle_name text">Middle Name</th>
                     <th table-cts-column="email">E-mail</th>
                     <th table-cts-column="consultation optional">Consultation Hours</th>
                     <td table-cts-column="edit">Action</td>
@@ -31,7 +30,9 @@
             <tbody></tbody>
             <tfoot id="add-faculty">
                 <tr class="add-data">
-                    <td><input type="text" class="form-control add-td-input unique"></td>
+                    <td><input type="text" class="form-control add-td-input" placeholder="Dela Cruz"></td>
+                    <td><input type="text" class="form-control add-td-input" placeholder="Juan"></td>
+                    <td><input type="text" class="form-control add-td-input" placeholder="Antonio"></td>
                     <td>
                         <div class="dropdown">
                             <button class="btn btn-secondary dropdown-toggle add-td-input" type="button"
@@ -43,11 +44,7 @@
                         </div>
                     </td>
                     <td><input type="number" class="form-control add-td-input text-center"></td>
-                    <td><input type="text" class="form-control add-td-input" placeholder="Dela Cruz"></td>
-                    <td><input type="text" class="form-control add-td-input" placeholder="Juan"></td>
-                    <td><input type="text" class="form-control add-td-input" placeholder="Antonio"></td>
-                    <td><input type="email" class="form-control add-td-input unique"
-                            placeholder="jadelacruz@school.edu.ph"></td>
+                    <td><input type="email" class="form-control add-td-input unique" placeholder="jadelacruz@school.edu.ph"></td>
                     <td><span class="add-td-input optional"></span></td>
                 </tr>
             </tfoot>

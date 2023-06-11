@@ -164,8 +164,8 @@ td.edit-action>div {
     justify-content: space-around;
 }
 
-.add-td-input:not(.dropdown-toggle),
-.td-input {
+.add-td-input[type=text],
+.td-input[type=text] {
     width: 100%;
 }
 
@@ -308,7 +308,7 @@ div.schedules>.sched-grid {
 }
 
 .sched-grid>* {
-    background-color: #FFFFFFCC;
+    background-color: #FFFFFFD6;
 }
 
 div.schedules>.sched-body {
@@ -373,4 +373,15 @@ div:last-child>*:has(.btn-top) {
     top: 0;
     right: 0;
     margin: 24px 48px 0 0;
+}
+
+.color-legend {
+    height: 20px;
+    width: 20px;
+    border: 2px #0f0d11 solid;
+    margin-right: 4px;
+}
+
+.color-legend > * {
+    visibility: collapse;
 }

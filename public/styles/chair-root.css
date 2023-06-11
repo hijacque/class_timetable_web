@@ -48,12 +48,16 @@ table>tbody>tr>td:not(td.edit-action) { cursor: default; }
 #blocks-schedule>tbody>tr>td:nth-child(1),
 #blocks-schedule>tbody>tr>td:nth-child(2),
 #blocks-schedule>tbody>tr>td:nth-child(4),
+#faculty-schedule>tbody>tr>td:nth-child(1),
 #faculty-schedule>tbody>tr>td:nth-child(2),
-#faculty-schedule>tbody>tr>td:nth-child(3),
+#faculty-schedule>tbody>tr>td:nth-child(4),
 #faculty-schedule>tbody>tr>td:nth-child(5),
-#faculty-schedule>tbody>tr>td:nth-child(6),
-#faculty-table>tbody>tr>td:nth-child(2),
-#faculty-table>tbody>tr>td:nth-child(3),
+#faculty-table>tbody>tr>td:nth-child(4),
+#faculty-table>tbody>tr>td:nth-child(5),
 td:has(.td-input) {
     text-align: center;
+}
+
+#faculty-table>tbody>tr>td:nth-child(7) {
+    white-space: nowrap;
 }
