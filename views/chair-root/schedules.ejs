@@ -166,21 +166,23 @@
 
         if (id == "faculty") {
             scheduleTable.attr("id", "faculty-schedule").append(
-                `<thead clas='text-center'><tr><th table-cts-column="faculty_id" style="width: 130px;">ID</th>` +
-                    `<th table-cts-column="faculty_status" style="width: 130px;">Employment Status</th>` +
-                    `<th table-cts-column="teach_load number" style="width: 80px;">Assigned Load</th>` +
+                `<thead clas='text-center'><tr>` +
+                    `<%- !currentTerm.isPosted ? '<th table-cts-column="sched_status" style="width: 120px;">Schedule Status</th>' : '' %>` +
+                    `<th table-cts-column="pref_status" style="width: 130px;">Preference Status</th>` +
                     `<th table-cts-column="name">Name</th>` +
-                    `<th table-cts-column="pref_status" style="width: 120px;">Preference Status</th>` +
-                    `<%- !currentTerm.isPosted ? '<th table-cts-column="sched_status" style="width: 110px;">Schedule Status</th>' : '' %>` +
+                    `<th table-cts-column="faculty_status" style="width: 130px;">Employment Status</th>` +
+                    `<th table-cts-column="teach_load number" style="width: 110px;">Assigned Load</th>` +
                 `</tr></thead><tbody></tbody>`
             );
             const facultyTable = new DisplayTable("#faculty-schedule");
             facultyTable.initData(
                 getSchedules(termID, id), true, 
                 () => {
-                    const rows = $(`${facultyTable.body}>tr`).click(event => openSchedule(id, event));
-                    rows.find("td:contains('submitted'), td:contains('posted')").addClass("text-success");
-                    rows.find("td:contains('saved')").addClass("text-primary");
+                    const rows = $(`${facultyTable.body}>tr`).click(
+                        event => openSchedule(id, event, facultyTable.data[$(event.currentTarget).index()].id)
+                    );
+                    rows.find("td:contains('submitted'), td:contains('posted'), td:contains('saved')").addClass("text-success");
+                    rows.find("td:contains('unanswered')").addClass("text-warning");
                 }
             );
         } else {
@@ -273,12 +275,12 @@
         console.log("deleting block...");
     }
 
-    const openSchedule = (tableID, rowEvent) => {
+    const openSchedule = (tableID, rowEvent, schedID) => {
         const row = rowEvent.currentTarget;
 
         if (tableID == "faculty") {
-            window.location.href = `/schedule/faculty?term=${openTerm.title}&` +
-                `id=${row.firstChild.textContent}`;    
+            const index = $(row).index();
+            window.location.href = `/schedule/faculty?term=${openTerm.title}&id=${schedID}`;
         } else if (!$(rowEvent.target).is("td.edit-action") && !$(rowEvent.target).closest("td").hasClass("edit-action")) {
             const [year, block] = row.children;
             window.location.href = `/schedule/${tableID}?term=${openTerm.title}&year=${year.textContent}&block=${block.textContent}`;

@@ -85,7 +85,7 @@
             <ul class="pagination" id="schedule-nav">
                 <% if (prevFaculty) { %>
                     <li class="page-item">
-                        <a href="/schedule/faculty?term=<%= term.code %>&id=<%= prevFaculty.faculty_id %>"
+                        <a href="/schedule/faculty?term=<%= term.code %>&id=<%= prevFaculty.id %>"
                             class="page-link me-2" type="button" ><i class="fas fa-chevron-left"></i></a>
                         <p class="prev page-label"><%= prevFaculty.name %></p>
                     </li>
@@ -96,9 +96,9 @@
                     </li>
                 <% } %>
                 <% if (nextFaculty) { %>
-                    <li class="justify-content-end page-item" id="<%= nextFaculty.id %>">
+                    <li class="justify-content-end page-item">
                         <p class="next page-label"><%= nextFaculty.name %></p>
-                        <a href="/schedule/faculty?term=<%= term.code %>&id=<%= nextFaculty.faculty_id %>" 
+                        <a href="/schedule/faculty?term=<%= term.code %>&id=<%= nextFaculty.id %>" 
                             class="page-link ms-2" type="button"><i class="fas fa-chevron-right"></i></a>
                     </li>
                 <% } else { %>
@@ -109,7 +109,7 @@
                 <% } %>
             </ul>
         </nav>
-        <% const {faculty_id, status, sched_status, pref_status, new_pref_subjs, old_pref_subjs, teach_load, assigned_load, consultation} = current %>
+        <% const {status, sched_status, pref_status, new_pref_subjs, old_pref_subjs, teach_load, assigned_load, consultation} = current %>
         <div class="about">
             <div class="d-flex">
                 <h4 class="page-title">
@@ -117,29 +117,28 @@
                 </h4>
                 <form method="post" target="export_schedule" action="/schedule/download/<%= term.code %>/faculty"
                     onsubmit="window.open('_blank','export_schedule');">
-                    <input type="hidden" name="id" value="<%= faculty_id %>">
+                    <input type="hidden" name="id" value="<%= id %>">
                     <input type="hidden" name="name" value="<%= name %>">
                     <button type="submit" class="ms-4 btn btn-secondary btn-floating" title="Export schedules">
                         <i class="fas fa-cloud-arrow-down fa-lg"></i>
                     </button>
                 </form>
                 <% if (sched_status == 'open') { %>
-                <form action="/schedule/save/<%= term.code %>/<%= current.id %>" method="post">
-                    <input type="hidden" name="facultyID" value="<%= faculty_id %>">
+                <form action="/schedule/save/<%= term.code %>" method="post">
+                    <input type="hidden" name="facultyID" value="<%= id %>">
                     <button type="submit" class="ms-2 btn btn-primary btn-floating" id="lock-schedules" title="Save schedules">
                         <i class="fas fa-lock fa-lg me-2"></i>
                     </button>
                 </form>
                 <% } else if (sched_status == 'saved') { %>
-                    <form action="/schedule/unsave/<%= term.code %>/<%= current.id %>" method="post">
-                        <input type="hidden" name="facultyID" value="<%= faculty_id %>">
+                    <form action="/schedule/unsave/<%= term.code %>" method="post">
+                        <input type="hidden" name="facultyID" value="<%= id %>">
                         <button type="submit" class="ms-2 btn btn-danger btn-floating" id="lock-schedules" title="Unlock schedules">
                             <i class="fas fa-unlock fa-lg me-2"></i>
                         </button>
                     </form>
                 <% } %>
             </div>
-            <h6 class="text-muted"><%= faculty_id %></h6>
             <p>
                 <b>Employment Status:</b> <%= status %><br>
                 <% if (consultation) { %>
@@ -167,6 +166,18 @@
                     <b>Previously Subjects:</b> <%= old_pref_subjs.join(", ") %>
                 <% } %>
             </p>
+            <hr>
+            <b>Color Guide:</b><br>
+            <div class="d-flex align-items-center">
+                <div class="color-legend">
+                    <span>preferred schedule</span>
+                </div>
+                <label>Preffered timeslot</label>
+                <div class="color-legend ms-4" style="background-color: #D9D9D9;">
+                    <span>blank schedule</span>
+                </div>
+                <label>Blank timeslot</label>
+            </div>
         </div>
         <div class="scheduler">
             <div></div>

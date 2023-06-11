@@ -53,12 +53,12 @@ router.post("/download/:term/block", getBlockSchedTable, (req, res) => {
     });
 });
 
-router.post("/save/:term/:faculty?", saveFacultySchedule, (req, res) => {
+router.post("/save/:term", saveFacultySchedule, (req, res) => {
     console.log(req.params);
     res.redirect("/chair/schedules/" + req.params.term);
 });
 
-router.post("/unsave/:term/:faculty?", unsaveFacultySchedule, (req, res) => {
+router.post("/unsave/:term", unsaveFacultySchedule, (req, res) => {
     console.log(req.params);
     res.redirect("/chair/schedules/" + req.params.term);
 });
