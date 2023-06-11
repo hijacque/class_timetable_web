@@ -284,7 +284,7 @@ CREATE TABLE `Schedules` (
   CONSTRAINT `schedules_ibfk_2` FOREIGN KEY (`subj_id`) REFERENCES `Subjects` (`id`) ON DELETE CASCADE,
   CONSTRAINT `schedules_ibfk_3` FOREIGN KEY (`block_id`) REFERENCES `Blocks` (`id`) ON DELETE CASCADE,
   CONSTRAINT `schedules_ibfk_4` FOREIGN KEY (`faculty_id`) REFERENCES `Faculty` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `schedules_ibfk_5` FOREIGN KEY (`room_id`) REFERENCES `Rooms` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `schedules_ibfk_5` FOREIGN KEY (`room_id`) REFERENCES `Rooms` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
