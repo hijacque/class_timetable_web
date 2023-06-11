@@ -258,9 +258,10 @@ router.route("/faculty/:deptID?")
             consultHours.push(current);
         });
 
-        query += `f.id, u.email FROM Colleges col INNER JOIN Departments d ` +
-            `ON col.id = d.college_id INNER JOIN Faculty f ON d.id = f.dept_id INNER JOIN Users u ` +
-            `ON f.id = u.id WHERE (col.school_id = "${user.id}" OR d.chair_id = "${user.id}")`;
+        query += `f.id, u.email, CASE WHEN f.id = d.chair_id THEN 1 ELSE 0 END AS is_chair FROM ` +
+            `Colleges col INNER JOIN Departments d ON col.id = d.college_id INNER JOIN Faculty f ON ` +
+            `d.id = f.dept_id INNER JOIN Users u ON f.id = u.id ` +
+            `WHERE (col.school_id = "${user.id}" OR d.chair_id = "${user.id}")`;
         if (req.params.deptID) {
             query += ` AND d.id = "${req.params.deptID}"`
         }
@@ -271,6 +272,7 @@ router.route("/faculty/:deptID?")
                 let consult = consultHours.find((ch) => fac.id == ch.faculty);
                 return { ...fac, consultation: consult ? consult.hours.join("<br>") : "" };
             });
+            console.log(result);
             res.status(200).json({
                 faculty: result
             });
@@ -1276,7 +1278,7 @@ router.post("/consultation", async (req, res) => {
     });
 });
 
-router.post("/update_faculty", async (req, res, next) => {
+router.post("/update_faculty/:deptID", async (req, res) => {
     const user = req.account;
     if (!user || (user.type != "admin" && user.type != "chair")) {
         res.cookie("serverMessage", {
@@ -1290,9 +1292,7 @@ router.post("/update_faculty", async (req, res, next) => {
     }
 
     const DB = req.app.locals.database;
-    const { id, status, teach_load, last_name, first_name, middle_name, email } = req.body.new;
-    console.log(req.body.old);
-    console.log(req.body.new);
+    const { id, status, teach_load, last_name, first_name, middle_name, email, is_chair } = req.body.new;
 
     if (email != req.body.old.email) {
         const [{ totalDuplicates }] = await DB.executeQuery(
@@ -1310,13 +1310,25 @@ router.post("/update_faculty", async (req, res, next) => {
         }
     }
 
-    await DB.executeQuery(
-        `UPDATE Faculty f INNER JOIN Departments d ON f.dept_id = d.id INNER JOIN Colleges col ON ` +
-        `d.college_id = col.id INNER JOIN Users u ON f.id = u.id SET f.status = '${status}', ` +
-        `f.teach_load = ${teach_load}, f.last_name = '${last_name}', f.first_name = '${first_name}', ` +
-        `f.middle_name = '${middle_name}', u.email = '${email}' WHERE (d.chair_id = '${user.id}' OR ` +
-        `col.school_id = '${user.id}') AND f.id = '${id}'`
-    );
+    let query = `UPDATE Faculty f INNER JOIN Departments d ON f.dept_id = d.id INNER JOIN Colleges col ON ` +
+    `d.college_id = col.id INNER JOIN Users u ON f.id = u.id SET f.status = '${status}', ` +
+    `f.teach_load = ${teach_load}, f.last_name = '${last_name}', f.first_name = '${first_name}', ` +
+    `f.middle_name = '${middle_name}', u.email = '${email}' WHERE (d.chair_id = '${user.id}' OR ` +
+    `col.school_id = '${user.id}') AND f.id = '${id}';`;
+
+    if (is_chair >= 1 && user.type == "admin") {
+        query += `UPDATE Users u INNER JOIN Departments d ON u.id = d.chair_id SET u.type = 3 WHERE ` +
+        `d.id = '${req.params.deptID}' LIMIT 1;` +
+        `UPDATE Departments SET chair_id = '${id}' WHERE id = '${req.params.deptID}' LIMIT 1;` +
+        `UPDATE Users SET type = 2 WHERE id = '${id}' LIMIT 1;`;
+    } else if (is_chair < 1 && user.type == "admin") {
+        query += `UPDATE Users u INNER JOIN Departments d ON u.id = d.chair_id SET u.type = 3 WHERE ` +
+        `d.id = '${req.params.deptID}' AND d.chair_id = '${id}' LIMIT 1;` +
+        `UPDATE Departments SET chair_id = CASE WHEN chair_id = '${id}' THEN NULL ELSE chair_id END ` +
+        `WHERE id = '${req.params.deptID}' LIMIT 1;`;
+    }
+
+    await DB.executeQuery(query);
     res.status(200).end();
 });
 

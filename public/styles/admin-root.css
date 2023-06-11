@@ -5,17 +5,17 @@
     z-index: 1;
 }
 
-#faculty-table>tbody>tr>td:nth-child(2),
-#faculty-table>tbody>tr>td:nth-child(3),
+#faculty-table>tbody>tr>td:nth-child(7),
+#faculty-table>tbody>tr>td:nth-child(8) {
+    white-space: nowrap;
+}
+
+#faculty-table>tbody>tr>td:nth-child(4),
+#faculty-table>tbody>tr>td:nth-child(5),
+#faculty-table>tbody>tr>td:nth-child(6),
 #subjects-table>tbody>tr>td:nth-child(3),
 #subjects-table>tbody>tr>td:nth-child(4),
 #subjects-table>tbody>tr>td:nth-child(5),
 td:has(.td-input) {
     text-align: center;
-}
-
-#faculty-table>tbody>tr>td:nth-child(8) {
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
 }

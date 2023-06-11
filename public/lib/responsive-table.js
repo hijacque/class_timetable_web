@@ -210,8 +210,10 @@ class EditableTable extends ResponsiveTable {
                 const value = row[key];
                 if (type == "time") {
                     newRow += `<td>${this.formatTime(value)}</td>`;
+                } else if (type == "checkbox") {
+                    newRow += `<td>${ value < 1 ? "" : "<i class='fas fa-check fa-lg text-success'></i>" }</td>`;
                 } else if (type == "link") {
-                    const title = about.split(" ")[0] || headers[i].textContent[0];
+                    const title = about.split(" ")[0] || headers[i].textContent;
                     newRow += `<td><a href='${value}' class='text-decoration-underline'>` +
                         `<i class="fas fa-arrow-up-right-from-square me-2"></i>${title}</a></td>`;
                 } else if (value) {
@@ -269,7 +271,7 @@ class EditableTable extends ResponsiveTable {
 
         if (newData) {
             for (let i = 0; i < addInputs.length; i++) {
-                let value = addInputs[i].value || addInputs[i].textContent;
+                let value = addInputs[i].value || addInputs[i].innerHTML;
                 const aboutCol = $(this.headers[i]).attr("table-cts-column").split(" ");
                 let title = this.headers[i].textContent;
 
@@ -298,7 +300,7 @@ class EditableTable extends ResponsiveTable {
         } else {
             newData = {};
             for (let i = 0; i < addInputs.length; i++) {
-                let value = addInputs[i].value || addInputs[i].textContent;
+                let value = addInputs[i].value || addInputs[i].innerHTML;
                 const aboutCol = $(this.headers[i]).attr("table-cts-column").split(" ");
                 let title = addInputs[i].title || addInputs[i].textContent || this.headers[i].textContent;
 
@@ -439,6 +441,8 @@ class EditableTable extends ResponsiveTable {
             const value = oldData[key];
             if (type == "link") {
                 continue;
+            } else if (type == "checkbox") {
+                input = `<input type="checkbox" class="form-check-input td-input" ${(value < 1) ? "" : "checked"}>`;
             } else if (type == "dropdown") {
                 let [list, options] = about.split(" ", 2);
                 list = list.trim().split(/[\[,\]]/);
@@ -496,13 +500,15 @@ class EditableTable extends ResponsiveTable {
             let updateData = {};
             let validEdit = true;
             for (let i = 0; i < inputs.length; i++) {
-                let newValue = inputs[i].value || inputs[i].textContent;
+                let newValue = inputs[i].value || inputs[i].innerHTML;
                 const title = headers[i].title || headers[i].textContent;
                 const about = $(headers[i]).attr("table-cts-column");
                 const [key, type] = about.split(" ", 3);
 
                 if (type == "link") {
                     continue;
+                } else if (type == "checkbox") {
+                    newValue = (inputs[i].checked) ? 1 : 0;
                 } else if (about.includes("optional") && (!newValue || newValue == "" || title == newValue)) {
                     newValue = null;
                 } else if (type == "email" && (!newValue.includes("@") || !newValue.includes("."))) {
@@ -542,6 +548,8 @@ class EditableTable extends ResponsiveTable {
                     let newValue = updateData[key];
                     if (type == "link") {
                         continue;
+                    } else if (type == "checkbox" && newValue >= 1) {
+                        $(inputs[i]).before("<i class='fas fa-check fa-lg text-success'></i>");
                     } else if (type == "time") {
                         $(inputs[i]).before(this.formatTime(newValue));
                     } else if (type == "dropdown" || inputs[i].classList.contains("dropdown-toggle")) {
@@ -597,6 +605,8 @@ class EditableTable extends ResponsiveTable {
                 const value = oldData[key];
                 if (rowInputs[i].type == "time") {
                     $(rowInputs[i]).before(this.formatTime(value));
+                } else if (rowInputs[i].type == "checkbox" && value >= 1) {
+                    $(rowInputs[i]).before("<i class='fas fa-check fa-lg text-success'></i>");
                 } else if ($(rowInputs[i]).hasClass("dropdown-toggle")) {
                     rowInputs[i] = $(rowInputs[i]).closest("div.dropdown");
                     $(rowInputs[i]).before(value);
@@ -634,9 +644,9 @@ class EditableTable extends ResponsiveTable {
                 if ($(event.currentTarget).attr("data-cts-reset") == "dropdown") {
                     $(dropMenuBtn).trigger("menu:reset");
                 } else {
-                    let value = $(event.currentTarget).text();
+                    let value = $(event.currentTarget).html();
                     $(dropMenuBtn).val(value);
-                    $(dropMenuBtn).text(value);
+                    $(dropMenuBtn).html(value);
                 }
             });
         }

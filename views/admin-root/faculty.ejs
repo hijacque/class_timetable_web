@@ -64,12 +64,12 @@
             <table class="table table-bordered table-sm my-4" id="faculty-table">
                 <thead class="text-center">
                     <tr>
-                        <th table-cts-column="faculty_id text">ID</th>
-                        <th table-cts-column="status dropdown [full-time,part-time]" style="width: 140px;">Employment Status</th>
-                        <th table-cts-column="teach_load number" style="width: 100px;">Teach<br>Load</th>
                         <th table-cts-column="last_name text">Surname</th>
                         <th table-cts-column="first_name text">First Name</th>
                         <th table-cts-column="middle_name text">Middle Name</th>
+                        <th table-cts-column="status dropdown [full-time,part-time]" style="width: 140px;">Employment Status</th>
+                        <th table-cts-column="teach_load number" style="width: 90px;">Teach<br>Load</th>
+                        <th table-cts-column="is_chair checkbox" style="width: 120px;">Chairperson</th>
                         <th table-cts-column="email text">E-mail</th>
                         <th table-cts-column="consultation optional">Consultation Hours</th>
                         <td table-cts-column="edit delete">Action</td>
@@ -78,7 +78,9 @@
                 <tbody></tbody>
                 <tfoot id="add-faculty">
                     <tr class="add-data">
-                        <td><input type="text" class="form-control add-td-input unique"></td>
+                        <td><input type="text" class="form-control add-td-input" placeholder="Dela Cruz"></td>
+                        <td><input type="text" class="form-control add-td-input" placeholder="Juan"></td>
+                        <td><input type="text" class="form-control add-td-input" placeholder="Antonio"></td>
                         <td>
                             <div class="dropdown">
                                 <button class="btn btn-secondary dropdown-toggle add-td-input" type="button"
@@ -90,9 +92,13 @@
                             </div>
                         </td>
                         <td><input type="number" class="form-control add-td-input text-center"></td>
-                        <td><input type="text" class="form-control add-td-input" placeholder="Dela Cruz"></td>
-                        <td><input type="text" class="form-control add-td-input" placeholder="Juan"></td>
-                        <td><input type="text" class="form-control add-td-input" placeholder="Antonio"></td>
+                        <td>
+                            <% if (currentDept.chair_id) { %>
+                                <label class="add-td-input optional"></label>
+                            <% } else { %>
+                                <input type="checkbox" class="form-check-input add-td-input" />
+                            <% } %>
+                        </td>
                         <td><input type="email" class="form-control add-td-input unique" placeholder="jadelacruz@school.edu.ph"></td>
                         <td><label class="add-td-input optional"></label></td>
                     </tr>
@@ -110,7 +116,7 @@
     <script>
         const updateFaculty = (prevData, changes) => new Promise((resolve, reject) => {
             $.post(
-                "/api/update_faculty", {old: prevData, new: changes}, 
+                "/api/update_faculty/<%= currentDept.id %>", {old: prevData, new: changes}, 
                 (data) => resolve(data)
             ).fail((error) => reject(error.responseJSON))
         });
@@ -133,6 +139,12 @@
 
             try {
                 await updateFaculty(oldData, newData);
+                if (newData.is_chair == 1) {
+                    let index = $(event.currentTarget).index();
+                    console.log(index);
+                    $(`${facultyTable.body}>tr:not(tr:nth-child(${index + 1}))>td:has('i.fa-check')`).empty();
+                    facultyTable.data = facultyTable.data.map((f, i) => i != index ? ({...f, is_chair: 0}) : f);
+                }
             } catch (error) {
                 if (error) {
                     if (error.redirect) {
@@ -155,12 +167,6 @@
             let openDepartment = departments.find(dept => dept.title == "<%= currentDept.name %>");
             $(openDepartment).addClass("active");
             facultyTable.initData(getFaculty("<%= currentDept.id %>"), true, () => {
-                if (facultyTable.data.length <= 0) {
-                    return $("#table-title").after(
-                        "<small class='text-muted d-block' id='chair-note'>* The first faculty entry will be " +
-                        "automatically assigned as the chairperson *</small>"
-                    );
-                }
                 $(`${facultyTable.body}>tr`).on("row:confirm-change", confirmFacultyEdit);
             });
     
@@ -174,9 +180,7 @@
                 
                 try {
                     const result = await addFaculty("<%= currentDept.id %>", newFaculty);
-                    if (facultyTable.data.length == 1) {
-                        $("#chair-note").remove();
-                    }
+                    console.log(result);
                     if (result) {
                         alertModal.show(...Object.values(result.message));
                     }
