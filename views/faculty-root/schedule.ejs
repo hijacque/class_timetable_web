@@ -284,14 +284,14 @@
                         <div></div>
                     </div>
                     <div class="sched-body">
-                        <% for (const {subject, year, block_no, course, mode, room, day, start, end} of current.classes) { %>
+                        <% for (const {subject, year, block_no, course, mode, room, day, start, end, color} of current.classes) { %>
                             <div class="sched-block" data-mdb-toggle="tooltip" data-mdb-html="true"
                                 <% if (room) { %>
                                 title="<b><%= subject %></b><br><small><%= year %>-<%= block_no %> <%= course %><br><i><%= mode %> @ <%= room %></i></small>"
                                 <% } else { %>
                                 title="<b><%= subject %></b><br><small><%= year %>-<%= block_no %> <%= course %><br><i><%= mode %></i></small>"
                                 <% } %>
-                                style="grid-column: <%= day %> / span 1; grid-row: <%= start %> / <%= end %>;">
+                                style="grid-column: <%= day %> / span 1; grid-row: <%= start %> / <%= end %>; background-color: <%= color %>;">
                                 <h6 class="text-break"><%= subject %></h6>
                                 <p class="text-truncate"><small>
                                     <%= year %>-<%= block_no %> <%= course %><br>
