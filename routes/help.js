@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const jwt = require("jsonwebtoken");
-const { verifyOTP, getOTP, sendOTP, changePassword } = require("./../lib/verification");
+const { verifyOTP, getOTP, sendOTP, changePassword, forgetPassword } = require("./../lib/verification");
 const { openAdminAccount } = require("../lib/account");
 
 router.get("/", (req, res) => {
@@ -46,6 +46,17 @@ router.route("/open-account/admin")
         }
     });
 
+router.route("/open-account/forget-password")
+    .get(getOTP, (req, res) => {
+        if (req.validHelpID) {
+            res.render("verify-otp", { serverAlert: req.cookies.serverMessage, subHelp: "open-account/forget-password"});
+        } else {
+            res.redirect("/help");
+        }
+    }).post(verifyOTP, (req, res) => {
+        res.cookie("id", req.accountID).redirect("../change-password")
+    });
+
 router.post("/resend-OTP", sendOTP, (req, res) => {
     if (req.body.resend) {
         const email = req.body.email || req.cookies.help.email;
@@ -73,4 +84,22 @@ router.route("/change-password")
         }).status(200).json({ redirect: "/logout" });
     });
 
+router.route("/forget-password")
+    .get((req, res) => {
+        if (req.cookies.serverMessage) res.clearCookie("serverMessage");
+        res.render("forget-password", {
+            serverAlert: req.cookies.serverMessage
+        });
+    })
+    .post(forgetPassword, sendOTP, (req, res) => {
+        if (req.accountID) {
+            res.cookie("id", res.locals.id, "serverMessage", {
+                title: res.locals.msg_title,
+                body: res.locals.msg_body,
+                mode: res.locals.msg_mode
+            }).status(200).redirect("account/" + res.locals.helpID);
+        } else {
+            res.redirect("/forget-password")
+        }
+    });
 module.exports = router;
