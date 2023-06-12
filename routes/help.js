@@ -49,12 +49,20 @@ router.route("/open-account/admin")
 router.route("/open-account/forget-password")
     .get(getOTP, (req, res) => {
         if (req.validHelpID) {
-            res.render("verify-otp", { serverAlert: req.cookies.serverMessage, subHelp: "open-account/forget-password"});
+            res.render("verify-otp", { serverAlert: req.cookies.serverMessage, subHelp: "forget-password"});
         } else {
             res.redirect("/help");
         }
     }).post(verifyOTP, (req, res) => {
-        res.cookie("id", req.accountID).redirect("../change-password")
+        const otpResult = req.message;
+        if (otpResult && otpResult.mode == 1) {
+            res.cookie("serverMessage", req.message, { httpOnly: true });
+            res.cookie("id", req.accountID).redirect("../change-password")
+        } else if (otpResult && (otpResult.mode == 2 || otpResult.mode == 0)) {
+            res.status(200).json(req.message);
+        } else {
+            res.status(400).json({ redirect: "help" });
+        }
     });
 
 router.post("/resend-OTP", sendOTP, (req, res) => {
