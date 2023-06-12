@@ -126,14 +126,17 @@
                 <% if (sched_status == 'open') { %>
                 <form action="/schedule/save/<%= term.code %>" method="post">
                     <input type="hidden" name="facultyID" value="<%= id %>">
-                    <button type="submit" class="ms-2 btn btn-primary btn-floating" id="lock-schedules" title="Save schedules">
+                    <button type="submit" class="ms-2 btn btn-primary btn-floating" id="lock-schedule" title="Save schedules">
                         <i class="fas fa-lock fa-lg me-2"></i>
                     </button>
                 </form>
+                <button class="ms-2 btn btn-warning btn-floating" id="clear-schedule" title="Clear schedule">
+                    <i class="fas fa-arrow-rotate-left fa-lg me-2"></i>
+                </button>
                 <% } else if (sched_status == 'saved') { %>
                     <form action="/schedule/unsave/<%= term.code %>" method="post">
                         <input type="hidden" name="facultyID" value="<%= id %>">
-                        <button type="submit" class="ms-2 btn btn-danger btn-floating" id="lock-schedules" title="Unlock schedules">
+                        <button type="submit" class="ms-2 btn btn-danger btn-floating" id="lock-schedule" title="Unlock schedules">
                             <i class="fas fa-unlock fa-lg me-2"></i>
                         </button>
                     </form>
@@ -163,7 +166,7 @@
                     <b>Form Status:</b> <%= pref_status %></span><br>
                 <% } %>
                 <% if (old_pref_subjs.length > 0) { %>
-                    <b>Previously Subjects:</b> <%= old_pref_subjs.join(", ") %>
+                    <b>Previously preferred subjects:</b> <%= old_pref_subjs.join(", ") %>
                 <% } %>
             </p>
             <hr>
@@ -647,6 +650,16 @@
             }
         }
     });
+
+    $("#clear-schedule").click(() => {
+        $("#accept-alert, #reject-alert, #confirm-alert").toggle();
+        alertModal.show(
+            2, "Are you sure?", 
+            "By clicking yes, you will remove all classes assigned to<br>Prof. <%= name %>"
+        );
+    });
+
+    $("#accept-alert, #reject-alert").click(() => $("#accept-alert, #reject-alert, #confirm-alert").toggle());
 
     function validateScheduleInput() {
         const day = $("#class-day");

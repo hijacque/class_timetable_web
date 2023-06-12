@@ -3,7 +3,8 @@ const {
     getFacultySched, getBlockSched, generateSchedule,
     getBlockSchedTable, getFacultySchedTable,
     saveFacultySchedule, postFacultySchedules,
-    unsaveFacultySchedule, unpostFacultySchedules
+    unsaveFacultySchedule, unpostFacultySchedules,
+    resetSchedule, deleteTermSchedule
 } = require("./../lib/schedule");
 const { verifySession } = require("./../lib/verification");
 
@@ -82,6 +83,19 @@ router.post("/delete/:term/", (req, res) => {
     // TODO: remove schedules assigned into faculty from the department
     console.log("Deleting departmental faculty schedules...");
     res.redirect("/chair/schedules/" + req.params.term);
+});
+
+router.post("/reset/:term/", resetSchedule, (req, res) => {
+    if (req.body.facultyID) {
+        res.status(200).redirect(`/schedule/faculty?term=${req.params.term}&id=${req.body.facultyID}`);
+    } else if (req.body.year && req.body.block) {
+        res.status(200).redirect(
+            `/schedule/faculty?term=${req.body.term}&year=${req.params.year}&block=${req.body.block}`
+        );
+    } else {
+        res.status(200).redirect('/chair/schedules/' + req.params.term);
+    }
+    // res.redirect("/chair/schedules/" + req.params.term);
 });
 
 module.exports = router;

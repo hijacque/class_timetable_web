@@ -23,16 +23,31 @@
                     <h5 class="modal-title" id="alert-title"></h5>
                 </div>
                 <div class="modal-body" id="alert-body"></div>
-                <div class="modal-footer text-center">
+                <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-mdb-dismiss="modal" id="confirm-alert">
                         OK
                     </button>
+                    <form action="/schedule/reset/<%= term.code %>" method="post">
+                        <% if (category == "faculty") { %>
+                            <input type="hidden" name="facultyID" value="<%= schedule.current.id %>">
+                        <% } else { %>
+                            <input type="hidden" name="year" value="<%= schedule.current.year %>">
+                            <input type="hidden" name="block" value="<%= schedule.current.block_no %>">
+                        <% } %>
+                        <button type="submit" class="btn btn-primary" data-mdb-dismiss="modal" id="accept-alert">
+                            yes
+                        </button>
+                    </form>
+                    
+                    <a type="button" class="btn btn-secondary" data-mdb-dismiss="modal" id="reject-alert">
+                        no
+                    </a>
                 </div>
             </div>
         </div>
     </div>
     <div class="app-bar bg-light">
-        <% if (category == "faculty") { %>
+        <% if (category == 'faculty' && schedule.current.sched_status == 'open') { %>
             <a type="button" onclick="window.location.href = '/chair/schedules/<%= term.code %>'">
                 <i class="fas fa-arrow-left fa-2x"></i>
             </a>

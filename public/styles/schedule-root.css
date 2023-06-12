@@ -75,3 +75,7 @@ nav { padding: 0 12px; }
     white-space: break-spaces;
     text-overflow: ellipsis;
 }
+
+#reject-alert, #accept-alert {
+    display: none;
+}
