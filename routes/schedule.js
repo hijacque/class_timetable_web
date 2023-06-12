@@ -1,20 +1,24 @@
 const router = require("express").Router();
-const { 
-    getFacultySched, getBlockSched, generateSchedule, 
-    getBlockSchedTable, getFacultySchedTable, 
+const {
+    getFacultySched, getBlockSched, generateSchedule,
+    getBlockSchedTable, getFacultySchedTable,
     saveFacultySchedule, postFacultySchedules,
-    unsaveFacultySchedule, unpostFacultySchedules 
+    unsaveFacultySchedule, unpostFacultySchedules
 } = require("./../lib/schedule");
 const { verifySession } = require("./../lib/verification");
 
 router.use(verifySession);
 
-router.post("/generate", generateSchedule, (req, res) => {
-    res.status(200).redirect('/chair/schedules/' + req.body.term);
+router.post("/generate/:facultyID?", generateSchedule, (req, res) => {
+    if (req.params.facultyID) {
+        res.status(200).redirect(`/schedule/faculty?term=${req.body.term}&id=${req.params.facultyID}`);
+    } else {
+        res.status(200).redirect('/chair/schedules/' + req.body.term);
+    }
 });
 
 router.get("/faculty", getFacultySched, (req, res) => {
-    const {serverMessage} = req.cookies;
+    const { serverMessage } = req.cookies;
     if (serverMessage) res.clearCookie("serverMessage");
     res.render("schedule-root/base", {
         category: "faculty",
@@ -25,7 +29,7 @@ router.get("/faculty", getFacultySched, (req, res) => {
 });
 
 router.get("/:courseID", getBlockSched, (req, res) => {
-    const {serverMessage} = req.cookies;
+    const { serverMessage } = req.cookies;
     if (serverMessage) res.clearCookie("serverMessage");
     res.render("schedule-root/base", {
         category: req.params.courseID,

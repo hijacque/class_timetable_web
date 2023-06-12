@@ -313,7 +313,7 @@
                                 <% } %>
                                     <button type="button" title="<%= deptClasses[i].subject %>" 
                                         itemid="<%= deptClasses[i].subj_id %>"
-                                        class="list-group-item list-group-item-action menu-item"
+                                        class="list-group-item list-group-item-action menu-item<%= deptClasses[i].assigned_time > 0 ? ' text-warning' : '' %>"
                                         aria-valuemax="<%= deptClasses[i].req_hours || 0 %>"
                                         aria-valuenow="<%= deptClasses[i].assigned_time || 0 %>">
                                         <p class="text-truncate m-0">

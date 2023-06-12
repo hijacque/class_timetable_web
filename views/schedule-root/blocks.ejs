@@ -403,7 +403,7 @@
                 <div class="sched-body">
                     <% for (const schedule of classes) { %>
                         <div data-mdb-toggle="tooltip" data-mdb-html="true"
-                            class="sched-block<%= (schedule.departmental) ? ' dept-subj' : '' %><%= (schedule.partial == 1) ? ' partial' : '' %>"
+                            class="sched-block<%= (schedule.departmental) ? ' dept-subj' : '' %><%= (schedule.partial == 1) ? ' partial' : '' %><%= (schedule.sched_status != 'open') ? ' disabled' : '' %>"
                             <% if (schedule.room) { %>
                             title="<b><%= schedule.subject %></b><br><small><%= schedule.faculty %><br><i><%= schedule.mode %> @ <%= schedule.room %></i></small>"
                             <% } else { %>
@@ -595,7 +595,7 @@
         scheduleForm.show();
     });
 
-    $(".sched-block").click((event) => {
+    $(".sched-block:not(.disabled)").click((event) => {
         const prevClass = event.currentTarget;
         $("#schedule-class-label").text("Change Class Schedule");
         const [subj, faculty, mode, room, bldg] = $(prevClass).find(".subject, .faculty, .mode, .room, .building");

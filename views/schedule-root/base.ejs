@@ -36,14 +36,21 @@
             <a type="button" onclick="window.location.href = '/chair/schedules/<%= term.code %>'">
                 <i class="fas fa-arrow-left fa-2x"></i>
             </a>
+            <h5 class="panel-title text-muted my-0"><%- term.title %></h5>
+            <form method="post" action="/schedule/generate/<%= schedule.current.id %>">
+                <button name="term" type="submit" title="Autogenerate Schedule" id="generate-sched"
+                    class="btn btn-primary btn-lg btn-rounded btn-top" value="<%= term.code %>">
+                    generate schedule<i class="fas fa-star fa-lg ms-3"></i>
+                </button>
+            </form>
         <% } else { %>
             <a onclick="window.location.href = '/chair/schedules/<%= term.code %>?course=<%= category %>'"
                 type="button" >
                 <i class="fas fa-arrow-left fa-2x"></i>
             </a>
+            <h5 class="panel-title text-muted my-0"><%- term.title %></h5>
+            <div></div>
         <% } %>
-        <h5 class="panel-title text-muted my-0"><%- term.title %></h5>
-        <div></div>
     </div>
     <% if (category == "faculty") { %>
         <%- include('faculty', {deptClasses:schedule.deptClasses, otherClasses:schedule.otherClasses, classrooms:schedule.classrooms }) %>
