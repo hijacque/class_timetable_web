@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const jwt = require("jsonwebtoken");
-const { verifyOTP, getOTP, sendOTP, changePassword } = require("./../lib/verification");
+const { verifyOTP, getOTP, sendOTP, changePassword, forgetPassword } = require("./../lib/verification");
 const { openAdminAccount } = require("../lib/account");
 
 router.get("/", (req, res) => {
@@ -29,7 +29,7 @@ router.get("/account/:helpID?", async (req, res) => {
 router.route("/open-account/admin")
     .get(getOTP, (req, res) => {
         if (req.validHelpID) {
-            res.render("verify-otp", { serverAlert: req.cookies.serverMessage, subHelp: "open-account/admin" });
+            res.render("verify-otp", { serverAlert: req.cookies.serverMessage, subHelp: "admin" });
         } else {
             res.redirect("/help");
         }
@@ -38,7 +38,26 @@ router.route("/open-account/admin")
         if (otpResult && otpResult.mode == 1) {
             req.message.body = "You can now login to your new account.";
             res.cookie("serverMessage", req.message, { httpOnly: true });
-            res.status(200).json({ redirect: "login" });
+            res.status(200).redirect("../../login");
+        } else if (otpResult && (otpResult.mode == 2 || otpResult.mode == 0)) {
+            res.status(200).json(req.message);
+        } else {
+            res.status(400).json({ redirect: "help" });
+        }
+    });
+
+router.route("/open-account/forget-password")
+    .get(getOTP, (req, res) => {
+        if (req.validHelpID) {
+            res.render("verify-otp", { serverAlert: req.cookies.serverMessage, subHelp: "forget-password"});
+        } else {
+            res.redirect("/help");
+        }
+    }).post(verifyOTP, (req, res) => {
+        const otpResult = req.message;
+        if (otpResult && otpResult.mode == 1) {
+            res.cookie("serverMessage", req.message, { httpOnly: true });
+            res.cookie("id", req.accountID).redirect("../change-password")
         } else if (otpResult && (otpResult.mode == 2 || otpResult.mode == 0)) {
             res.status(200).json(req.message);
         } else {
@@ -73,4 +92,22 @@ router.route("/change-password")
         }).status(200).json({ redirect: "/logout" });
     });
 
+router.route("/forget-password")
+    .get((req, res) => {
+        if (req.cookies.serverMessage) res.clearCookie("serverMessage");
+        res.render("forget-password", {
+            serverAlert: req.cookies.serverMessage
+        });
+    })
+    .post(forgetPassword, sendOTP, (req, res) => {
+        if (req.accountID) {
+            res.cookie("id", res.locals.id, "serverMessage", {
+                title: res.locals.msg_title,
+                body: res.locals.msg_body,
+                mode: res.locals.msg_mode
+            }).status(200).redirect("account/" + res.locals.helpID);
+        } else {
+            res.redirect("/forget-password")
+        }
+    });
 module.exports = router;

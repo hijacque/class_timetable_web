@@ -23,41 +23,11 @@
         </div>
     </div>
     <h1>Enter OTP we sent to your e-mail</h1>
-    <input type="text" id="pin" maxlength="6" class="text-uppercase">
-    <button type="button" class="btn btn-primary" id="submit">Confirm</button>
+    <form action="<%- subHelp %>" method="post">
+        <input type="text" id="pin" maxlength="6" name="pin" class="text-uppercase">
+        <button type="submit" class="btn btn-primary" id="submit">Confirm</button>
+    </form>
     <!-- MDB -->
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.0.0/mdb.min.js"></script>
-    <script>
-        $("#submit").click((event) => {
-            $.post("/help/<%- subHelp %>", { pin: $("#pin").val() }, (data) => {
-                console.log(data);
-                if (data.redirect) {
-                    window.location.href = data.redirect;
-                }
-
-                $("#alert-title").text(data.title);
-                $("#alert-body").html(data.body);
-                if (data.mode == 0) {
-                    $("#alert-title").addClass("text-danger");
-                    $("#alert-title").removeClass("text-warning");
-                    let cancelBtn = $("#confirm-alert");
-                    cancelBtn.text("No").toggleClass("btn-secondary btn-danger").click(() => location.replace("/login"));
-                    $(".modal-footer").append(
-                        '<form action="/help/resend-otp" method="POST">' +
-                        '<button type="submit" class="btn btn-secondary" name="resend" value="1">Yes</button>' +
-                        '</form>'
-                    );
-                    alertModal.show();
-                } else if (data.mode == 2) {
-                    $("#alert-title").addClass("text-warning");
-                    alertModal.show();
-                }
-                $("#pin").val(null);
-            });
-        });
-        
-        const alertModal = new mdb.Modal("#alert-modal");
-    </script>
 </body>
 
 </html>
