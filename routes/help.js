@@ -29,7 +29,7 @@ router.get("/account/:helpID?", async (req, res) => {
 router.route("/open-account/admin")
     .get(getOTP, (req, res) => {
         if (req.validHelpID) {
-            res.render("verify-otp", { serverAlert: req.cookies.serverMessage, subHelp: "open-account/admin" });
+            res.render("verify-otp", { serverAlert: req.cookies.serverMessage, subHelp: "admin" });
         } else {
             res.redirect("/help");
         }
@@ -38,7 +38,7 @@ router.route("/open-account/admin")
         if (otpResult && otpResult.mode == 1) {
             req.message.body = "You can now login to your new account.";
             res.cookie("serverMessage", req.message, { httpOnly: true });
-            res.status(200).json({ redirect: "login" });
+            res.status(200).redirect("../../login");
         } else if (otpResult && (otpResult.mode == 2 || otpResult.mode == 0)) {
             res.status(200).json(req.message);
         } else {
