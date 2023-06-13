@@ -1,7 +1,7 @@
 // required packages
 const router = require("express").Router();
 const { createAdmin, loginAccount, getAdminData, getChairData, getFacultyData } = require("../lib/account");
-const { sendOTP, verifySession, createSession, changePassword } = require("./../lib/verification");
+const { getOTP, verifyOTP, sendOTP, verifySession, createSession, changePassword } = require("./../lib/verification");
 require("./../lib/verification");
 require("./../lib/account");
 
@@ -17,21 +17,35 @@ router.route("/login")
         if (req.cookies.serverMessage) res.clearCookie("serverMessage");
         res.render("login", { serverAlert: req.cookies.serverMessage, root: process.env.API_DOMAIN });
 
-    }).post(loginAccount, createSession, (req, res) => {
+    }).post(loginAccount, sendOTP, (req, res) => {
 
-        if (res.locals.change_pass == true) {
-            // send id to change password
-            return res.cookie("id", res.locals.id).status(200).json({ root: "/help/change-password" });
+        if (req.account || res.change_pass == true) {
+            return res.status(200).json({ root:("/verify") });
         }
 
-        if (req.account) {
-            return res.status(200).json({ root: "/" + req.account.type, });
-        }
         res.cookie("serverMessage", {
             mode: 0,
             title: res.locals.error_title,
             body: res.locals.error_body
-        }).status(200).json({ root: "/login" });
+        }).status(200).json({ root: "login" });
+    });
+
+router.route("/verify")
+    .get(getOTP, (req, res) => {
+        res.render("verify-otp", { serverAlert: req.cookies.serverMessage, subHelp: "/verify"});
+    }).post(verifyOTP, createSession, (req, res) => {
+
+        // Prompt to change password
+        if (req.cookies.change_pass == 'true') {
+            return res.cookie("id", req.account.id).status(200).redirect("/help/change-password");
+        }
+
+        // Login the User
+        if (req.account) {
+            return res.status(200).redirect("/" + req.account.type);
+        }
+
+        res.cookie("id", req.accountID).redirect("/login")
     });
 
 router.route("/signup")

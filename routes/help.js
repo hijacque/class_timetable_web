@@ -80,6 +80,7 @@ router.post("/resend-OTP", sendOTP, (req, res) => {
 router.route("/change-password")
     .get((req, res) => {
         if (req.cookies.serverMessage) res.clearCookie("serverMessage");
+        if (req.cookies.change_pass) res.clearCookie("change_pass");
         res.render("change-password", {
             serverAlert: req.cookies.serverMessage
         });
