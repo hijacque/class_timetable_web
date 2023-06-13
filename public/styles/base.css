@@ -324,6 +324,31 @@ div.schedules>.sched-body {
     column-gap: 1px;
 }
 
+.sched-grid > div.pref-slot {
+    background-color: white;
+}
+
+.sched-grid > div.conflict-slot {
+    background-color: #F44040;
+}
+
+.sched-grid > div.pref-slot.conflict-slot {
+    background-color: pink;
+}
+
+div.sched-body>div.sched-options {
+    padding: 8px 12px 8px 12px;
+    margin: 2px 8px 4px 8px;
+    border-radius: 12px;
+    box-shadow: 0 1px 5px #b6b3b977;
+    line-height: 20px;
+    overflow: hidden;
+    cursor: pointer;
+    text-align: center;
+    background-color: #1a181c;
+    display: none;
+}
+
 div.sched-body>div.sched-block {
     background-color: transparent;
     padding: 8px 12px 8px 12px;

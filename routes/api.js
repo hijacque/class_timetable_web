@@ -590,7 +590,7 @@ router.route("/curricula/:courseID?") // getting and adding the semesters in a c
         if (blocks.length > 0) {
             query += `INSERT INTO Blocks (id, course_id, term_id, year, block_no) VALUES ${blocks.join(", ")};`
         }
-        
+
         await DB.executeQuery(query);
         res.status(200).json({
             message: {
@@ -922,173 +922,206 @@ router.route("/schedules/:termID")
         res.status(200).end();
     });
 
-router.post("/schedule/:termID", async (req, res) => { // changes or removes a class schedule
-    // check user credentials
-    const user = req.account;
-    if (!user || user.type != "chair") {
-        res.cookie("serverMessage", {
-            message: {
-                mode: 0,
-                title: "Unauthorized request",
-                body: "Please login before accessing chair dashboard."
-            }
-        })
-        return res.status(401).json({ redirect: "/logout" });
-    }
-
-    const { action, oldSched } = req.body;
-    const DB = req.app.locals.database;
-    const { termID } = req.params;
-
-    if (action == "change") {
-        const { faculty, block, partial } = req.body.newSched;
-        if (oldSched.faculty != faculty && partial) {
-            return res.status(409).json({
+router.route("/schedule/:termID")
+    .get(async (req, res) => {
+        // check user credentials
+        const user = req.account;
+        if (!user || user.type != "chair") {
+            res.cookie("serverMessage", {
                 message: {
                     mode: 0,
-                    title: "Cannot share classes",
-                    body: "Professors cannot teach the same block of the same subject."
+                    title: "Unauthorized request",
+                    body: "Please login before accessing chair dashboard."
                 }
+            })
+            return res.status(401).json({ redirect: "/logout" });
+        }
+        
+        if (!req.query.blockID || !req.query.facultyID) {
+            return res.status(400).json({
+                message: "Invalid inputs, cannot get schedule."
             });
         }
-
-        console.log("Changing schedule...");
-        const { mode, room, subject } = req.body.newSched;
-        let [prefRooms] = await DB.executeQuery(
-            `SELECT pref_rooms AS room FROM Subjects WHERE id = '${subject}' LIMIT 1`
+        
+        console.log(req.query);
+        const DB = req.app.locals.database;
+        const classes = await DB.executeQuery(
+            `SELECT day, (TRUNCATE(start/60, 0) - 7) * 2 AS start_time, (TRUNCATE(end/60, 0) - 7) * 2 ` +
+            `AS end_time FROM Schedules WHERE term_id = '${req.params.termID}' AND mode IS NOT NULL AND ` +
+            `(block_id = '${req.query.blockID}' OR faculty_id = '${req.query.facultyID}') ORDER BY start_time, day`
         );
-        prefRooms = prefRooms ? prefRooms.room.split(",") : [];
 
-        // check if classroom exists
-        let classroom;
-        if (mode == 1 && (!room || room == "")) {
-            [classroom] = await DB.executeQuery(
-                `SELECT r.id, r.name FROM Rooms r INNER JOIN Buildings b ON r.bldg_id = b.id INNER JOIN ` +
-                    `Terms t ON b.school_id = t.school_id WHERE t.id = '${termID}' ` +
-                    (prefRooms.length > 0) ? "OR r.name LIKE '%" +
-                    prefRooms.map(r => r.split(" ").join("%")).join("%' OR r.name LIKE '%") + "%'" : "" + "LIMIT 1"
-            );
-            message = `Auto-assigned schedule into classroom ${classroom.name}`;
-        } else if (mode == 1) {
-            [classroom] = await DB.executeQuery(
-                `SELECT r.id, r.name FROM Rooms r INNER JOIN Buildings b ON r.bldg_id = b.id INNER JOIN ` +
-                `Terms t ON b.school_id = t.school_id WHERE t.id = '${termID}' AND r.id = '${room}' LIMIT 1`
-            );
-        }
-
-        if (mode == 1 && !classroom) {
-            return res.status(404).json({
+        console.table(classes);
+        res.status(200).json({
+            classes: classes
+        });
+    }).post(async (req, res) => { // changes or removes a class schedule
+        // check user credentials
+        const user = req.account;
+        if (!user || user.type != "chair") {
+            res.cookie("serverMessage", {
                 message: {
                     mode: 0,
-                    title: "Classroom not found",
-                    body: "The classroom does not exist"
+                    title: "Unauthorized request",
+                    body: "Please login before accessing chair dashboard."
                 }
-            });
+            })
+            return res.status(401).json({ redirect: "/logout" });
         }
 
-        let { day, start, end } = req.body.newSched;
-        let conflicts = await DB.executeQuery(
-            `SELECT sc.faculty_id, sc.subj_id, sc.block_id, sc.room_id, sc.day, sc.start, sc.end, r.name, ` +
-            `CONCAT(co.title, ' ', b.year, ' - block ', b.block_no) AS block, CONCAT(f.last_name, ', ', ` +
-            `f.first_name, ' ', f.middle_name) AS faculty, CASE WHEN s.type IS NULL THEN s.title ELSE ` +
-            `CONCAT(s.title, ' (', s.type, ')') END AS subject FROM Schedules sc LEFT JOIN Rooms r ON ` +
-            `sc.room_id = r.id INNER JOIN Blocks b ON sc.block_id = b.id INNER JOIN Subjects s ON ` +
-            `sc.subj_id = s.id LEFT JOIN Courses co ON b.course_id = co.id LEFT JOIN Faculty f ON ` +
-            `sc.faculty_id = f.id WHERE sc.term_id = '${termID}' AND (sc.block_id = '${block}' ` +
-            (faculty != "pass" ? `OR sc.faculty_id = '${faculty}' ` : "") +
-            (classroom ? `OR sc.room_id = '${classroom.id}'` : "") +
-            `) AND sc.day = ${day} AND ((sc.start <= ${start} AND ${start} < sc.end) OR ` +
-            `(sc.start < ${end} AND ${end} <= sc.end) OR (${start} <= sc.start AND sc.start < ${end}) ` +
-            `OR (${start} < sc.end AND sc.end <= ${end})) ORDER BY sc.start, sc.day`
-        );
-        conflicts = conflicts.filter(
-            (con) => con.subj_id != oldSched.subject && con.block_id != oldSched.block &&
-                con.mode != oldSched.mode && con.day != oldSched.day && con.start != oldSched.start &&
-                con.end != oldSched.end && con.faculty_id != oldSched.faculty
-        )
+        const { action, oldSched } = req.body;
+        const DB = req.app.locals.database;
+        const { termID } = req.params;
 
-        console.log("Found conflicts:");
-        console.table(conflicts);
-
-        if (conflicts.length > 0) {
-            let message = {
-                mode: 0,
-                title: "Conflicting schedule",
-                body: "Could not specify faculty/block/room conflict, try changing time/room input."
-            };
-
-            if (conflicts.some(({ faculty_id }) => faculty_id == faculty)) {
-                message.title = "Conflicting faculty schedule";
-                message.body = `<b>Prof. ${conflicts[0].faculty}</b> has "${conflicts[0].subject}" class with ` +
-                    `${conflicts[0].block} at the time.<br>Try changing time input.`;
-            } else if (conflicts.some(({ block_id }) => block_id == block)) {
-                message.title = "Conflicting block schedule";
-                message.body = `<b>${conflicts[0].block}</b> has "${conflicts[0].subject}" class at the time.<br>Try changing time input.`;
-            } else if (mode == 1 && conflicts.some(({ room_id }) => room_id == classroom.id)) {
-                message.title = "Conflicting room schedule";
-                message.body = `<b>${conflicts[0].name}</b> is already taken at the time.<br>Try changing classroom input.`;
+        if (action == "change") {
+            const { faculty, block, partial } = req.body.newSched;
+            if (oldSched.faculty != faculty && partial) {
+                return res.status(409).json({
+                    message: {
+                        mode: 0,
+                        title: "Cannot share classes",
+                        body: "Professors cannot teach the same block of the same subject."
+                    }
+                });
             }
 
-            return res.status(409).json({ message: message });
-        }
+            console.log("Changing schedule...");
+            const { mode, room, subject } = req.body.newSched;
+            let [prefRooms] = await DB.executeQuery(
+                `SELECT pref_rooms AS room FROM Subjects WHERE id = '${subject}' LIMIT 1`
+            );
+            prefRooms = prefRooms ? prefRooms.room.split(",") : [];
 
-        console.log(oldSched);
-        console.log(req.body.newSched);
+            // check if classroom exists
+            let classroom;
+            if (mode == 1 && (!room || room == "")) {
+                [classroom] = await DB.executeQuery(
+                    `SELECT r.id, r.name FROM Rooms r INNER JOIN Buildings b ON r.bldg_id = b.id INNER JOIN ` +
+                        `Terms t ON b.school_id = t.school_id WHERE t.id = '${termID}' ` +
+                        (prefRooms.length > 0) ? "OR r.name LIKE '%" +
+                        prefRooms.map(r => r.split(" ").join("%")).join("%' OR r.name LIKE '%") + "%'" : "" + "LIMIT 1"
+                );
+                message = `Auto-assigned schedule into classroom ${classroom.name}`;
+            } else if (mode == 1) {
+                [classroom] = await DB.executeQuery(
+                    `SELECT r.id, r.name FROM Rooms r INNER JOIN Buildings b ON r.bldg_id = b.id INNER JOIN ` +
+                    `Terms t ON b.school_id = t.school_id WHERE t.id = '${termID}' AND r.id = '${room}' LIMIT 1`
+                );
+            }
 
-        await DB.executeQuery(
-            // if faculty is changed
-            (
-                (!partial && oldSched.faculty != faculty) ? `UPDATE Preferences p INNER JOIN Terms t ON ` +
-                    `p.term_id = t.id INNER JOIN Colleges col ON t.school_id = col.school_id INNER JOIN ` +
-                    `Subjects s ON col.id = s.college_id SET p.assigned_load = (p.assigned_load - s.units) ` +
-                    `WHERE p.term_id = '${termID}' AND s.id = '${subject}' AND p.faculty_id = '${oldSched.faculty}' ` +
-                    `LIMIT 1; UPDATE Preferences p INNER JOIN Terms t ON p.term_id = t.id INNER JOIN ` +
-                    `Colleges col ON t.school_id = col.school_id INNER JOIN Subjects s ON col.id = s.college_id ` +
-                    `SET p.assigned_load = (p.assigned_load + s.units) WHERE p.term_id = '${termID}' AND ` +
-                    `s.id = '${subject}' AND p.faculty_id = ${!faculty || faculty == "pass" ? "NULL" : `'${faculty}'`} ` +
-                    `LIMIT 1; ` : ""
-            ) +
+            if (mode == 1 && !classroom) {
+                return res.status(404).json({
+                    message: {
+                        mode: 0,
+                        title: "Classroom not found",
+                        body: "The classroom does not exist"
+                    }
+                });
+            }
 
-            `UPDATE Schedules SET day = ${day}, start = ${start}, end = ${end}, mode = ${mode}, ` +
-            `faculty_id = ${!faculty || faculty == "pass" ? "NULL" : `'${faculty}'`}, room_id = ${classroom ? `'${classroom.id}'` : "NULL"} ` +
-            `WHERE term_id = '${termID}' AND subj_id = '${subject}' AND block_id = '${block}' AND day = ${oldSched.day} AND ` +
-            `start = ${oldSched.start} AND end = ${oldSched.end} LIMIT 1;`
-        );
+            let { day, start, end } = req.body.newSched;
+            let conflicts = await DB.executeQuery(
+                `SELECT sc.faculty_id, sc.subj_id, sc.block_id, sc.room_id, sc.day, sc.start, sc.end, r.name, ` +
+                `CONCAT(co.title, ' ', b.year, ' - block ', b.block_no) AS block, CONCAT(f.last_name, ', ', ` +
+                `f.first_name, ' ', f.middle_name) AS faculty, CASE WHEN s.type IS NULL THEN s.title ELSE ` +
+                `CONCAT(s.title, ' (', s.type, ')') END AS subject FROM Schedules sc LEFT JOIN Rooms r ON ` +
+                `sc.room_id = r.id INNER JOIN Blocks b ON sc.block_id = b.id INNER JOIN Subjects s ON ` +
+                `sc.subj_id = s.id LEFT JOIN Courses co ON b.course_id = co.id LEFT JOIN Faculty f ON ` +
+                `sc.faculty_id = f.id WHERE sc.term_id = '${termID}' AND (sc.block_id = '${block}' ` +
+                (faculty != "pass" ? `OR sc.faculty_id = '${faculty}' ` : "") +
+                (classroom ? `OR sc.room_id = '${classroom.id}'` : "") +
+                `) AND sc.day = ${day} AND ((sc.start <= ${start} AND ${start} < sc.end) OR ` +
+                `(sc.start < ${end} AND ${end} <= sc.end) OR (${start} <= sc.start AND sc.start < ${end}) ` +
+                `OR (${start} < sc.end AND sc.end <= ${end})) ORDER BY sc.start, sc.day`
+            );
+            conflicts = conflicts.filter(
+                (con) => con.subj_id != oldSched.subject && con.block_id != oldSched.block &&
+                    con.mode != oldSched.mode && con.day != oldSched.day && con.start != oldSched.start &&
+                    con.end != oldSched.end && con.faculty_id != oldSched.faculty
+            )
 
-        return res.status(200).end();
-    } else if (action == "delete") {
-        const { subject, block, faculty, day, start, end } = oldSched;
-        const [[{ sameClasses }], [{ units }]] = await DB.executeQuery(
-            `SELECT COUNT(*) AS sameClasses FROM Schedules WHERE term_id = '${termID}' AND ` +
-            `subj_id = '${subject}' AND block_id = '${block}';` +
+            console.log("Found conflicts:");
+            console.table(conflicts);
 
-            `SELECT units FROM Subjects WHERE id = '${subject}' LIMIT 1;`
-        );
+            if (conflicts.length > 0) {
+                let message = {
+                    mode: 0,
+                    title: "Conflicting schedule",
+                    body: "Could not specify faculty/block/room conflict, try changing time/room input."
+                };
 
-        if (sameClasses > 1) {
+                if (conflicts.some(({ faculty_id }) => faculty_id == faculty)) {
+                    message.title = "Conflicting faculty schedule";
+                    message.body = `<b>Prof. ${conflicts[0].faculty}</b> has "${conflicts[0].subject}" class with ` +
+                        `${conflicts[0].block} at the time.<br>Try changing time input.`;
+                } else if (conflicts.some(({ block_id }) => block_id == block)) {
+                    message.title = "Conflicting block schedule";
+                    message.body = `<b>${conflicts[0].block}</b> has "${conflicts[0].subject}" class at the time.<br>Try changing time input.`;
+                } else if (mode == 1 && conflicts.some(({ room_id }) => room_id == classroom.id)) {
+                    message.title = "Conflicting room schedule";
+                    message.body = `<b>${conflicts[0].name}</b> is already taken at the time.<br>Try changing classroom input.`;
+                }
+
+                return res.status(409).json({ message: message });
+            }
+
+            console.log(oldSched);
+            console.log(req.body.newSched);
+
             await DB.executeQuery(
-                `DELETE FROM Schedules WHERE term_id = '${termID}' AND (subj_id = '${subject}' AND ` +
-                `block_id = '${block}') AND day = ${day} AND start = ${start} AND end = ${end} LIMIT 1`
+                // if faculty is changed
+                (
+                    (!partial && oldSched.faculty != faculty) ? `UPDATE Preferences p INNER JOIN Terms t ON ` +
+                        `p.term_id = t.id INNER JOIN Colleges col ON t.school_id = col.school_id INNER JOIN ` +
+                        `Subjects s ON col.id = s.college_id SET p.assigned_load = (p.assigned_load - s.units) ` +
+                        `WHERE p.term_id = '${termID}' AND s.id = '${subject}' AND p.faculty_id = '${oldSched.faculty}' ` +
+                        `LIMIT 1; UPDATE Preferences p INNER JOIN Terms t ON p.term_id = t.id INNER JOIN ` +
+                        `Colleges col ON t.school_id = col.school_id INNER JOIN Subjects s ON col.id = s.college_id ` +
+                        `SET p.assigned_load = (p.assigned_load + s.units) WHERE p.term_id = '${termID}' AND ` +
+                        `s.id = '${subject}' AND p.faculty_id = ${!faculty || faculty == "pass" ? "NULL" : `'${faculty}'`} ` +
+                        `LIMIT 1; ` : ""
+                ) +
+
+                `UPDATE Schedules SET day = ${day}, start = ${start}, end = ${end}, mode = ${mode}, ` +
+                `faculty_id = ${!faculty || faculty == "pass" ? "NULL" : `'${faculty}'`}, room_id = ${classroom ? `'${classroom.id}'` : "NULL"} ` +
+                `WHERE term_id = '${termID}' AND subj_id = '${subject}' AND block_id = '${block}' AND day = ${oldSched.day} AND ` +
+                `start = ${oldSched.start} AND end = ${oldSched.end} LIMIT 1;`
             );
+
+            return res.status(200).end();
+        } else if (action == "delete") {
+            const { subject, block, faculty, day, start, end } = oldSched;
+            const [[{ sameClasses }], [{ units }]] = await DB.executeQuery(
+                `SELECT COUNT(*) AS sameClasses FROM Schedules WHERE term_id = '${termID}' AND ` +
+                `subj_id = '${subject}' AND block_id = '${block}';` +
+
+                `SELECT units FROM Subjects WHERE id = '${subject}' LIMIT 1;`
+            );
+
+            if (sameClasses > 1) {
+                await DB.executeQuery(
+                    `DELETE FROM Schedules WHERE term_id = '${termID}' AND (subj_id = '${subject}' AND ` +
+                    `block_id = '${block}') AND day = ${day} AND start = ${start} AND end = ${end} LIMIT 1`
+                );
+            } else {
+                await DB.executeQuery(
+                    // remove schedule
+                    `UPDATE Schedules SET faculty_id = NULL, room_id = NULL, day = NULL, start = NULL, ` +
+                    `end = NULL, mode = NULL WHERE term_id = '${termID}' AND (subj_id = '${subject}' AND ` +
+                    `block_id = '${block}') AND day = ${day} AND start = ${start} AND end = ${end} LIMIT 1; ` +
+
+                    // subtract faculty load
+                    `UPDATE Preferences SET assigned_load = assigned_load - ${units} ` +
+                    `WHERE faculty_id = '${faculty}' AND term_id = '${termID}' LIMIT 1;`
+                );
+            }
+
+            res.status(200).end();
         } else {
-            await DB.executeQuery(
-                // remove schedule
-                `UPDATE Schedules SET faculty_id = NULL, room_id = NULL, day = NULL, start = NULL, ` +
-                `end = NULL, mode = NULL WHERE term_id = '${termID}' AND (subj_id = '${subject}' AND ` +
-                `block_id = '${block}') AND day = ${day} AND start = ${start} AND end = ${end} LIMIT 1; ` +
-
-                // subtract faculty load
-                `UPDATE Preferences SET assigned_load = assigned_load - ${units} ` +
-                `WHERE faculty_id = '${faculty}' AND term_id = '${termID}' LIMIT 1;`
-            );
+            console.log("Invalid action");
+            return res.status(400).end();
         }
-
-        res.status(200).end();
-    } else {
-        console.log("Invalid action");
-        return res.status(400).end();
-    }
-});
+    });
 
 router.post("/blocks/:courseID", async (req, res) => {
     // check user credentials
@@ -1157,7 +1190,7 @@ router.post("/delete_block/:termID", async (req, res) => {
     }
 
     console.log(req.body);
-    const {year, block} = req.body;
+    const { year, block } = req.body;
     const DB = req.app.locals.database;
 
     await DB.executeQuery(
@@ -1212,13 +1245,13 @@ router.post("/preferences/:prefID", async (req, res) => {
     let query = "";
     if (schedules && schedules.length > 0) {
         query += `INSERT INTO PrefSchedules VALUES ` +
-        `(${schedules.map((val) => `'${req.params.prefID}', ` + Object.values(val).join(", ")).join(`), (`)});`;
+            `(${schedules.map((val) => `'${req.params.prefID}', ` + Object.values(val).join(", ")).join(`), (`)});`;
     }
 
     if (subjects && subjects.length > 0) {
         query += `INSERT INTO PrefSubjects SELECT DISTINCT '${req.params.prefID}', sub.id FROM Faculty f ` +
-        `INNER JOIN Departments d ON f.dept_id = d.id INNER JOIN Subjects sub ON ` +
-        `d.college_id = sub.college_id WHERE f.id = '${user.id}' AND sub.title IN ('${subjects.join("', '")}');`;
+            `INNER JOIN Departments d ON f.dept_id = d.id INNER JOIN Subjects sub ON ` +
+            `d.college_id = sub.college_id WHERE f.id = '${user.id}' AND sub.title IN ('${subjects.join("', '")}');`;
     }
 
     await DB.executeQuery(
@@ -1311,21 +1344,21 @@ router.post("/update_faculty/:deptID", async (req, res) => {
     }
 
     let query = `UPDATE Faculty f INNER JOIN Departments d ON f.dept_id = d.id INNER JOIN Colleges col ON ` +
-    `d.college_id = col.id INNER JOIN Users u ON f.id = u.id SET f.status = '${status}', ` +
-    `f.teach_load = ${teach_load}, f.last_name = '${last_name}', f.first_name = '${first_name}', ` +
-    `f.middle_name = '${middle_name}', u.email = '${email}' WHERE (d.chair_id = '${user.id}' OR ` +
-    `col.school_id = '${user.id}') AND f.id = '${id}';`;
+        `d.college_id = col.id INNER JOIN Users u ON f.id = u.id SET f.status = '${status}', ` +
+        `f.teach_load = ${teach_load}, f.last_name = '${last_name}', f.first_name = '${first_name}', ` +
+        `f.middle_name = '${middle_name}', u.email = '${email}' WHERE (d.chair_id = '${user.id}' OR ` +
+        `col.school_id = '${user.id}') AND f.id = '${id}';`;
 
     if (is_chair >= 1 && user.type == "admin") {
         query += `UPDATE Users u INNER JOIN Departments d ON u.id = d.chair_id SET u.type = 3 WHERE ` +
-        `d.id = '${req.params.deptID}' LIMIT 1;` +
-        `UPDATE Departments SET chair_id = '${id}' WHERE id = '${req.params.deptID}' LIMIT 1;` +
-        `UPDATE Users SET type = 2 WHERE id = '${id}' LIMIT 1;`;
+            `d.id = '${req.params.deptID}' LIMIT 1;` +
+            `UPDATE Departments SET chair_id = '${id}' WHERE id = '${req.params.deptID}' LIMIT 1;` +
+            `UPDATE Users SET type = 2 WHERE id = '${id}' LIMIT 1;`;
     } else if (is_chair < 1 && user.type == "admin") {
         query += `UPDATE Users u INNER JOIN Departments d ON u.id = d.chair_id SET u.type = 3 WHERE ` +
-        `d.id = '${req.params.deptID}' AND d.chair_id = '${id}' LIMIT 1;` +
-        `UPDATE Departments SET chair_id = CASE WHEN chair_id = '${id}' THEN NULL ELSE chair_id END ` +
-        `WHERE id = '${req.params.deptID}' LIMIT 1;`;
+            `d.id = '${req.params.deptID}' AND d.chair_id = '${id}' LIMIT 1;` +
+            `UPDATE Departments SET chair_id = CASE WHEN chair_id = '${id}' THEN NULL ELSE chair_id END ` +
+            `WHERE id = '${req.params.deptID}' LIMIT 1;`;
     }
 
     await DB.executeQuery(query);
@@ -1376,6 +1409,41 @@ router.post("/update_subject/:id", async (req, res) => {
         `SET code = '${code}', title = '${title}', type = '${type}', units = '${units}', req_hours = '${req_hours}', pref_rooms = '${pref_rooms}' ` +
         `WHERE id = '${req.params.id}'`
     );
+});
+
+router.get("/unavailable-rooms/:term", async (req, res) => {
+    const user = req.account;
+    if (!user || user.type != "chair") {
+        res.cookie("serverMessage", {
+            message: {
+                mode: 0,
+                title: "Unauthorized request",
+                body: "Please login before updating schedules."
+            }
+        });
+        return res.status(401).json({ redirect: "/logout" });
+    }
+
+    const DB = req.app.locals.database;
+    const { start, end, day } = req.query || req.body;
+    console.log(req.query);
+
+    if (!start || !end || !day) {
+        return res.status(400).json({
+            message: "Please enter day, start and end time"
+        });
+    }
+
+    const conflictRooms = await DB.executeQuery(
+        `SELECT DISTINCT r.id, r.name FROM Rooms r INNER JOIN (SELECT * FROM ` +
+        `Schedules WHERE day = ${day} AND ((start <= ${start} AND ${start} < end) OR ` +
+        `(start < ${end} AND ${end} <= end) OR (${start} <= start AND start < ${end}) OR ` +
+        `(${start} < end AND end <= ${end})) AND term_id = '${req.params.term}') AS sc ON r.id = sc.room_id ` +
+        `ORDER BY r.name`
+    );
+
+    console.table(conflictRooms);
+    res.status(200).json({ rooms: conflictRooms.map(r => r.id) });
 });
 
 module.exports = router;

@@ -93,6 +93,11 @@
                                 <i class="fas fa-lock fa-lg me-2"></i>save all
                             </button>
                         </form>
+                        <div>
+                            <button class="ms-2 btn btn-warning btn-rounded" id="clear-schedule" title="Clear schedules">
+                                <i class="fas fa-arrow-rotate-left fa-lg me-2"></i>reset all
+                            </button>
+                        </div>
                     <% } %>
                 </div>
                 <label for="term-title">Status: <span id="term-status" class="text-success">OPEN</span></label>
@@ -191,7 +196,7 @@
                 `<th table-cts-column="block_no" style="width: 120px;">Block</th>` +
                 `<th table-cts-column="total_students number" style="width: 160px;">No. of Students</th>` +
                 `<th table-cts-column="sched_status" style="width: 120px;">Schedule<br>Status</th>` +
-                `<th table-cts-column="${$("#generate-sched").get().length > 0 ? "delete" : ""}">Action</th></tr><tr class='add-data'>` +
+                `<th table-cts-column="${$("#generate-sched").get().length > 0 ? "edit delete" : ""}">Action</th></tr><tr class='add-data'>` +
                     `<td><input type="number" class="form-control add-td-input reuse text-center"></td>` +
                     `<td><label class="add-td-input optional"></label></td>` +
                     `<td><input type="number" class="form-control add-td-input optional text-center" min="1" max="100"></td>` +
@@ -334,4 +339,14 @@
             location.replace("/chair/schedules/" + year + semester[0]);
         }
     });
+
+    $("#clear-schedule").click(() => {
+        $("#accept-alert, #reject-alert, #confirm-alert").toggle();
+        alertModal.show(
+            2, "Are you sure?", 
+            "By clicking yes, you will remove all classes assigned to faculty and blocks under your department."
+        );
+    });
+
+    $("#accept-alert, #reject-alert").click(() => $("#accept-alert, #reject-alert, #confirm-alert").toggle());
 </script>
