@@ -3,7 +3,8 @@ const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const { AppDatabase } = require("./lib/app-database");
 const { AppMailer } = require("./lib/app-mailer");
-require("dotenv").config();
+const env = require("dotenv").config();
+require("dotenv-expand").expand(env);
 const config = process.env;
 
 const app = express();
@@ -20,6 +21,7 @@ app.use("/api", require("./routes/api"));
 app.use("/schedule", require("./routes/schedule"));
 
 // debug route
+console.log(config.API_DOMAIN);
 app.get("/test", (req, res) => {
     // res.status(200).json(req.signedCookies);
 });
