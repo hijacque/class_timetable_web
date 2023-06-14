@@ -18,34 +18,32 @@ router.route("/login")
         res.render("login", { serverAlert: req.cookies.serverMessage, root: process.env.API_DOMAIN });
 
     }).post(loginAccount, sendOTP, (req, res) => {
-
         if (req.account || res.change_pass == true) {
-            return res.status(200).json({ root:("/verify") });
+            return res.status(200).json({ root: "/verify" });
         }
 
         res.cookie("serverMessage", {
             mode: 0,
             title: res.locals.error_title,
             body: res.locals.error_body
-        }).status(200).json({ root: "login" });
+        }).status(200).json({ root: "/login" });
     });
 
 router.route("/verify")
     .get(getOTP, (req, res) => {
         res.render("verify-otp", { serverAlert: req.cookies.serverMessage, subHelp: "/verify"});
     }).post(verifyOTP, createSession, (req, res) => {
-
-        // Prompt to change password
-        if (req.cookies.change_pass == 'true') {
-            return res.cookie("id", req.account.id).status(200).redirect("/help/change-password");
-        }
-
         // Login the User
         if (req.account) {
-            return res.status(200).redirect("/" + req.account.type);
+            return res.status(200).json({ redirect: "/" + req.account.type });
         }
 
-        res.cookie("id", req.accountID).redirect("/login")
+        const {mode} = req.message;
+        if (mode == 2 || mode == 0) {
+            res.status(200).json({ message: req.message });
+        } else {
+            res.json({ redirect: "/login" });
+        }
     });
 
 router.route("/signup")
@@ -54,21 +52,17 @@ router.route("/signup")
         res.render("signup", { serverAlert: req.cookies.serverMessage });
     })
     .post(createAdmin, sendOTP, (req, res) => {
-        if (req.accountID) {
-            res.cookie("serverMessage", {
-                title: "OTP sent to " + req.body.email,
-                body: "Verify your account via the link we sent.",
-                mode: 3
-            }, { httpOnly: true }).redirect("/login");
+        if (req.account) {
+            res.redirect("/help/open-account/admin");
         } else {
             res.redirect("/signup");
         }
     });
 
 router.get("/logout", (req, res) => {
-    if (req.signedCookies.ctsSession) {
-        res.clearCookie("ctsSession");
-    }
+    res.clearCookie("ctsSession");
+    res.clearCookie("helpID");
+    res.clearCookie("otp");
     res.redirect("/login");
 });
 

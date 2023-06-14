@@ -23,12 +23,50 @@
         </div>
     </div>
     <h1>Enter OTP we sent to your e-mail</h1>
-    <form action="<%- subHelp %>" method="post">
-        <input type="text" id="pin" maxlength="6" name="pin" class="text-uppercase">
-        <button type="submit" class="btn btn-primary" id="submit">Confirm</button>
-    </form>
+    <input type="text" id="pin" maxlength="6" class="text-uppercase" autocomplete="off">
+    <button type="button" class="btn btn-primary" id="submit">confirm</button>
+
     <!-- MDB -->
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.0.0/mdb.min.js"></script>
+    <script>
+        $("#submit").click((event) => {
+            const inputPin = $("#pin").val();
+            if (!inputPin || inputPin == "") {
+                return alertModal.show(2, "Enter OTP", "Please type in the OTP we sent you.")
+            } else if (inputPin.length != 6) {
+                return alertModal.show(2, "OTP incomplete", "Check your OTP, it needs to be 6 characters.")
+            }
+
+            // use ajax instead or form post to prevent user from reaccessing verify-otp page when done
+            $.post("<%- subHelp %>", { pin: $("#pin").val() }, (data) => {
+                console.log(data);
+                if (data.redirect) {
+                    return location.replace(data.redirect);
+                }
+                
+                const result = data.message;
+                if (result.mode == 0) {
+                    let cancelBtn = $("#confirm-alert");
+                    cancelBtn.text("no").click(() => location.replace("/login"));
+                    $(".modal-footer").prepend(
+                        '<form action="/help/resend-otp" method="POST">' +
+                        '<button type="submit" class="btn btn-primary" name="resend" value="1">Yes</button>' +
+                        '</form>'
+                    );
+                }
+                
+                alertModal.show(...Object.values(result));
+            });
+        });
+
+        $("#confirm-alert").click(() => $("#pin").focus());
+        
+        const alertModal = new ThemedAlert(new mdb.Modal("#alert-modal"), "alert-modal");
+        <% if (serverAlert && Object.keys(serverAlert).length == 3) { %>
+            <% const {mode, title, body} = serverAlert %>
+            alertModal.show(<%- JSON.stringify(mode) %>, "<%= title %>", "<%= body %>");
+        <% } %>
+    </script>
 </body>
 
 </html>
