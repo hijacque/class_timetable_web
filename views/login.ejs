@@ -67,7 +67,7 @@
                             <button class="btn btn-primary btn-block rounded-pill btn-lg mb-2" id="submit"
                                 type="submit">Log
                                 in</button>
-                            <a class="text-muted" href="/help/forget-password"><small>Forgot
+                            <a class="text-muted" href="/help/forgot-password"><small>Forgot
                                     password?</small></a>
                             <!-- must lead to reset.html to get their username -->
                         </div>
@@ -100,8 +100,12 @@
                 email: $("#email").val(),
                 password: $("#password").val()
             }, (data) => {
-                location.replace(data.root);
-            }).fail(data => window.location.replace(data.root));
+                if (data.root) {
+                    location.replace(data.root);
+                } else if (data.redirect) {
+                    location.href = data.redirect;
+                }
+            }).fail(data => location.reload());
         });
     </script>
 </body>
