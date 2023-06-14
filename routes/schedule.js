@@ -59,12 +59,54 @@ router.post("/download/:term/block", getBlockSchedTable, (req, res) => {
 });
 
 router.post("/save/:term", saveFacultySchedule, (req, res) => {
-    console.log(req.params);
+    if (req.incompleteScheds) {
+        if (req.body.facultyID) {
+            res.cookie("serverMessage", {
+                mode: 2,
+                title: "Unable to save faculty schedule",
+                body: "<p>Some classes are not fully plotted.</p>"
+            });
+            return res.redirect(`/schedule/faculty?term=${req.params.term}&id=${req.body.facultyID}`);
+        }
+        res.cookie("serverMessage", {
+            mode: 2,
+            title: "Unable to save incomplete schedules",
+            body: "<p>Some classes are not fully plotted in the following faculty's timetable:<br>" +
+                `<ul><li>${req.incompleteScheds.map(sched => sched.name).join("</li><li>")}</li></ul></p>`
+        });
+    } else {
+        if (req.body.facultyID) {
+            res.cookie("serverMessage", {
+                mode: 1,
+                title: "Saved faculty schedule",
+                body: "Successfully saved faculty schedule, you cannot add nor modify classes when schedule is in saved mode"
+            });
+            return res.redirect(`/schedule/faculty?term=${req.params.term}&id=${req.body.facultyID}`);
+        }
+        res.cookie("serverMessage", {
+            mode: 1,
+            title: "Saved faculty schedules",
+            body: "Successfully saved faculty schedules, you cannot add nor modify classes in saved mode"
+        });
+    }
+
     res.redirect("/chair/schedules/" + req.params.term);
 });
 
 router.post("/unsave/:term", unsaveFacultySchedule, (req, res) => {
-    console.log(req.params);
+    if (req.body.facultyID) {
+        res.cookie("serverMessage", {
+            mode: 1,
+            title: "Opened faculty schedule",
+            body: "You can continue editing the faculty schedule."
+        });
+        return res.redirect(`/schedule/faculty?term=${req.params.term}&id=${req.body.facultyID}`);
+    }
+    res.cookie("serverMessage", {
+        mode: 1,
+        title: "Opened faculty schedules",
+        body: "You can continue editing the faculty schedules."
+    });
     res.redirect("/chair/schedules/" + req.params.term);
 });
 

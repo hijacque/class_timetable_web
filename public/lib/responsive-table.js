@@ -182,12 +182,12 @@ class EditableTable extends ResponsiveTable {
 
         this.#editOptions = `${id}>tbody>tr>td.edit-action> div.edit-options`;
         this.#changeOptions = `${id}>tbody>tr>td.edit-action> div.confirm-options`;
-        const actions = $(`${id}>thead>tr> *:last-child:contains(ction)`).attr("table-cts-column").split(" ");
-        if (actions.includes("edit")) {
+        const actions = $(`${id}>thead>tr> *:last-child:contains(ction)`).attr("table-cts-column");
+        if (actions && actions.includes("edit")) {
             this.editButtons = `${this.#editOptions}>a.edit`;
         }
 
-        if (actions.includes("delete")) {
+        if (actions && actions.includes("delete")) {
             this.deleteButtons = `${this.#editOptions}>a.delete`;
         }
 

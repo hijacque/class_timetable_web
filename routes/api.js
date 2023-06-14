@@ -2,6 +2,7 @@ const router = require("express").Router();
 const crypto = require("crypto");
 const { verifySession } = require("./../lib/verification");
 const { createFaculty } = require("./../lib/account");
+const { saveFacultySchedule, unsaveFacultySchedule } = require("./../lib/schedule");
 const { convertMinutesTime, toWeekDay } = require("./../lib/time-conversion");
 
 // for CRUD purposes, sub-directly controlled from client side
@@ -771,6 +772,45 @@ router.post("/terms", async (req, res) => {
     res.status(200).json({ termID: termID });
 });
 
+router.post("/save_schedule/:term", saveFacultySchedule, async (req, res) => {
+    console.log("saving schedule");
+    if (req.incompleteScheds && req.body.facultyID) {
+        res.status(409).json({
+            message: {
+                mode: 2,
+                title: "Unable to save faculty schedule",
+                body: "<p>Some classes are not fully plotted.</p>"
+            }
+        });
+    } else if (req.body.facultyID) {
+        let [aboutProf] = await req.app.locals.database.executeQuery(
+            `SELECT * FROM Preferences WHERE faculty_id = '${req.body.facultyID}' LIMIT 1`
+        );
+        console.log(aboutProf);
+        res.status(200).json(aboutProf);
+    } else {
+        res.status(500).end();
+    }
+});
+
+router.post("/unsave_schedule/:term", unsaveFacultySchedule, async (req, res) => {
+    console.log("unsaving schedule");
+    if (req.body.facultyID) {
+        let [aboutProf] = await req.app.locals.database.executeQuery(
+            `SELECT * FROM Preferences WHERE faculty_id = '${req.body.facultyID}' LIMIT 1`
+        );
+        console.log(aboutProf);
+        return res.status(200).json(aboutProf);
+    }
+    res.status(500).json({
+        message: {
+            mode: 0,
+            title: "Server Error",
+            body: "An unexpected error occured, try again later as we fix this issue."
+        }
+    });
+});
+
 router.route("/schedules/:termID")
     .get(async (req, res) => { // get faculty or block details per term schedule
         // check user credentials
@@ -789,12 +829,14 @@ router.route("/schedules/:termID")
         const DB = req.app.locals.database;
         let query;
         if (req.query.category == "faculty") {
-            query = `SELECT f.id, CONCAT(f.last_name, ", ", f.first_name, " ", f.middle_name) AS name, pref.sched_status, ` +
-                `f.faculty_id, CONCAT(pref.assigned_load, " / ", f.teach_load) AS teach_load, pref.status AS pref_status, ` +
-                `f.status AS faculty_status FROM Terms t INNER JOIN Preferences pref ON t.id = pref.term_id ` +
-                `INNER JOIN Faculty f ON pref.faculty_id = f.id INNER JOIN Departments d ON f.dept_id = d.id ` +
-                `WHERE d.chair_id = '${user.id}' AND t.id = '${req.params.termID}' ` +
-                `ORDER BY f.status, name`;
+            query = `SELECT f.id, CONCAT(f.last_name, ", ", f.first_name, " ", f.middle_name) AS name, CASE ` +
+                `WHEN pref.sched_status = 'saved' THEN '<input class="form-check-input save-schedule" ` +
+                `type="checkbox" checked/>' ELSE '<input class="form-check-input save-schedule" type="checkbox" />' ` +
+                `END AS sched_status_checkbox, f.faculty_id, CONCAT(pref.assigned_load, " / ", f.teach_load) AS ` +
+                `teach_load, pref.sched_status, pref.status AS pref_status, f.status AS faculty_status FROM Terms t INNER JOIN ` +
+                `Preferences pref ON t.id = pref.term_id INNER JOIN Faculty f ON pref.faculty_id = f.id ` +
+                `INNER JOIN Departments d ON f.dept_id = d.id WHERE d.chair_id = '${user.id}' AND ` +
+                `t.id = '${req.params.termID}' ORDER BY f.status, name`;
         } else {
             query = `SELECT id, year, block_no, total_students, CASE WHEN is_complete THEN 'COMPLETE' ELSE ` +
                 `'incomplete' END AS sched_status FROM Blocks WHERE course_id = "${req.query.category}" ` +

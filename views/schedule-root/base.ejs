@@ -82,7 +82,9 @@
             alertModal.show(<%- JSON.stringify(mode) %>, "<%= title %>", "<%- body %>");
         <% } %>
         
-        const scheduleForm = new mdb.Modal($("#schedule-class"));
+        <% if (category == 'faculty' && schedule.current.sched_status == 'open') { %>
+            const scheduleForm = new mdb.Modal($("#schedule-class"));
+        <% } %>
     </script>
 </body>
 </html>

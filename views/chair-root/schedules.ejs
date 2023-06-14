@@ -172,7 +172,7 @@
         if (id == "faculty") {
             scheduleTable.attr("id", "faculty-schedule").append(
                 `<thead clas='text-center'><tr>` +
-                    `<%- !currentTerm.isPosted ? '<th table-cts-column="sched_status" style="width: 120px;">Schedule Status</th>' : '' %>` +
+                    `<%- !currentTerm.isPosted ? '<th table-cts-column="sched_status_checkbox" style="width: 120px;">Save<br>Schedule</th>' : '' %>` +
                     `<th table-cts-column="pref_status" style="width: 130px;">Preference Status</th>` +
                     `<th table-cts-column="name">Name</th>` +
                     `<th table-cts-column="faculty_status" style="width: 130px;">Employment Status</th>` +
@@ -180,16 +180,49 @@
                 `</tr></thead><tbody></tbody>`
             );
             const facultyTable = new DisplayTable("#faculty-schedule");
-            facultyTable.initData(
-                getSchedules(termID, id), true, 
-                () => {
-                    const rows = $(`${facultyTable.body}>tr`).click(
-                        event => openSchedule(id, event, facultyTable.data[$(event.currentTarget).index()].id)
-                    );
-                    rows.find("td:contains('submitted'), td:contains('posted'), td:contains('saved')").addClass("text-success");
-                    rows.find("td:contains('unanswered')").addClass("text-warning");
+            facultyTable.initData(getSchedules(termID, id), true, () => {
+                const rows = $(`${facultyTable.body}>tr`);
+                rows.find("td:contains('saved'), td:contains('submitted')").addClass("text-success");
+                rows.find("td:contains('unanswered')").addClass("text-warning");
+
+                // for when schedules are posted
+                if ("<%= currentTerm.isPosted %>" == "true") {
+                    return;
                 }
-            );
+
+                rows.find("td:not(:first-child)").click(
+                    (event) => openSchedule(id, event, facultyTable.data[$(event.currentTarget).closest("tr").index()].id)
+                );
+                rows.find("td:first-child >input[type=checkbox]").click(async (event) => { 
+                    let row = $(event.currentTarget).closest("tr");
+                    if (event.currentTarget.checked) {
+                        const data = await saveSchedule(facultyTable.data[row.index()].id).catch((error) => {
+                            event.currentTarget.checked = false;
+                            if (!error) {
+                                alertModal.show(0, "Server Error", "We will get back to you later.");
+                            } else if (error.message) {
+                                alertModal.show(...Object.values(error.message));
+                            }
+                        });
+                        console.log(data);
+                        row.find("td:nth-child(2)").text(data.status);
+                        row.find("td").removeClass("text-warning text-success");
+                        row.find("td:contains('submitted')").addClass("text-success");
+                        row.find("td:contains('unanswered')").addClass("text-warning");
+                        facultyTable.data[row.index()].sched_status = 'saved';
+                    } else {
+                        const data = await unsaveSchedule(facultyTable.data[row.index()].id).catch(() => {
+                            event.currentTarget.checked = true;
+                        });
+                        console.log(data);
+                        row.find("td:nth-child(2)").text(data.status);
+                        row.find("td").removeClass("text-warning text-success");
+                        row.find("td:contains('submitted')").addClass("text-success");
+                        row.find("td:contains('unanswered')").addClass("text-warning");
+                        facultyTable.data[row.index()].sched_status = 'open';
+                    }
+                });
+            });
         } else {
             scheduleTable.attr("id", "blocks-schedule").append(
                 `<thead clas='text-center'><tr><th table-cts-column="year" style="width: 120px;">Year</th>` +
@@ -253,6 +286,20 @@
     const deleteBlock = (oldBlock) => new Promise((resolve, reject) => {
         $.post(
             "/api/delete_block/<%= currentTerm.id %>", oldBlock, () => location.reload()
+        ).fail((error) => reject(error.responseJSON))
+    });
+
+    const saveSchedule = (facultyID) => new Promise((resolve, reject) => {
+        $.post(
+            "/api/save_schedule/<%= currentTerm.year + currentTerm.term %>", {facultyID: facultyID}, 
+            (data) => resolve(data)
+        ).fail((error) => reject(error.responseJSON))
+    });
+
+    const unsaveSchedule = (facultyID) => new Promise((resolve, reject) => {
+        $.post(
+            "/api/unsave_schedule/<%= currentTerm.year + currentTerm.term %>", {facultyID: facultyID},
+            (data) => resolve(data)
         ).fail((error) => reject(error.responseJSON))
     });
 
