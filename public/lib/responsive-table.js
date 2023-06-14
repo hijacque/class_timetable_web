@@ -36,9 +36,13 @@ class ResponsiveTable {
         $(this.headers).attr("aria-sort", "ascending").click((event) => this.#sortTable(event.currentTarget));
     }
 
-    async initData(data = []) {
+    async initData(data = [], callback = () => {}) {
         $(this.body).empty();
-        this.data = data;
+        if (!this.data) {
+            this.data = data;
+        } else {
+            this.data.splice(0, this.data.length, ...data);
+        }
     }
 
     #sortTable(baseColumn) {
@@ -46,50 +50,60 @@ class ResponsiveTable {
         if (action && action != "Action") {
             return;
         }
-
-        const aboutCol = $(baseColumn).attr("table-cts-column").split(" ");
+        
+        const [key, type, about] = $(baseColumn).attr("table-cts-column").split(" ", 3);
         const columnTitle = baseColumn.textContent;
         const sortType = baseColumn.ariaSort.includes("asc") ? 1 : baseColumn.ariaSort.includes("desc") ? 0 : 2;
         let colIndex = $(baseColumn).index();
-
+        
         if (colIndex < 0) {
             this.showTableAlert(`Could not sort <b>${columnTitle}</b> column.`);
             return;
         }
-
-        const baseColRows = $(`${this.body} > tr > td:nth-child(${colIndex + 1})`).get();
-        if (aboutCol[1] === "number") {
-            baseColRows.sort((a, b) => {
-                let prev = (a.textContent.includes(".")) ? parseFloat(a.textContent) : parseInt(a.textContent) || 0;
-                let next = (b.textContent.includes(".")) ? parseFloat(b.textContent) : parseInt(b.textContent) || 0;
-                if (sortType > 0) {
-                    return next - prev;
-                } else {
-                    return prev - next;
-                }
-            });
-        } else {
-            baseColRows.sort((a, b) => {
-                let prev = a.textContent;
-                let next = b.textContent;
-                if (sortType > 0) {
-                    return next.localeCompare(prev);
-                } else {
-                    return prev.localeCompare(next);
-                }
-            });
-        }
-
+        
         if (sortType > 0) {
+            if (type === "number") {
+                this.data.sort((a, b) => b[key] - a[key]);
+                this.syncTableData();
+            } else {
+                this.data.sort((a, b) => a[key].localeCompare(b[key]));
+                this.syncTableData();
+            }
             $(this.headers).attr("aria-sort", "ascending");
             baseColumn.ariaSort = "descending";
         } else {
             $(this.headers).attr("aria-sort", "ascending");
+            if (type === "number") {
+                this.data.sort((a, b) => a[key] - b[key]);
+                this.syncTableData();
+            } else {
+                this.data.sort((a, b) => b[key].localeCompare(a[key]));
+                this.syncTableData();
+            }
         }
+    }
 
-        for (let i = 0; i < baseColRows.length; i++) {
-            let row = $(baseColRows[i]).closest("tr");
-            $(this.body).prepend(row);
+    syncTableData() {
+        const headers = this.headers;
+        const tableRows = $(`${this.body} >tr`).get();
+        for (let r = 0; r < this.data.length; r++) {
+            const row = this.data[r];
+            const columns = tableRows[r].children;
+            for (let i = 0; i < headers.length; i++) {
+                const [key, type, about] = $(headers[i]).attr("table-cts-column").split(" ", 3);
+                let value = row[key];
+                if (type == "time") {
+                    value = this.formatTime(value);
+                } else if (type == "checkbox") {
+                    value = `<td>${ value < 1 ? "" : "<i class='fas fa-check fa-lg text-success'></i>" }</td>`;
+                } else if (type == "link") {
+                    const title = about.split(" ")[0] || headers[i].textContent;
+                    value += `<a href='${value}' class='text-decoration-underline'>` +
+                        `<i class="fas fa-arrow-up-right-from-square me-2"></i>${title}</a>`;
+                }
+
+                columns[i].innerHTML = value;
+            }
         }
     }
 
@@ -125,6 +139,7 @@ class EditableTable extends ResponsiveTable {
     #changeOptions;
     #alwaysOnEdit;
     #inputOptions = ['optional', 'unique'];
+    #initCallback;
 
     addBtn; // for adding new row
     editBtn; // for opening edit view
@@ -260,7 +275,7 @@ class EditableTable extends ResponsiveTable {
 
         $(this.confirmButtons).click((event) => $(event.currentTarget).closest("tr").trigger("row:confirm-change"));
         $(this.cancelButtons).click((event) => $(event.currentTarget).closest("tr").trigger("row:cancel-change"));
-
+        
         callback();
     }
 

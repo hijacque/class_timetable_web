@@ -61,3 +61,7 @@ td:has(.td-input) {
 #faculty-table>tbody>tr>td:nth-child(7) {
     white-space: nowrap;
 }
+
+#accept-alert, #reject-alert {
+    display: none;
+}
