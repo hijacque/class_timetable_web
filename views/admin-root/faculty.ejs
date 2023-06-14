@@ -9,37 +9,39 @@
             </div>
         </div>
         <div class="panel-body">
-            <% if (colleges.length > 0) { %>
-                <% for (const {id, name, departments} of colleges) { %>
-                    <a type="button" class="collapse-btn" title="<%= name %>" data-mdb-toggle="collapse"
-                        data-mdb-target="#college-<%= id %>" aria-expanded="false"
-                        aria-controls="college-<%= id %>">
-                        <i class="fas fa-caret-down me-2"></i><text>
-                            <%= name %>
-                        </text>
-                    </a>
-                    <% if (departments.length> 0) { %>
-                        <div class="collapse show" id="college-<%= id %>">
-                            <div>
-                                <ul class="list-group panel-menu">
-                                    <% for (const dept of departments) { %>
-                                        <a type="button" class="list-group-item list-group-item-action menu-item"
-                                            <% if (dept.name != currentDept.name) { %>
-                                                href="/admin/faculty/<%= dept.name.split(' ').join('_') %>"
-                                            <% } %>
-                                            title="<%= dept.name %>" id="<%= dept.name %>">
-                                            <p class="text-truncate m-0">
-                                                <%= dept.name %>
-                                            </p>
-                                        </a>   
-                                    <% } %>
-                                </ul>
+            <% if (typeof colleges != "undefined") { %>
+                <% if (colleges.length > 0) { %>
+                    <% for (const {id, name, departments} of colleges) { %>
+                        <a type="button" class="collapse-btn" title="<%= name %>" data-mdb-toggle="collapse"
+                            data-mdb-target="#college-<%= id %>" aria-expanded="false"
+                            aria-controls="college-<%= id %>">
+                            <i class="fas fa-caret-down me-2"></i><text>
+                                <%= name %>
+                            </text>
+                        </a>
+                        <% if (departments.length> 0) { %>
+                            <div class="collapse show" id="college-<%= id %>">
+                                <div>
+                                    <ul class="list-group panel-menu">
+                                        <% for (const dept of departments) { %>
+                                            <a type="button" class="list-group-item list-group-item-action menu-item"
+                                                <% if (dept.name != currentDept.name) { %>
+                                                    href="/admin/faculty/<%= dept.name.split(' ').join('_') %>"
+                                                <% } %>
+                                                title="<%= dept.name %>" id="<%= dept.name %>">
+                                                <p class="text-truncate m-0">
+                                                    <%= dept.name %>
+                                                </p>
+                                            </a>
+                                        <% } %>
+                                    </ul>
+                                </div>
                             </div>
-                        </div>
-                    <% } else { %>
-                        <div class="collapse" id="college-<%= id %>">
-                            <p>No Departments</p>
-                        </div>
+                        <% } else { %>
+                            <div class="collapse" id="college-<%= id %>">
+                                <p>No Departments</p>
+                            </div>
+                        <% } %>
                     <% } %>
                 <% } %>
             <% } else { %>
@@ -48,64 +50,66 @@
         </div>
     </div>
     <div class="shadow-3 bg-white px-5 pt-4">
-        <% if (colleges.length > 0 && currentDept) { %>
-            <h2 style="color: #8673b4;" id="table-title">Faculty in <%= currentDept.name %> Department</h2>
-            <br>
-            <div>
-                <a class="btn btn-primary btn-rounded btn-top" data-cts-toggle="table" data-cts-target="#faculty-table"
-                    href="#add-faculty" type="button">
-                    <i class="fas fa-edit fa-lg me-2"></i>edit table
-                </a>
-                <a class="btn btn-success btn-rounded btn-top" data-cts-dismiss="table" data-cts-target="#faculty-table"
-                    aria-hidden="true" type="button">
-                    <i class="fas fa-check-double fa-lg me-2"></i>save table
-                </a>
-            </div>
-            <table class="table table-bordered table-sm my-4" id="faculty-table">
-                <thead class="text-center">
-                    <tr>
-                        <th table-cts-column="last_name text">Surname</th>
-                        <th table-cts-column="first_name text">First Name</th>
-                        <th table-cts-column="middle_name text">Middle Name</th>
-                        <th table-cts-column="status dropdown [full-time,part-time]" style="width: 140px;">Employment Status</th>
-                        <th table-cts-column="teach_load number" style="width: 90px;">Teach<br>Load</th>
-                        <th table-cts-column="is_chair checkbox" style="width: 120px;">Chairperson</th>
-                        <th table-cts-column="email text">E-mail</th>
-                        <th table-cts-column="consultation optional">Consultation Hours</th>
-                        <td table-cts-column="edit delete">Action</td>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-                <tfoot id="add-faculty">
-                    <tr class="add-data">
-                        <td><input type="text" class="form-control add-td-input" placeholder="Dela Cruz"></td>
-                        <td><input type="text" class="form-control add-td-input" placeholder="Juan"></td>
-                        <td><input type="text" class="form-control add-td-input" placeholder="Antonio"></td>
-                        <td>
-                            <div class="dropdown">
-                                <button class="btn btn-secondary dropdown-toggle add-td-input" type="button"
-                                    data-mdb-toggle="dropdown" aria-expanded="false" title="Status">Status</button>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" role="button">full-time</a></li>
-                                    <li><a class="dropdown-item" role="button">part-time</a></li>
-                                </ul>
-                            </div>
-                        </td>
-                        <td><input type="number" class="form-control add-td-input text-center"></td>
-                        <td>
-                            <% if (currentDept.chair_id) { %>
-                                <label class="add-td-input optional"></label>
-                            <% } else { %>
-                                <input type="checkbox" class="form-check-input add-td-input" />
-                            <% } %>
-                        </td>
-                        <td><input type="email" class="form-control add-td-input unique" placeholder="jadelacruz@school.edu.ph"></td>
-                        <td><label class="add-td-input optional"></label></td>
-                    </tr>
-                </tfoot>
-            </table>
-        <% } else if (colleges.length > 0) { %>
-            <h4>No Departments selected yet.</h4>
+        <% if (typeof colleges != "undefined") { %>
+            <% if (colleges.length > 0 && currentDept) { %>
+                <h2 style="color: #8673b4;" id="table-title">Faculty in <%= currentDept.name %> Department</h2>
+                <br>
+                <div>
+                    <a class="btn btn-primary btn-rounded btn-top" data-cts-toggle="table" data-cts-target="#faculty-table"
+                        href="#add-faculty" type="button">
+                        <i class="fas fa-edit fa-lg me-2"></i>edit table
+                    </a>
+                    <a class="btn btn-success btn-rounded btn-top" data-cts-dismiss="table" data-cts-target="#faculty-table"
+                        aria-hidden="true" type="button">
+                        <i class="fas fa-check-double fa-lg me-2"></i>save table
+                    </a>
+                </div>
+                <table class="table table-bordered table-sm my-4" id="faculty-table">
+                    <thead class="text-center">
+                        <tr>
+                            <th table-cts-column="last_name text">Surname</th>
+                            <th table-cts-column="first_name text">First Name</th>
+                            <th table-cts-column="middle_name text">Middle Name</th>
+                            <th table-cts-column="status dropdown [full-time,part-time]" style="width: 140px;">Employment Status</th>
+                            <th table-cts-column="teach_load number" style="width: 90px;">Teach<br>Load</th>
+                            <th table-cts-column="is_chair checkbox" style="width: 120px;">Chairperson</th>
+                            <th table-cts-column="email text">E-mail</th>
+                            <th table-cts-column="consultation optional">Consultation Hours</th>
+                            <td table-cts-column="edit delete">Action</td>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                    <tfoot id="add-faculty">
+                        <tr class="add-data">
+                            <td><input type="text" class="form-control add-td-input" placeholder="Dela Cruz"></td>
+                            <td><input type="text" class="form-control add-td-input" placeholder="Juan"></td>
+                            <td><input type="text" class="form-control add-td-input" placeholder="Antonio"></td>
+                            <td>
+                                <div class="dropdown">
+                                    <button class="btn btn-secondary dropdown-toggle add-td-input" type="button"
+                                        data-mdb-toggle="dropdown" aria-expanded="false" title="Status">Status</button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" role="button">full-time</a></li>
+                                        <li><a class="dropdown-item" role="button">part-time</a></li>
+                                    </ul>
+                                </div>
+                            </td>
+                            <td><input type="number" class="form-control add-td-input text-center"></td>
+                            <td>
+                                <% if (currentDept.chair_id) { %>
+                                    <label class="add-td-input optional"></label>
+                                <% } else { %>
+                                    <input type="checkbox" class="form-check-input add-td-input" />
+                                <% } %>
+                            </td>
+                            <td><input type="email" class="form-control add-td-input unique" placeholder="jadelacruz@school.edu.ph"></td>
+                            <td><label class="add-td-input optional"></label></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            <% } else if (colleges.length > 0) { %>
+                <h4>No Departments selected yet.</h4>
+            <% } %>
         <% } else { %>
             <h4>No Colleges found...</h4>
         <% } %>
@@ -116,7 +120,7 @@
     <script>
         const updateFaculty = (prevData, changes) => new Promise((resolve, reject) => {
             $.post(
-                "/api/update_faculty/<%= currentDept.id %>", {old: prevData, new: changes}, 
+                "/api/update_faculty/<%= currentDept.id %>", {old: prevData, new: changes},
                 (data) => resolve(data)
             ).fail((error) => reject(error.responseJSON))
         });
@@ -162,14 +166,14 @@
         }
         const departments = $(".panel-menu > .menu-item").get();
         const facultyTable = new EditableTable("#faculty-table");
-        
+
         if (departments.length > 0) {
             let openDepartment = departments.find(dept => dept.title == "<%= currentDept.name %>");
             $(openDepartment).addClass("active");
             facultyTable.initData(getFaculty("<%= currentDept.id %>"), true, () => {
                 $(`${facultyTable.body}>tr`).on("row:confirm-change", confirmFacultyEdit);
             });
-    
+
             $(facultyTable.addBtn).click(async (event) => {
                 let newFaculty;
                 try {
@@ -177,7 +181,7 @@
                 } catch (error) {
                     return console.log(error);
                 }
-                
+
                 try {
                     const result = await addFaculty("<%= currentDept.id %>", newFaculty);
                     console.log(result);
