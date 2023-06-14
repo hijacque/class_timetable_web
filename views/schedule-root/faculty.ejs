@@ -66,7 +66,7 @@
                 </div>
             </div>
             <div class="modal-footer d-flex justify-content-end">
-                <button type="button" class="btn btn-secondary me-2" data-mdb-dismiss="modal">cancel</button>
+                <button type="button" class="btn btn-secondary me-2 cancel-schedule" data-mdb-dismiss="modal">cancel</button>
                 <button type="button" class="btn btn-warning me-2" id="reset-schedule">reset</button>
                 <button type="button" class="btn btn-primary" id="change-schedule" data-mdb-dismiss="modal">change</button>
                 <button type="button" class="btn btn-primary" id="add-schedule" data-mdb-dismiss="modal">assign</button>
@@ -252,11 +252,9 @@
                         </div>
                         <div class="sched-options" 
                             style="grid-column: <%= schedule.day %> / span 1; grid-row: <%= schedule.start_time %> / <%= schedule.end_time %>;">
-                            <div class="d-flex justify-content-around align-items-center mb-4">
-                                <a class="btn btn-floating btn-sm btn-primary edit-schedule"><i class="fas fa-edit"></i></a>
-                                <a class="btn btn-floating btn-sm btn-secondary cancel-schedule"><i class="fas fa-times fa-lg"></i></a>
-                                <a class="btn btn-floating btn-sm btn-danger delete-schedule"><i class="fas fa-trash-can"></i></a>
-                            </div>
+                            <a class="btn btn-floating btn-sm btn-primary edit-schedule"><i class="fas fa-edit"></i></a>
+                            <a class="btn btn-floating btn-sm btn-secondary cancel-schedule"><i class="fas fa-times fa-lg"></i></a>
+                            <a class="btn btn-floating btn-sm btn-danger delete-schedule"><i class="fas fa-trash-can"></i></a>
                         </div>
                     <% } %>
                     <% for (const schedule of current.partialClasses) { %>
@@ -323,15 +321,19 @@
                                 <% } %>
                                     <button type="button" title="<%= deptClasses[i].subject %>" 
                                         itemid="<%= deptClasses[i].subj_id %>"
-                                        class="list-group-item list-group-item-action menu-item<%= deptClasses[i].assigned_time > 0 ? ' text-warning' : '' %>"
+                                        class="list-group-item list-group-item-action menu-item"
                                         aria-valuemax="<%= deptClasses[i].req_hours || 0 %>"
                                         aria-valuenow="<%= deptClasses[i].assigned_time || 0 %>">
-                                        <p class="text-truncate m-0">
+                                        <p class="text-truncate m-0<%= deptClasses[i].assigned_time > 0 ? ' text-warning' : '' %>">
                                             <%= deptClasses[i].subject %><br>
                                             <% if (deptClasses[i].assigned_time > 0) { %>
                                                 <small class="text-muted">Assigned hours: <%= deptClasses[i].assigned_time %> / <%= deptClasses[i].req_hours %></small>
                                             <% } %>
                                         </p>
+                                        <div class="sched-options">
+                                            <a class="btn btn-floating btn-sm btn-primary edit-schedule"><i class="fas fa-plus"></i></a>
+                                            <a class="btn btn-floating btn-sm btn-secondary cancel-schedule"><i class="fas fa-times fa-lg"></i></a>
+                                        </div>
                                     </button>
                             <% } %>
                             </ul>
@@ -375,6 +377,10 @@
                                         <% } %>
                                         <small></small>
                                     </p>
+                                    <div class="sched-options">
+                                        <a class="btn btn-floating btn-sm btn-primary edit-schedule"><i class="fas fa-plus"></i></a>
+                                        <a class="btn btn-floating btn-sm btn-secondary cancel-schedule"><i class="fas fa-times fa-lg"></i></a>
+                                    </div>
                                 </button>
                             <% } %>
                             </ul>
@@ -425,13 +431,14 @@
         ).fail((error) => reject(error.responseJSON));
     });
 
-    $(".menu-item").click((event) => {
+    $(".menu-item > *:not(.sched-options)").click(async (event) => {
         currentSched = {};
-        const newClass = event.currentTarget;
+        const newClass = $(event.currentTarget).closest(".menu-item");
+
         $("#schedule-class-label").text("Assign New Class");
-        $("#class-subject").text(newClass.title).attr("aria-valuenow", newClass.getAttribute("itemid"));
-        const assignedHours = parseFloat(newClass.ariaValueNow);
-        const reqHours = parseInt(newClass.ariaValueMax);
+        $("#class-subject").text(newClass.attr("title")).attr("aria-valuenow", newClass.attr("itemid"));
+        const assignedHours = parseFloat(newClass.attr("aria-valuenow"));
+        const reqHours = parseInt(newClass.attr("aria-valuemax"));
         $("#class-hours")
             .text(`${assignedHours} / ${reqHours}`)
             .attr("aria-valuemax", reqHours - assignedHours)
@@ -442,12 +449,34 @@
         $(`ul[aria-labelledby='class-day']>li>a.dropdown-item.cancel`).trigger("click");
         $(`ul[aria-labelledby='class-mode']>li>a.dropdown-item.cancel`).trigger("click");
 
-        const block = $(newClass).closest(".panel-menu");
+        const block = newClass.closest(".panel-menu");
         $("#class-block").text(block.attr("title")).attr("aria-valuenow", block.attr("id"));
+
+        try {
+            let {classes} = await getBlockSchedule({
+                blockID: block.attr("id"), facultyID: "<%= id %>"
+            });
+            const grid = $(".sched-grid >div").get();
+            let class_no = 0;
+            for (let {day, start_time, end_time} of classes) {
+                start_time = parseInt(start_time);
+                end_time = parseInt(end_time);
+                for (let i = start_time; i < end_time; i++) {
+                    const tile = grid[(i * 7 + day) - 1];
+                    tile.classList.add("conflict-slot");
+                }
+                class_no++;
+            }
+            console.log(class_no);
+        } catch (error) {
+            console.log(error);
+        }
 
         $("#add-schedule").show();
         $("#change-schedule, #reset-schedule").hide();
-        scheduleForm.show();
+        $(schedBlocks).hide();
+        $(".menu-item").not(newClass).addClass("disabled").prop("disabled", true);
+        newClass.find(".sched-options").css("display", "flex");
     });
     
     const schedBlocks = $(".sched-block").click(async (event) => {
@@ -506,14 +535,17 @@
         $("#add-schedule").hide();
         $("#reset-schedule, #change-schedule").show();
         $(schedBlocks).hide();
-        $(".sched-options").hide().get(schedBlocks.indexOf(event.currentTarget)).style.display = "block";
+        $(".menu-item").addClass("disabled").prop("disabled", true);
+        $(".sched-block + .sched-options").hide().get(schedBlocks.indexOf(event.currentTarget)).style.display = "flex";
     }).get();
 
     $(".edit-schedule").click(() => scheduleForm.show());
 
     $(".cancel-schedule").click(() => {
-        $(".sched-grid >div.conflict-slot").removeClass("conflict-slot");
+        console.log(event.currentTarget);
         $(schedBlocks).show();
+        $(".menu-item").removeClass("disabled").prop("disabled", false);
+        $(".sched-grid >div.conflict-slot").removeClass("conflict-slot");
         $(".sched-options").hide();
     });
 

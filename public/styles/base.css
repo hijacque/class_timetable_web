@@ -347,6 +347,8 @@ div.sched-body>div.sched-options {
     text-align: center;
     background-color: #1a181c;
     display: none;
+    justify-content: space-between;
+    align-items: start;
 }
 
 div.sched-body>div.sched-block {
@@ -354,7 +356,7 @@ div.sched-body>div.sched-block {
     padding: 8px 12px 8px 12px;
     margin: 2px 8px 4px 8px;
     border-radius: 12px;
-    box-shadow: 0 1px 5px #b6b3b977;
+    box-shadow: 0 1px 10px #b6b3b977;
     line-height: 20px;
     overflow: hidden;
     cursor: pointer;

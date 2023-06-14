@@ -57,6 +57,25 @@ nav { padding: 0 12px; }
     margin-bottom: 24px;
 }
 
+.modal-body>label { 
+    font-weight: bold;
+    margin-right: 6px;
+}
+
+.menu-item > .sched-options {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background-color: #0f0d11;
+    height: 100%;
+    width: 100%;
+    border-radius: inherit;
+    display: none;
+    align-items: center;
+    justify-content: space-around;
+    z-index: 3;
+}
+
 #class-day, #class-mode {
     width: 135px;
 }
@@ -64,11 +83,6 @@ nav { padding: 0 12px; }
 #class-subject, #class-block, #class-faculty, #class-hours {
     white-space: nowrap;
     text-overflow: ellipsis;
-}
-
-.modal-body>label { 
-    font-weight: bold;
-    margin-right: 6px;
 }
 
 #class-subject {
