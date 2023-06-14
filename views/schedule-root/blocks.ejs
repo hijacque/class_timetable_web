@@ -473,7 +473,7 @@
                         <ul class="list-group panel-menu">
                             <% for (const {subj_id, subject, req_hours, assigned_time, faculty_id, faculty_name} of deptClasses) { %>
                                 <button type="button" title="<%= subject %>" id="<%= subj_id %>"
-                                    class="list-group-item list-group-item-action menu-item"
+                                    class="list-group-item list-group-item-action menu-item<%= assigned_time > 0 ? ' text-warning' : '' %>"
                                     <% if (faculty_id) { %>
                                         itemid="<%= faculty_id %>"
                                     <% } %>
@@ -508,7 +508,7 @@
                         <ul class="list-group panel-menu">
                             <% for (const {subj_id, subject, req_hours, assigned_time, faculty_id, faculty_name} of otherClasses) { %>
                                 <button type="button" title="<%= subject %>" id="<%= subj_id %>"
-                                    class="list-group-item list-group-item-action menu-item"
+                                    class="list-group-item list-group-item-action menu-item<%= assigned_time > 0 ? ' text-warning' : '' %>"
                                     <% if (faculty_id) { %>
                                         itemid="<%= faculty_id %>"
                                     <% } %>

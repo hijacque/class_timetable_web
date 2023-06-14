@@ -145,9 +145,9 @@
                 <% } %>
                 <b>Faculty Load:</b> 
                 <% if (assigned_load > teach_load) { %>
-                    <span class="text-danger"><%= assigned_load %> / <%= teach_load %></span>
+                    <span class="text-danger" id="assigned-load"><%= assigned_load %></span> / <span><%= teach_load %></span>
                 <% } else { %>
-                    <span><%= assigned_load %> / <%= teach_load %></span>
+                    <span id="assigned-load"><%= assigned_load %></span> / <span><%= teach_load %></span>
                 <% } %>
                 <br>
                 <b>Schedule Status:</b> <%= sched_status %>
@@ -363,9 +363,9 @@
                                     <ul class="list-group panel-menu" id="<%= otherClasses[i].block_id %>"
                                         title="<%= otherClasses[i].course %> <%= otherClasses[i].year %> - <%= otherClasses[i].block_no %>">
                                 <% } %>
-                                <button type="button" class="list-group-item list-group-item-action menu-item"
+                                <button type="button" title="<%= otherClasses[i].subject %>"
+                                    class="list-group-item list-group-item-action menu-item<%= otherClasses.assigned_load > 0 ? ' text-warning' : '' %>"
                                     itemid="<%= otherClasses[i].subj_id %>"
-                                    title="<%= otherClasses[i].subject %>"
                                     aria-valuemax="<%= otherClasses[i].req_hours || 0 %>"
                                     aria-valuenow="<%= otherClasses[i].assigned_time || 0 %>">
                                     <p class="text-truncate m-0">
@@ -389,7 +389,7 @@
         </div>
         <% } %>
 </div>
-
+<% if (current.sched_status == 'open') { %>
 <script src="/lib/display-dropdown.js"></script>
 <script src="/lib/schedule-util.js"></script>
 <script>
@@ -741,3 +741,4 @@
 
     $("#accept-alert, #reject-alert").click(() => $("#accept-alert, #reject-alert, #confirm-alert").toggle());
 </script>
+<% } %>

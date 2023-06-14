@@ -808,11 +808,9 @@ router.route("/schedules/:termID")
         const user = req.account;
         if (!user || user.type != "chair") {
             res.cookie("serverMessage", {
-                message: {
-                    mode: 0,
-                    title: "Unauthorized request",
-                    body: "Please login before assigning class."
-                }
+                mode: 0,
+                title: "Unauthorized request",
+                body: "Please login before assigning class."
             })
             return res.status(401).json({ redirect: "/logout" });
         }
@@ -820,6 +818,22 @@ router.route("/schedules/:termID")
         const DB = req.app.locals.database;
         const { termID } = req.params;
         const { faculty, block, partial, mode, room, subject } = req.body.schedule;
+
+        const [[{ assigned_load, teach_load }], [{ units }]] = await DB.executeQuery(
+            `SELECT p.assigned_load, f.teach_load FROM Faculty f INNER JOIN Preferences p ON ` +
+            `f.id = p.faculty_id WHERE f.id = '${faculty}' AND p.term_id = '${termID}' LIMIT 1;` +
+            `SELECT units FROM Subjects WHERE id = '${subject}' LIMIT 1;`
+        );
+
+        console.log(assigned_load, teach_load, units);
+        if (assigned_load + units > teach_load) {
+            res.cookie("serverMessage", {
+                mode: 0,
+                title: "Overload faculty",
+                body: "Did not assign class to this faculty because it will exceed their required load."
+            })
+            return res.status(200).end();
+        }
 
         let [prefRooms] = await DB.executeQuery(
             `SELECT pref_rooms AS room FROM Subjects WHERE id = '${subject}' LIMIT 1`
@@ -923,7 +937,7 @@ router.route("/schedules/:termID")
     });
 
 router.route("/schedule/:termID")
-    .get(async (req, res) => {
+    .get(async (req, res) => { // gets individual block or faculty schedule
         // check user credentials
         const user = req.account;
         if (!user || user.type != "chair") {
@@ -936,13 +950,13 @@ router.route("/schedule/:termID")
             })
             return res.status(401).json({ redirect: "/logout" });
         }
-        
+
         if (!req.query.blockID || !req.query.facultyID) {
             return res.status(400).json({
                 message: "Invalid inputs, cannot get schedule."
             });
         }
-        
+
         console.log(req.query);
         const DB = req.app.locals.database;
         const classes = await DB.executeQuery(
