@@ -36,7 +36,7 @@ class ResponsiveTable {
         $(this.headers).attr("aria-sort", "ascending").click((event) => this.#sortTable(event.currentTarget));
     }
 
-    async initData(data = [], callback = () => {}) {
+    async initData(data = []) {
         $(this.body).empty();
         if (!this.data) {
             this.data = data;
@@ -51,10 +51,14 @@ class ResponsiveTable {
             return;
         }
         
-        const [key, type, about] = $(baseColumn).attr("table-cts-column").split(" ", 3);
+        let [key, type] = $(baseColumn).attr("table-cts-column").split(" ", 3);
         const columnTitle = baseColumn.textContent;
         const sortType = baseColumn.ariaSort.includes("asc") ? 1 : baseColumn.ariaSort.includes("desc") ? 0 : 2;
         let colIndex = $(baseColumn).index();
+        
+        if (!type) {
+            type = typeof(this.data[0][key]);
+        }
         
         if (colIndex < 0) {
             this.showTableAlert(`Could not sort <b>${columnTitle}</b> column.`);
@@ -69,6 +73,7 @@ class ResponsiveTable {
                 this.data.sort((a, b) => a[key].localeCompare(b[key]));
                 this.syncTableData();
             }
+            console.table(this.data);
             $(this.headers).attr("aria-sort", "ascending");
             baseColumn.ariaSort = "descending";
         } else {
@@ -80,6 +85,7 @@ class ResponsiveTable {
                 this.data.sort((a, b) => b[key].localeCompare(a[key]));
                 this.syncTableData();
             }
+            console.table(this.data);
         }
     }
 

@@ -109,7 +109,7 @@
                     <% if (prev) { %>
                         <li class="page-item">
                             <a class="page-link me-2" type="button" 
-                                href="/chair/schedules/<%= year + term %><%= (prev.id != 'faculty') ? '?course=' + prev.id : '' %>">
+                                href="/chair/schedules/<%= year + term %><%= (prev.id != 'faculty') ? '?course=' + prev.title.split(' ').join('_') : '' %>">
                                 <i class="fas fa-chevron-left"></i>
                             </a>
                             <p class="prev page-label"><%= prev.title %></p>
@@ -124,7 +124,7 @@
                         <li class="justify-content-end page-item">
                             <p class="next page-label"><%= next.title %></p>
                             <a class="page-link ms-2" type="button" 
-                                href="/chair/schedules/<%= year + term %><%= next.id != 'faculty' ? '?course=' + next.id : '' %>">
+                                href="/chair/schedules/<%= year + term %><%= next.id != 'faculty' ? '?course=' + next.title.split(' ').join('_') : '' %>">
                                 <i class="fas fa-chevron-right"></i>
                             </a>
                         </li>
@@ -133,6 +133,22 @@
                     <% } %>
                 </ul>
             </nav>
+            <% if (current.id == 'faculty') { %>
+                <div id="pref-form-control">
+                    <label class="table-title fw-bold me-3">Preference Form Deadline:</label>
+                    <% if (currentTerm.deadline_date) { %>
+                        <input type="date" id="form-deadline-date" name="date" class="form-control" required value="<%= currentTerm.deadline_date %>">
+                    <% } else { %>
+                        <input type="date" id="form-deadline-date" name="date" class="form-control" required>
+                    <% } %>
+                    <% if (currentTerm.deadline_time) { %>
+                        <input type="time" id="form-deadline-time" name="date" class="form-control" required value="<%= currentTerm.deadline_time %>">
+                    <% } else { %>
+                        <input type="time" id="form-deadline-time" name="time" class="form-control" required>
+                    <% } %>
+                    <button class="btn btn-secondary btn-rounded" type="button" id="set-deadline">Set Deadline</button>
+                </div>
+            <% } %>
             <table class="table table-bordered table-sm my-4"></table>
         <% } else if (terms.length > 0) { %>
             <h3>No chosen term yet...</h3>
@@ -285,6 +301,11 @@
         ).fail((error) => reject(error.responseJSON))
     });
 
+    const setDeadline = (deadline) => new Promise((resolve, reject) => $.post(
+        "/api/pref-deadline/<%= currentTerm.id %>", {deadline: deadline},
+        (data) => resolve(data)
+    ).fail(error => reject(error.responseJSON)));
+
     const removeBlock = async (event) => {
         if (event.currentTarget.isConnected) {
             return;
@@ -363,10 +384,26 @@
             return console.error("Academic term already exists.");
         }
         
-        const newTermID = await addTerm(year, semester[0]);
-        if (newTermID) {
-            location.replace("/chair/schedules/" + year + semester[0]);
+        try {
+            const newTermID = await addTerm(year, semester[0]);
+            if (newTermID) {
+                location.replace("/chair/schedules/" + year + semester[0]);
+            }
+        } catch (error) {
+            console.log(error);
+            if (error) {
+                if (error.redirect) {
+                    location.replace(error.redirect);
+                }
+                if (error.message) {
+                    alertModal.show(...Object.values(error.message));
+                }
+                console.log(error);
+            } else {
+                alertModal.show(0, "Server error", "Unexpected error occured, please try again later.");
+            }
         }
+        
     });
 
     $("#clear-schedule").click(() => {
@@ -375,6 +412,66 @@
             2, "Are you sure?", 
             "By clicking yes, you will remove all classes assigned to faculty and blocks under your department."
         );
+    });
+
+    $("#set-deadline").click(async function () {
+        var deadlineDate = $("#form-deadline-date").val();
+        var deadlineTime = $("#form-deadline-time").val();
+
+        if (!deadlineDate || !deadlineTime) {
+            return alertModal.show(0, "Incomplete deadline", "Please fill date and time input.");
+        }
+        
+        let currentDate = new Date();
+        console.log(currentDate);
+        const currentYear = currentDate.getFullYear();
+        const currentMonth = currentDate.getMonth() + 1;
+        const currentDay = currentDate.getDate();
+
+        currentDate = new Date(currentDate.getTime() + 15*60000); // forward 15 minutes;
+        const currentHour = currentDate.getHours();
+        const currentMinute = currentDate.getMinutes();
+        
+        const [year, month, day] = deadlineDate.split("-").map(date => parseInt(date));
+        const [hour, minute] = deadlineTime.split(":").map(date => parseInt(date));
+        
+        let formattedCurrent = currentYear + "-" + String(currentMonth).padStart(2, "0").slice(-2) + "-" +
+            String(currentDay).padStart(2, "0").slice(-2);
+            
+        if (year < currentYear) {
+            return alertModal.show(0, "Invalid deadline", "Deadline date must be later or due today.");
+        } else if (year == currentYear && month < currentMonth) {
+            return alertModal.show(0, "Invalid deadline", "Deadline date must be later or due today.");
+        } else if (year == currentYear && month == currentMonth && day < currentDay) {
+            return alertModal.show(0, "Invalid deadline", "Deadline date must be later or due today.");
+        } else if (deadlineDate == formattedCurrent) {
+            if (hour < currentHour || (hour == currentHour && minute < currentMinute)) {
+                return alertModal.show(0, "Invalid deadline", "Deadline date must be later than 15 minutes from now.");
+            }
+        }
+        
+        let formattedDeadline = `${deadlineDate} ${deadlineTime}:00`;
+        console.log(formattedDeadline);
+
+        try {
+            await setDeadline(formattedDeadline);
+            location.reload();
+        } catch (error) {
+            console.log(error);
+            if (error) {
+                if (error.redirect) {
+                    location.replace(error.redirect);
+                }
+                if (error.message) {
+                    alertModal.show(...Object.values(error.message));
+                }
+                console.log(error);
+            } else {
+                alertModal.show(0, "Server error", "Unexpected error occured, please try again later.");
+            }
+            $("#form-deadline-date").val(null);
+            $("#form-deadline-time").val(null);
+        }
     });
 
     $("#accept-alert, #reject-alert").click(() => $("#accept-alert, #reject-alert, #confirm-alert").toggle());
