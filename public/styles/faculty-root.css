@@ -8,3 +8,9 @@ html {
     left: 0;
     z-index: 1;
 }
+
+#pref-form-deadline {
+    display: grid;
+    grid-template-columns: max-content auto;
+    align-items: center;
+}

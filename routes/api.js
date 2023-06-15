@@ -26,7 +26,7 @@ router.route("/departments/:collegeID?")
 
         const DB = req.app.locals.database;
         let query = `SELECT d.id, d.name AS department, CASE WHEN d.chair_id IS NULL THEN "To be assigned..." ELSE ` +
-            `CONCAT(f.last_name, ", ", f.first_name, " ", f.middle_name, " (", f.faculty_id, ")") END AS ` +
+            `CONCAT(f.last_name, ", ", f.first_name, " ", f.middle_name) END AS ` +
             `chairperson, d.chair_id FROM Schools s INNER JOIN Colleges col ON ` +
             `s.id = col.school_id INNER JOIN Departments d ON col.id = d.college_id LEFT JOIN Faculty f ON ` +
             `d.chair_id = f.id WHERE s.id = "${user.id}"`;
@@ -269,14 +269,10 @@ router.route("/faculty/:deptID?")
         query += " ORDER BY f.status, f.last_name, f.first_name, f.middle_name";
 
         await DB.executeQuery(query).then((data) => {
-            const result = data.map((fac) => {
+            res.status(200).json({ faculty: data.map((fac) => {
                 let consult = consultHours.find((ch) => fac.id == ch.faculty);
                 return { ...fac, consultation: consult ? consult.hours.join("<br>") : "" };
-            });
-            console.log(result);
-            res.status(200).json({
-                faculty: result
-            });
+            }) });
         });
 
     }).post(createFaculty, (req, res) => { // creates new faculty in 
@@ -698,7 +694,7 @@ router.post("/curriculum/:courseID", async (req, res) => { // adding a subject i
     });
 });
 
-router.post("/terms", async (req, res) => {
+router.post("/terms", async (req, res) => { // creates new academic term to start schedule
     // check user credentials
     const user = req.account;
     if (!user || user.type != "chair") {
@@ -736,11 +732,14 @@ router.post("/terms", async (req, res) => {
     );
 
     const termID = crypto.randomBytes(6).toString("base64url");
-    const faculty = await DB.executeQuery(`SELECT id FROM Faculty ORDER by dept_id`);
-
+    const faculty = await DB.executeQuery(
+        `SELECT f.id FROM Faculty f INNER JOIN Departments d ON f.dept_id = d.id INNER JOIN Colleges col ON ` +
+        `d.college_id = col.id WHERE col.school_id = '${schoolID}' ORDER by f.dept_id`
+    );
+    
     for (let i = 0; i < faculty.length; i++) {
         const prefID = crypto.randomBytes(6).toString("base64url");
-        faculty[i] = `('${prefID}', '${termID}', '${faculty[i].id}')`;
+        faculty[i] = `('${prefID}', '${termID}', '${faculty[i].id}', DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 7 DAY))`;
     }
 
     const courses = await DB.executeQuery(
@@ -758,7 +757,7 @@ router.post("/terms", async (req, res) => {
     }
 
     let query = `INSERT INTO Terms VALUES ('${termID}', '${schoolID}', ${year}, '${term}', 1, current_timestamp); ` +
-        `INSERT INTO Preferences (id, term_id, faculty_id) VALUES ${faculty.join(",")};`;
+        `INSERT INTO Preferences (id, term_id, faculty_id, deadline) VALUES ${faculty.join(",")};`;
 
     if (blocks.length > 0) {
         query += `INSERT INTO Blocks (id, course_id, term_id, year) VALUES ${blocks.join(",")}; `;
@@ -767,7 +766,8 @@ router.post("/terms", async (req, res) => {
         `SELECT b.term_id, cu.subj_id, b.id FROM Blocks b INNER JOIN Curricula cu ON b.course_id = cu.course_id ` +
         `AND b.year = cu.year WHERE b.term_id = '${termID}' AND cu.term = '${term}' AND cu.subj_id IS NOT NULL ` +
         `ORDER BY b.year, b.block_no`
-
+    
+        
     await DB.executeQuery(query);
     res.status(200).json({ termID: termID });
 });
@@ -833,10 +833,11 @@ router.route("/schedules/:termID")
                 `WHEN pref.sched_status = 'saved' THEN '<input class="form-check-input save-schedule" ` +
                 `type="checkbox" checked/>' ELSE '<input class="form-check-input save-schedule" type="checkbox" />' ` +
                 `END AS sched_status_checkbox, f.faculty_id, CONCAT(pref.assigned_load, " / ", f.teach_load) AS ` +
-                `teach_load, pref.sched_status, pref.status AS pref_status, f.status AS faculty_status FROM Terms t INNER JOIN ` +
-                `Preferences pref ON t.id = pref.term_id INNER JOIN Faculty f ON pref.faculty_id = f.id ` +
-                `INNER JOIN Departments d ON f.dept_id = d.id WHERE d.chair_id = '${user.id}' AND ` +
-                `t.id = '${req.params.termID}' ORDER BY f.status, name`;
+                `teach_load, pref.sched_status, CASE WHEN CURRENT_TIMESTAMP > pref.deadline AND ` +
+                `pref.status = 'pending' THEN 'unanswered' ELSE pref.status END AS pref_status, f.status AS ` +
+                `faculty_status FROM Terms t INNER JOIN Preferences pref ON t.id = pref.term_id INNER JOIN ` +
+                `Faculty f ON pref.faculty_id = f.id INNER JOIN Departments d ON f.dept_id = d.id WHERE ` +
+                `d.chair_id = '${user.id}' AND t.id = '${req.params.termID}' ORDER BY f.status, name`;
         } else {
             query = `SELECT id, year, block_no, total_students, CASE WHEN is_complete THEN 'COMPLETE' ELSE ` +
                 `'incomplete' END AS sched_status FROM Blocks WHERE course_id = "${req.query.category}" ` +
@@ -1043,10 +1044,10 @@ router.route("/schedule/:termID")
 
             console.log("Changing schedule...");
             const { mode, room, subject } = req.body.newSched;
-            let [prefRooms] = await DB.executeQuery(
-                `SELECT pref_rooms AS room FROM Subjects WHERE id = '${subject}' LIMIT 1`
+            let [{ pref_rooms, req_hours }] = await DB.executeQuery(
+                `SELECT pref_rooms, req_hours FROM Subjects WHERE id = '${subject}' LIMIT 1`
             );
-            prefRooms = prefRooms ? prefRooms.room.split(",") : [];
+            pref_rooms = pref_rooms ? pref_rooms.split(",") : [];
 
             // check if classroom exists
             let classroom;
@@ -1054,8 +1055,8 @@ router.route("/schedule/:termID")
                 [classroom] = await DB.executeQuery(
                     `SELECT r.id, r.name FROM Rooms r INNER JOIN Buildings b ON r.bldg_id = b.id INNER JOIN ` +
                         `Terms t ON b.school_id = t.school_id WHERE t.id = '${termID}' ` +
-                        (prefRooms.length > 0) ? "OR r.name LIKE '%" +
-                        prefRooms.map(r => r.split(" ").join("%")).join("%' OR r.name LIKE '%") + "%'" : "" + "LIMIT 1"
+                        (pref_rooms.length > 0) ? "OR r.name LIKE '%" +
+                        pref_rooms.map(r => r.split(" ").join("%")).join("%' OR r.name LIKE '%") + "%'" : "" + "LIMIT 1"
                 );
                 message = `Auto-assigned schedule into classroom ${classroom.name}`;
             } else if (mode == 1) {
@@ -1121,28 +1122,68 @@ router.route("/schedule/:termID")
                 return res.status(409).json({ message: message });
             }
 
-            console.log(oldSched);
-            console.log(req.body.newSched);
-
-            await DB.executeQuery(
-                // if faculty is changed
-                (
-                    (!partial && oldSched.faculty != faculty) ? `UPDATE Preferences p INNER JOIN Terms t ON ` +
-                        `p.term_id = t.id INNER JOIN Colleges col ON t.school_id = col.school_id INNER JOIN ` +
-                        `Subjects s ON col.id = s.college_id SET p.assigned_load = (p.assigned_load - s.units) ` +
-                        `WHERE p.term_id = '${termID}' AND s.id = '${subject}' AND p.faculty_id = '${oldSched.faculty}' ` +
-                        `LIMIT 1; UPDATE Preferences p INNER JOIN Terms t ON p.term_id = t.id INNER JOIN ` +
-                        `Colleges col ON t.school_id = col.school_id INNER JOIN Subjects s ON col.id = s.college_id ` +
-                        `SET p.assigned_load = (p.assigned_load + s.units) WHERE p.term_id = '${termID}' AND ` +
-                        `s.id = '${subject}' AND p.faculty_id = ${!faculty || faculty == "pass" ? "NULL" : `'${faculty}'`} ` +
-                        `LIMIT 1; ` : ""
-                ) +
-
-                `UPDATE Schedules SET day = ${day}, start = ${start}, end = ${end}, mode = ${mode}, ` +
-                `faculty_id = ${!faculty || faculty == "pass" ? "NULL" : `'${faculty}'`}, room_id = ${classroom ? `'${classroom.id}'` : "NULL"} ` +
-                `WHERE term_id = '${termID}' AND subj_id = '${subject}' AND block_id = '${block}' AND day = ${oldSched.day} AND ` +
-                `start = ${oldSched.start} AND end = ${oldSched.end} LIMIT 1;`
+            let partialClasses = await DB.executeQuery(
+                `SELECT * FROM Schedules WHERE term_id = '${termID}' AND subj_id = '${subject}' AND ` +
+                `block_id = '${block}'`
             );
+            partialClasses = partialClasses.filter((c) => c.day != day && c.start != start && c.end != end);
+
+            req_hours = req_hours * 60 - (end - start);
+            console.log(req_hours);
+            
+            if (partialClasses.length > 0 && req_hours > 0) {
+                partialClasses = partialClasses.map((c) => {
+                    if (req_hours <= 0) {
+                        return c;
+                    } else if ((c.end - c.start) <= req_hours) {
+                        req_hours -= (c.end - c.start);
+                        return { ...c, newStart: c.start, newEnd: c.end };
+                    } else {
+                        c = { ...c, newStart: c.start, newEnd: c.start + req_hours };
+                        req_hours = 0;
+                        return c;
+                    }
+                })
+            }
+            console.table(partialClasses);
+
+            console.log(
+                partialClasses.reduce((query, c) => {
+                    return query += (c.newStart && c.newEnd) ?
+                        `UPDATE Schedules start = ${c.newStart}, end = ${c.newEnd} WHERE term_id = '${termID}' ` +
+                        `AND subj_id = '${subject}' AND block_id = '${block}' AND day = ${c.day} AND ` +
+                        `start = ${c.start} AND end = ${c.end} LIMIT 1;` :
+                        `DELETE FROM Schedules WHERE term_id = '${termID}' AND subj_id = '${subject}' AND ` +
+                        `block_id = '${block}' AND day = ${c.day} AND start = ${c.start} AND end = ${c.end} LIMIT 1;`
+                }, "")
+            );
+            // await DB.executeQuery(
+            //     // if faculty is changed
+            //     (
+            //         (!partial && oldSched.faculty != faculty) ? `UPDATE Preferences p INNER JOIN Terms t ON ` +
+            //             `p.term_id = t.id INNER JOIN Colleges col ON t.school_id = col.school_id INNER JOIN ` +
+            //             `Subjects s ON col.id = s.college_id SET p.assigned_load = (p.assigned_load - s.units) ` +
+            //             `WHERE p.term_id = '${termID}' AND s.id = '${subject}' AND p.faculty_id = '${oldSched.faculty}' ` +
+            //             `LIMIT 1; UPDATE Preferences p INNER JOIN Terms t ON p.term_id = t.id INNER JOIN ` +
+            //             `Colleges col ON t.school_id = col.school_id INNER JOIN Subjects s ON col.id = s.college_id ` +
+            //             `SET p.assigned_load = (p.assigned_load + s.units) WHERE p.term_id = '${termID}' AND ` +
+            //             `s.id = '${subject}' AND p.faculty_id = ${!faculty || faculty == "pass" ? "NULL" : `'${faculty}'`} ` +
+            //             `LIMIT 1; ` : ""
+            //     ) +
+
+            //     `UPDATE Schedules SET day = ${day}, start = ${start}, end = ${end}, mode = ${mode}, ` +
+            //     `faculty_id = ${!faculty || faculty == "pass" ? "NULL" : `'${faculty}'`}, room_id = ${classroom ? `'${classroom.id}'` : "NULL"} ` +
+            //     `WHERE term_id = '${termID}' AND subj_id = '${subject}' AND block_id = '${block}' AND day = ${oldSched.day} AND ` +
+            //     `start = ${oldSched.start} AND end = ${oldSched.end} LIMIT 1;` +
+            //     partialClasses.reduce((query, c) => {
+            //         return query += (c.newStart && c.newEnd) ?
+            //             `UPDATE Schedules start = ${c.newStart}, end = ${c.newEnd} WHERE term_id = '${termID}' ` +
+            //             `AND subj_id = '${subject}' AND block_id = '${block}' AND day = ${c.day} AND ` +
+            //             `start = ${c.start} AND end = ${c.end} LIMIT 1;` :
+            //             `DELETE FROM Schedules WHERE term_id = '${termID}' AND subj_id = '${subject}' AND ` +
+            //             `block_id = '${block}' AND day = ${c.day} AND start = ${c.start} AND end = ${c.end} LIMIT 1;`
+            //     }, "")
+            // );
 
             return res.status(200).end();
         } else if (action == "delete") {
@@ -1299,6 +1340,66 @@ router.post("/preferences/:prefID", async (req, res) => {
     let { subjects, schedules } = req.body;
 
     let query = "";
+    if (schedules && schedules.length > 0) {
+        query += `INSERT INTO PrefSchedules VALUES ` +
+            `(${schedules.map((val) => `'${req.params.prefID}', ` + Object.values(val).join(", ")).join(`), (`)});`;
+    }
+
+    if (subjects && subjects.length > 0) {
+        query += `INSERT INTO PrefSubjects SELECT DISTINCT '${req.params.prefID}', sub.id FROM Faculty f ` +
+            `INNER JOIN Departments d ON f.dept_id = d.id INNER JOIN Subjects sub ON ` +
+            `d.college_id = sub.college_id WHERE f.id = '${user.id}' AND sub.title IN ('${subjects.join("', '")}');`;
+    }
+
+    await DB.executeQuery(
+        query + `UPDATE Preferences SET status = 2 WHERE id = '${req.params.prefID}' AND faculty_id = '${user.id}';`
+    );
+
+    res.status(200).json({
+        message: {
+            mode: 1,
+            title: "Preference recorded",
+            body: `Schedule for this term will be posted by chairperson.`
+        }
+    });
+});
+
+router.post("/update-preferences/:prefID", async (req, res) => {
+    const user = req.account;
+    if (!user || (user.type != "faculty" && user.type != "chair")) {
+        res.cookie("serverMessage", {
+            message: {
+                mode: 0,
+                title: "Unauthorized request",
+                body: "Please login before accessing admin dashboard."
+            }
+        })
+        return res.status(401).json({ redirect: "/logout" });
+    }
+
+    const DB = req.app.locals.database;
+
+    const [deadline] = await DB.executeQuery(
+        `SELECT deadline FROM Preferences WHERE pref_id = '${pref}' AND CURRENT_TIMESTAMP < pdeadline LIMIT 1`
+    );
+
+    if (!deadline) {
+        return res.status(409).json({ message: {
+            mode: 0,
+            title: "Late Submission",
+            body: "Could not update your changes on time, contact your chairperson if you need more time to answer."
+        } });
+    }
+
+    let { subjects, schedules } = req.body;
+
+    console.log(req.body);
+
+    // delete previous preferences
+    let query = `DELETE FROM PrefSubjects WHERE pref_id = '${req.params.prefID}'; ` +
+        `DELETE FROM PrefSchedules WHERE pref_id = '${req.params.prefID}';`;
+
+    // re-enter new preferences
     if (schedules && schedules.length > 0) {
         query += `INSERT INTO PrefSchedules VALUES ` +
             `(${schedules.map((val) => `'${req.params.prefID}', ` + Object.values(val).join(", ")).join(`), (`)});`;
@@ -1501,5 +1602,37 @@ router.get("/unavailable-rooms/:term", async (req, res) => {
     console.table(conflictRooms);
     res.status(200).json({ rooms: conflictRooms.map(r => r.id) });
 });
+
+router.post("/pref-deadline/:term", async (req, res) => {
+    const user = req.account;
+    if (!user || user.type != "chair") {
+        res.cookie("serverMessage", {
+            message: {
+                mode: 0,
+                title: "Unauthorized request",
+                body: "Please login before updating schedules."
+            }
+        });
+        return res.status(401).json({ redirect: "/logout" });
+    }
+
+    if (!req.body.deadline) {
+        return res.status(409).json({ message: {
+            mode: 0,
+            title: "Invalid parameters",
+            body: "Could not set deadline for preference forms without appropriate deadline."
+        } });
+    }
+
+    await req.app.locals.database.executeQuery(
+        `UPDATE Preferences p INNER JOIN Faculty f ON p.faculty_id = f.id INNER JOIN Departments d ON ` +
+        `f.dept_id = d.id SET p.deadline = '${req.body.deadline}' WHERE d.chair_id = '${user.id}' AND p.term_id = '${req.params.term}'`
+    );
+
+    res.cookie("serverMessage", {
+        mode: 1, title: "Deadline set", 
+        body: "Faculty under your department should finalize their preference on or before the deadline."
+    }).status(200).end();
+})
 
 module.exports = router;

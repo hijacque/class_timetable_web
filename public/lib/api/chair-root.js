@@ -1,8 +1,8 @@
-const addTerm = (year, semester) => new Promise((resolve) => $.post(
+const addTerm = (year, semester) => new Promise((resolve, reject) => $.post(
     "/api/terms", { year: year, term: semester },
     (data) => {
         resolve(data.termID);
-    }).fail(() => location.reload())
+    }).fail((error) => reject(error.responseJSON))
 );
 
 const addBlock = (courseID, year, totalStudents, termID) => new Promise((resolve, reject) => {

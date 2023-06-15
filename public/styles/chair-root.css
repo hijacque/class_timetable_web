@@ -65,3 +65,11 @@ td:has(.td-input) {
 #accept-alert, #reject-alert {
     display: none;
 }
+
+#pref-form-control {
+    display: grid;
+    grid-template-columns: max-content 150px 150px max-content;
+    column-gap: 8px;
+    align-items: center;
+    margin-top: 36px;
+}
