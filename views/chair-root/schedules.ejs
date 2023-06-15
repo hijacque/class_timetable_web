@@ -40,7 +40,7 @@
                     <% for (const term of terms) { %>
                         <a type="button" class="list-group-item list-group-item-action menu-item"
                             <% if (term.id != currentTerm.id) { %>
-                                href="/chair/schedules/<%= term.year %><%= term.term %>" 
+                                href="/chair/schedules/<%= term.year %><%= term.term %>"
                             <% } %>
                             title="<%= term.year %><%= term.term %>">
                             <p class="text-truncate m-0">
@@ -105,10 +105,10 @@
             <% } %>
             <% const {prev, current, next} = data %>
             <nav aria-label="Schedule Navigation for Department">
-                <ul class="pagination" id="schedule-nav">
+                <ul class="dropdown-menu" id="schedule-nav">
                     <% if (prev) { %>
                         <li class="page-item">
-                            <a class="page-link me-2" type="button" 
+                            <a class="page-link me-2" type="button"
                                 href="/chair/schedules/<%= year + term %><%= (prev.id != 'faculty') ? '?course=' + prev.id : '' %>">
                                 <i class="fas fa-chevron-left"></i>
                             </a>
@@ -123,7 +123,7 @@
                     <% if (next) { %>
                         <li class="justify-content-end page-item">
                             <p class="next page-label"><%= next.title %></p>
-                            <a class="page-link ms-2" type="button" 
+                            <a class="page-link ms-2" type="button"
                                 href="/chair/schedules/<%= year + term %><%= next.id != 'faculty' ? '?course=' + next.id : '' %>">
                                 <i class="fas fa-chevron-right"></i>
                             </a>
@@ -175,7 +175,7 @@
                 rows.find("td:not(:first-child)").click(
                     (event) => openSchedule(id, event, facultyTable.data[$(event.currentTarget).closest("tr").index()].id)
                 );
-                rows.find("td:first-child >input[type=checkbox]").click(async (event) => { 
+                rows.find("td:first-child >input[type=checkbox]").click(async (event) => {
                     let row = $(event.currentTarget).closest("tr");
                     if (event.currentTarget.checked) {
                         const data = await saveSchedule(facultyTable.data[row.index()].id).catch((error) => {
@@ -273,7 +273,7 @@
 
     const saveSchedule = (facultyID) => new Promise((resolve, reject) => {
         $.post(
-            "/api/save_schedule/<%= currentTerm.year + currentTerm.term %>", {facultyID: facultyID}, 
+            "/api/save_schedule/<%= currentTerm.year + currentTerm.term %>", {facultyID: facultyID},
             (data) => resolve(data)
         ).fail((error) => reject(error.responseJSON))
     });

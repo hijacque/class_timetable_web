@@ -1,9 +1,21 @@
 const router = require("express").Router();
 const crypto = require("crypto");
+const fs = require("fs");
+const csv = require("csv-parser");
+const multer = require("multer");
 const { verifySession } = require("./../lib/verification");
 const { createFaculty } = require("./../lib/account");
 const { saveFacultySchedule, unsaveFacultySchedule } = require("./../lib/schedule");
 const { convertMinutesTime, toWeekDay } = require("./../lib/time-conversion");
+
+// Configure multer to handle file uploads
+const storage = multer.diskStorage({
+  destination: 'uploads/',
+  filename: (req, file, cb) => {
+    cb(null, file.originalname);
+  }
+});
+const upload = multer({ storage });
 
 // for CRUD purposes, sub-directly controlled from client side
 router.use(verifySession);
@@ -279,7 +291,7 @@ router.route("/faculty/:deptID?")
             });
         });
 
-    }).post(createFaculty, (req, res) => { // creates new faculty in 
+    }).post(createFaculty, (req, res) => { // creates new faculty in
         res.status(200).end();
     });
 
@@ -1465,6 +1477,44 @@ router.post("/update_subject/:id", async (req, res) => {
         `SET code = '${code}', title = '${title}', type = '${type}', units = '${units}', req_hours = '${req_hours}', pref_rooms = '${pref_rooms}' ` +
         `WHERE id = '${req.params.id}'`
     );
+});
+
+router.post("/import_subjects/:id", upload.single('csvFile'), async (req, res) => {
+    console.log(req.params.id)
+    const user = req.account;
+    if (!user || user.type != "admin") {
+        res.cookie("serverMessage", {
+            message: {
+                mode: 0,
+                title: "Unauthorized request",
+                body: "Please login before importing schedules."
+            }
+        });
+        return res.status(401).json({ redirect: "/logout" });
+    }
+
+        var results = [];
+        fs.createReadStream(req.file.path)
+        .pipe(csv())
+        .on('data', (data) => {
+            results.push(data)
+        })
+        .on('end', () => {
+            results.forEach(async row => {
+                const DB = req.app.locals.database;
+                const subjID = crypto.randomBytes(6).toString("base64url");
+                const { code, title, type, units, req_hours, pref_rooms } = row;
+                try {
+                    await DB.executeQuery(
+                        `INSERT INTO Subjects (id, college_id, code, title, type, units, req_hours, pref_rooms) ` +
+                        `VALUES ('${subjID}', '${req.params.id}', '${code}', '${title}', '${type}', '${units}', '${req_hours}', '${pref_rooms}')`
+                    );
+                } catch(error) {
+                    console.error(error);
+                }
+            });
+        });
+    res.status(200).redirect("../../admin/subjects");
 });
 
 router.get("/unavailable-rooms/:term", async (req, res) => {
