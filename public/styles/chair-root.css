@@ -24,11 +24,22 @@
     color: #8673b4;
 }
 
-.pagination > li.page-title {
+.schedule-nav {
+    display: grid;
+    grid-template-columns: max-content max-content;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.page-title {
+    display: inline;
     font-weight: bold;
     font-size: xx-large;
     white-space: nowrap;
-    justify-content: center;
+    margin-right: 12px;
 }
 
 ul.pagination>li {
@@ -41,8 +52,6 @@ table>tbody>tr>td:not(td.edit-action) { cursor: default; }
 #blocks-schedule { 
     width: 500px;
     max-width: 100%;
-    margin-left: auto;
-    margin-right: auto;
 }
 
 #blocks-schedule>tbody>tr>td:nth-child(1),

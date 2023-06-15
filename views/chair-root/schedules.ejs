@@ -83,7 +83,6 @@
                     <% } %>
                 </div>
                 <label for="term-title">Status: <span id="term-status" class="text-success">OPEN</span></label>
-                <hr>
             <% } else { %>
                 <div class="d-flex">
                     <h3 id="term-title"><%- term_ordinal %> Semester, <%= year %>-<%= year+1 %></h3>
@@ -101,35 +100,30 @@
                     </form>
                 </div>
                 <label for="term-title">Status: <span id="term-status" class="text-primary">POSTED</span></label>
-                <hr>
             <% } %>
-            <% const {prev, current, next} = data %>
-            <nav aria-label="Schedule Navigation for Department">
-                <ul class="pagination" id="schedule-nav">
-                    <% if (prev) { %>
-                        <li class="page-item">
-                            <a class="page-link me-2" type="button" 
-                                href="/chair/schedules/<%= year + term %><%= (prev.id != 'faculty') ? '?course=' + prev.title.split(' ').join('_') : '' %>">
-                                <i class="fas fa-chevron-left"></i>
-                            </a>
-                            <p class="prev page-label"><%= prev.title %></p>
-                        </li>
-                    <% } else { %>
-                        <li class="page-item disabled"></li>
-                    <% } %>
-
-                    <li class="page-title"><%= current.title %></li>
-
-                    <% if (next) { %>
-                        <li class="justify-content-end page-item">
-                            <p class="next page-label"><%= next.title %></p>
-                            <a class="page-link ms-2" type="button" 
-                                href="/chair/schedules/<%= year + term %><%= next.id != 'faculty' ? '?course=' + next.title.split(' ').join('_') : '' %>">
-                                <i class="fas fa-chevron-right"></i>
-                            </a>
-                        </li>
-                    <% } else { %>
-                        <li class="justify-content-end page-item disabled"></li>
+            <hr>
+            <br>
+            <% const {current, tables} = data %>
+            <nav aria-label="Schedule Navigation for Department" id="schedule-nav" class="dropend">
+                <h4 class="page-title"><%= current.title %></h4>
+                <button type="button" class="btn btn-primary btn-floating" data-mdb-toggle="dropdown"
+                    aria-expanded="false"><i class="fas fa-caret-right"></i></button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item<%= current.id == 'faculty' ? ' active' : '' %>" 
+                        <% if (current.id != tables[0].d) { %>
+                            href="/chair/schedules/<%= currentTerm.year + currentTerm.term %>"
+                        <% } %>
+                        ><%= tables[0].title %>
+                    </a></li>
+                    
+                    <% for (let i = 1; i < tables.length; i++) { %>
+                        <% const {id, title} = tables[i] %>
+                        <li><a class="dropdown-item<%= (current.id == id) ? ' active' : '' %>" 
+                            <% if (current.id != id) { %>
+                                href="/chair/schedules/<%= currentTerm.year + currentTerm.term %>?course=<%= title.split(' ').join('_') %>"
+                            <% } %>
+                            ><%= title %>
+                        </a></li>
                     <% } %>
                 </ul>
             </nav>
@@ -148,8 +142,10 @@
                     <% } %>
                     <button class="btn btn-secondary btn-rounded" type="button" id="set-deadline">Set Deadline</button>
                 </div>
+            <% } else { %>
+                <br>
             <% } %>
-            <table class="table table-bordered table-sm my-4"></table>
+            <table class="table table-bordered table-sm my-3"></table>
         <% } else if (terms.length > 0) { %>
             <h3>No chosen term yet...</h3>
         <% } else { %>
