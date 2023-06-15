@@ -145,7 +145,6 @@ class EditableTable extends ResponsiveTable {
     #changeOptions;
     #alwaysOnEdit;
     #inputOptions = ['optional', 'unique'];
-    #initCallback;
 
     addBtn; // for adding new row
     editBtn; // for opening edit view

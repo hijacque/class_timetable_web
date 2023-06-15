@@ -69,6 +69,19 @@
     const courses = $(".panel-menu > .menu-item").get();
     
     <% if (currentCourse) { %>
+        async function filterSubjects(event) {
+            const subjects = $(event.currentTarget).siblings("ul").find(".dropdown-item").hide().get();
+            const subjSearch = event.currentTarget.value || "";
+            // const rooms = $("ul[aria-labelledby='class-room'] > li > .dropdown-item, #avail-rooms-alert").removeClass("disabled").hide().get();
+            const totalSubjs = Math.min(6, subjects.length);
+            
+            subjects.sort(
+                (a, b) => b.textContent.localeCompare(subjSearch, undefined, {sensitivity:"accent"}) - a.textContent.localeCompare(subjSearch, undefined, {sensitivity:"accent"})
+            );
+
+            subjects.slice(0, totalSubjs).forEach(subj => subj.style.display = "block");
+        }
+        
         function addTermTables(tables = []) {
             const tableContent = 
                 `<thead><th table-cts-column="code text" style="width: 150px;">COURSE CODE</th>` +
@@ -96,44 +109,72 @@
                 view.append(newTable);
 
                 const newSemTable = new EditableTable(`#${term.year}-${term.term}-term`);
-                newSemTable.initData(term.subjects, false, () => newSemTable.addBtn.click(async (event) => {
-                    const lastRow = $(`${newSemTable.body}>tr:last-child`);
-                    const newRow = await $(event.currentTarget).data("newRow");
-                    newRow.year = term.year;
-                    newRow.semester = term.term;
+                    newSemTable.initData(term.subjects, false, () => {
+                        newSemTable.addBtn.click(async (event) => {
+                        const lastRow = $(`${newSemTable.body}>tr:last-child`);
+                        const newRow = await $(event.currentTarget).data("newRow");
+                        newRow.year = term.year;
+                        newRow.semester = term.term;
 
-                    if (!newRow.code && !newRow.title) {
-                        lastRow.remove();
-                        newSemTable.data.pop();
-                        return alertModal.show(
-                            0, "No subject code nor title",
-                            "Cannot add subject into curriculum without code and title to base search on."
-                        );
-                    }
-                        
-                    try {
-                        const newSubject = await addCourseSubject("<%= currentCourse.id %>", newRow);
-                        const [rCode, rTitle, rUnits] = lastRow.children().get();
-                        rCode.textContent = newSubject.code;
-                        rTitle.textContent = newSubject.title;
-                        rUnits.textContent = newSubject.units;
-                    } catch (error) {
-                        const eResponse = error.responseJSON;
-                        if (eResponse) {
-                            if (eResponse.redirect) {
-                                location.replace(eResponse.redirect);
-                            }
-                            if (eResponse.message) {
-                                alertModal.show(...Object.values(eResponse.message));
-                            }
-                        } else {
-                            alertModal.show(0, "Server error", "Unexpected error occured, please try again later.");
+                        if (!newRow.code && !newRow.title) {
+                            lastRow.remove();
+                            newSemTable.data.pop();
+                            return alertModal.show(
+                                0, "No subject code nor title",
+                                "Cannot add subject into curriculum without code and title to base search on."
+                            );
                         }
+                            
+                        try {
+                            const newSubject = await addCourseSubject("<%= currentCourse.id %>", newRow);
+                            const [rCode, rTitle, rUnits] = lastRow.children().get();
+                            rCode.textContent = newSubject.code;
+                            rTitle.textContent = newSubject.title;
+                            rUnits.textContent = newSubject.units;
+                        } catch (error) {
+                            const eResponse = error.responseJSON;
+                            if (eResponse) {
+                                if (eResponse.redirect) {
+                                    location.replace(eResponse.redirect);
+                                }
+                                if (eResponse.message) {
+                                    alertModal.show(...Object.values(eResponse.message));
+                                }
+                            } else {
+                                alertModal.show(0, "Server error", "Unexpected error occured, please try again later.");
+                            }
 
-                        $(`${newSemTable.body}>tr:last-child`).remove();
-                        newSemTable.data.pop();
-                    }
-                }));
+                            $(`${newSemTable.body}>tr:last-child`).remove();
+                            newSemTable.data.pop();
+                        }
+                    });
+
+                    const [code, title] = newSemTable.footer.find(".add-td-input").get();
+                    code.id = "subj-code";
+                    title.id = "subj-title";
+                    code.setAttribute("data-mdb-toggle", "dropdown");
+                    code.setAttribute("aria-expanded", "false");
+                    code.setAttribute("autocomplete", "off");
+                    
+                    title.setAttribute("data-mdb-toggle", "dropdown");
+                    title.setAttribute("aria-expanded", "false");
+                    title.setAttribute("autocomplete", "off");
+
+                    $(title).after(
+                        `<ul class="dropdown-menu" aria-labelledby="subj-code">` +
+                        `<%- data.subjects.reduce((acc, s) => acc + '<li><a role="button" title="' + s.code + '" class="dropdown-item' + (s.taken > 0 ? ' disabled' : '') + '" itemid="' + s.id + '">' + s.title + '</a></li>', '') %>` +
+                        `</ul>`
+                    ).focusin(filterSubjects).on("input", filterSubjects);
+
+                    $(code).after(
+                        `<ul class="dropdown-menu" aria-labelledby="subj-code">` +
+                        `<%- data.subjects.reduce((acc, s) => acc + '<li><a role="button" title="' + s.title + '" class="dropdown-item' + (s.taken > 0 ? ' disabled' : '') + '" itemid="' + s.id + '">' + s.code + '</a></li>', '') %>` +
+                        `</ul>`
+                    ).focusin(filterSubjects).on("input", filterSubjects);
+
+                    $("#subj-code + [aria-labelledby='subj-code'] > li > .dropdown-item").click(fillSubjTitle);
+                    $("#subj-title + [aria-labelledby='subj-code'] > li > .dropdown-item").click(fillSubjCode);
+                });
                 semesterTables.push(newSemTable);
             }
 
@@ -142,6 +183,18 @@
                 latestYear = tables[totalTerms-1].year;
                 latestTerm = tables[totalTerms-1].term;
             }
+        }
+
+        function fillSubjCode(event) {
+            const subject = event.currentTarget;
+            $("#subj-code").val(subject.title);
+            $("#subj-title").val(subject.textContent);
+        }
+
+        function fillSubjTitle(event) {
+            const subject = event.currentTarget;
+            $("#subj-code").val(subject.textContent);
+            $("#subj-title").val(subject.title);
         }
 
         async function initCourseCurriculum(data) {
