@@ -65,7 +65,7 @@ router.route("/open-account/faculty")
         const otpResult = req.message;
         if (otpResult && otpResult.mode == 1) {
             res.cookie("serverMessage", req.message, { httpOnly: true });
-            res.cookie("id", req.accountID).redirect("../change-password")
+            res.cookie("id", req.accountID).redirect("/help/change-password")
         } else if (otpResult && (otpResult.mode == 2 || otpResult.mode == 0)) {
             res.status(200).json(req.message);
         } else {
@@ -97,8 +97,8 @@ router.route("/change-password/verify")
             res.cookie(
                 "helpID", jwt.sign({
                     ...req.account, subHelp: "/help/change-password"}, 
-                    process.env.HELP_KEY, {expiresIn: "4m"
-                }), { httpOnly: true, signed: true }
+                    process.env.HELP_KEY
+                ), { httpOnly: true, signed: true }
             );
             return res.status(200).json({ redirect: "/help/change-password" });
         }
