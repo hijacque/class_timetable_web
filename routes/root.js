@@ -94,7 +94,7 @@ router.get("/chair/:task?/:current?", verifySession, getChairData, getFacultyDat
     }
 });
 
-router.get("/faculty/:task?",verifySession, getFacultyData, (req, res) => {
+router.get("/faculty/:task?/:current?",verifySession, getFacultyData, (req, res) => {
     if (req.cookies.serverMessage) res.clearCookie("serverMessage");
     if (req.taskData) {
         const tasks = ["schedule", "preference", "consultation"];

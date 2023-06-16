@@ -1,17 +1,20 @@
 <% const {current, subjOptions, forms, type} = data %>
 <div class="bg-light task-view" id="preference-view">
     <div class="side-panel px-3">
-        <h4>Pending<br>Preference Forms</h4>
+        <h4>Open Preference Forms</h4>
         <div class="panel-body">
             <hr>
             <% if (current && forms) { %>
             <ul class="list-group panel-menu">
-                <% for (const {pref_id, year, ordinal_term, term} of forms) { %>
+                <% for (const {pref_id, year, ordinal_term, term, status} of forms) { %>
                     <a type="button" class="list-group-item list-group-item-action menu-item"
-                        href="/<%= type %>/preference?term=<%= year %><%= term %>"
+                        href="/<%= type %>/preference/<%= year %><%= term %>"
                         title="<%= year %><%= term %>" id="<%= pref_id %>" >
                         <p class="text-truncate m-0">
-                            <%= year %>-<%= year + 1 %>, <%- ordinal_term %> Semester
+                            <%= year %>-<%= year + 1 %>, <%- ordinal_term %> Semester<br>
+                            <% if (status != 'PENDING') { %>
+                                <small class="text-muted"><%= status %></small>
+                            <% } %>
                         </p>
                     </a>
                 <% } %>
@@ -25,11 +28,11 @@
         <% if (current && forms) { %>
         <div>
             <a class="btn btn-primary btn-lg btn-rounded btn-top mt-2" title="Submit preference form" 
-                id="submit-pref" type="button">
-                <i class="fas fa-check fa-lg me-2"></i>submit
+                id="<%= (current.status == 'PENDING') ? 'submit-pref' : 'update-pref' %>" type="button">
+                <i class="fas fa-check fa-lg me-2"></i><%= (current.status == 'PENDING') ? 'submit' : 'update' %>
             </a>
         </div>
-        <% const {pref_id, year, ordinal_term, term} = current %>
+        <% const {pref_id, year, ordinal_term, term, status, deadline_date, deadline_time} = current %>
             <h3 class="text-center mb-4">
                 Faculty Schedule Preference Form<br>
                 <small class="text-muted">
@@ -38,6 +41,51 @@
             </h3>
             <hr>
             <div class="px-5">
+                <div id="pref-form-deadline">
+                    <label class="table-title fw-bold me-2">Preference Form Deadline:</label>
+                    <span><%= deadline_date %> | <%= deadline_time %></span>
+                </div>
+                <script>
+                    $("#set-deadline").click(function () {
+                        var deadlineDate = $("form-deadline-date").val();
+                        var deadlineTime = $("form-deadline-time").val();
+                        
+                        const currentDate = new Date();
+                        const year = currentDate.getFullYear();
+                        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+                        const day = String(currentDate.getDate()).padStart(2, '0');
+                        const formattedCurrentDate = `${year}-${month}-${day}`;
+                        console.log(formattedCurrentDate);
+    
+                        //if deadline di na wede pa iedit form
+                        if (deadlineDate === formattedCurrentDate) {
+                            const preferenceView = document.getElementById("preference-view");
+                            preferenceView.innerHTML += `
+                            <div style="
+                                position: absolute;
+                                top: 0;
+                                left: 0;
+                                width: 100%;
+                                height: 100%;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                background-color: white;
+                                z-index: 999;">
+                                <p style="font-size: 600px; font-weight: bold; color: black; text-align: center;">You can't edit this form</p>
+                            </div>`;
+                        } 
+                        //if no, wede pa 
+                        else { 
+                            console.log("Deadline does not match current date");
+                        }
+                        $(document).ready(function() {
+                            myFunction();
+                        });
+                    });
+                    
+                  </script>
+                <br>
                 <label class="table-title fw-bold">Your Subject Expertises:</label>
                 <div class="mb-4 mt-2 w-75 stack-list" id="subjects-list">
                     <div class="dropdown">
@@ -60,41 +108,21 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>Monday</td>
-                            <td><input type="time" class="form-control start-time"></td>
-                            <td><input type="time" class="form-control end-time"></td>
-                        </tr>
-                        <tr>
-                            <td>Tuesday</td>
-                            <td><input type="time" class="form-control start-time"></td>
-                            <td><input type="time" class="form-control end-time"></td>
-                        </tr>
-                        <tr>
-                            <td>Wednesday</td>
-                            <td><input type="time" class="form-control start-time"></td>
-                            <td><input type="time" class="form-control end-time"></td>
-                        </tr>
-                        <tr>
-                            <td>Thursday</td>
-                            <td><input type="time" class="form-control start-time"></td>
-                            <td><input type="time" class="form-control end-time"></td>
-                        </tr>
-                        <tr>
-                            <td>Friday</td>
-                            <td><input type="time" class="form-control start-time"></td>
-                            <td><input type="time" class="form-control end-time"></td>
-                        </tr>
-                        <tr>
-                            <td>Saturday</td>
-                            <td><input type="time" class="form-control start-time"></td>
-                            <td><input type="time" class="form-control end-time"></td>
-                        </tr>
-                        <tr>
-                            <td>Sunday</td>
-                            <td><input type="time" class="form-control start-time"></td>
-                            <td><input type="time" class="form-control end-time"></td>
-                        </tr>
+                        <% for (const sched of current.schedules) { %>
+                            <tr>
+                                <td><%= sched.day %></td>
+                                <% if (sched.start_time) { %>
+                                    <td><input type="time" class="form-control start-time" value="<%= sched.start_time %>"></td>
+                                <% } else { %>
+                                    <td><input type="time" class="form-control start-time"></td>
+                                <% } %>
+                                <% if (sched.end_time) { %>
+                                    <td><input type="time" class="form-control end-time" value="<%= sched.end_time %>"></td>
+                                <% } else { %>
+                                    <td><input type="time" class="form-control end-time"></td>
+                                <% } %>
+                            </tr>
+                        <% } %>
                     </tbody>
                 </table>
             </div>
@@ -107,9 +135,16 @@
 </div>
 <% if (current) { %>
 <script>
-    const expertises = [];
+    const expertises = <%- JSON.stringify(current.subjects || []) %>;
+
     const submitPreference = (schedules = []) => new Promise((resolve, reject) => $.post(
         "/api/preferences/<%= current.pref_id %>",
+        {subjects: expertises || [], schedules: schedules}, 
+        (data) => resolve(data), "json",
+    ).fail((data) => reject(data)));
+
+    const updatePreference = (schedules = []) => new Promise((resolve, reject) => $.post(
+        "/api/update-preferences/<%= current.pref_id %>",
         {subjects: expertises || [], schedules: schedules}, 
         (data) => resolve(data), "json",
     ).fail((data) => reject(data)));
@@ -124,7 +159,7 @@
     }
 
     const subjectsList = $("div.stack-list#subjects-list");
-    $(subjectsList).find(".dropdown-item").click((event) => {
+    const subjects = $(subjectsList).find(".dropdown-item").click((event) => {
         $(".pref-form").scrollTop(0);
         let itemVal = event.currentTarget.textContent;
         let newItem = $(`<button class="btn btn-outline-secondary btn-rounded stack-list-item" type="button">${itemVal}</button>`);
@@ -143,9 +178,14 @@
 
     });
 
-    $("#submit-pref").click(async () => {
-        let prefSchedules = $("#pref-schedule>tbody>tr").get() || [];
-        for (let i = 0; i < prefSchedules.length; i++) {
+    if (expertises.length > 0) {
+        console.log(expertises);
+        subjects.get().forEach((sub) => expertises.includes(sub.textContent) ? $(sub).trigger("click") : null);
+    }
+
+    function validPrefSchedules() {
+        let prefSchedules = $("#pref-schedule>tbody>tr").get().slice(0, 7) || [];
+        for (let i = 0; i < 7; i++) {
             const start = $(prefSchedules[i]).find(".start-time").val();
             const end = $(prefSchedules[i]).find(".end-time").val();
             const day = $(`tbody>tr:nth-child(${i+1})>td:first-child`).text();
@@ -157,7 +197,7 @@
                 if (startTime < 7 * 60) {
                     $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
                     alertModal.show(2, "Start time is too early on " + day, "Class must start on or later than 7AM");
-                    return console.log("Class must start on or later than 7AM");
+                    return false;
                 }
                 prefSchedules[i].start = startTime;
 
@@ -165,17 +205,39 @@
                 if (endTime > 22 * 60) {
                     $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
                     alertModal.show(2, "End time is too late on " + day, "Class must end on or before than 10PM");
-                    return console.log("Class must end on or before 10PM");
+                    return false;
                 }
                 prefSchedules[i].end = endTime;
                 console.log(startTime, endTime);
             }
         }
-        
-        console.log(prefSchedules);
-        console.log(expertises);
+
+        return prefSchedules.filter(sched => sched.start && sched.end);
+    }
+
+    $("#submit-pref").click(async () => {
         try {
-            const {message} = await submitPreference(prefSchedules.filter(sched => sched.start && sched.end));
+            const {message} = await submitPreference(validPrefSchedules() || []);
+            $("#confirm-alert").click(() => location.reload());
+            alertModal.show(...Object.values(message));
+        } catch (eResponse) {
+            if (eResponse) {
+                if (eResponse.redirect) {
+                    location.replace(eResponse.redirect);
+                }
+                if (eResponse.message) {
+                    $("#confirm-alert").attr("data-mdb-target", "#add-class").attr("data-mdb-toggle", "modal");
+                    alertModal.show(...Object.values(eResponse.message));
+                }
+            } else {
+                alertModal.show(0, "Server error", "Unexpected error occured, please try again later.");
+            }
+        }
+    });
+
+    $("#update-pref").click(async () => {
+        try {
+            const {message} = await updatePreference(validPrefSchedules() || []);
             $("#confirm-alert").click(() => location.reload());
             alertModal.show(...Object.values(message));
         } catch (eResponse) {

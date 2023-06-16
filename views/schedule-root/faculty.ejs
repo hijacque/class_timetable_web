@@ -233,7 +233,7 @@
                             <% } %>
                             style="grid-column: <%= schedule.day %> / span 1; grid-row: <%= schedule.start_time %> / <%= schedule.end_time %>; background-color: <%= schedule.color %>;"
                             aria-valuemin="<%= schedule.start %>" aria-valuemax="<%= schedule.end %>" 
-                            aria-valuenow="<%= schedule.day %>" aria-current="<%= schedule.duration %>">
+                            aria-valuenow="<%= schedule.day %>" aria-current="<%= schedule.req_hours %>">
                             <h6 class="text-break subject" itemid="<%= schedule.subj_id %>"><%= schedule.subject %></h6>
                             <p class="text-truncate"><small>
                                 <span class="block" itemid="<%= schedule.block_id %>">
@@ -266,7 +266,7 @@
                             <% } %>
                             style="grid-column: <%= schedule.day %> / span 1; grid-row: <%= schedule.start_time %> / <%= schedule.end_time %>;"
                             aria-valuemin="<%= schedule.start %>" aria-valuemax="<%= schedule.end %>" 
-                            aria-valuenow="<%= schedule.day %>" aria-current="<%= schedule.duration %>">
+                            aria-valuenow="<%= schedule.day %>" aria-current="<%= schedule.req_hours %>">
                             <h6 class="text-break subject" itemid="<%= schedule.subj_id %>"><%= schedule.subject %></h6>
                             <p class="text-truncate"><small>
                                 <span class="text-danger faculty">No professor yet</span><br>
@@ -487,7 +487,9 @@
         $("#class-block").text(block.textContent).attr("aria-valuenow", block.getAttribute("itemid"));
         $("#class-start").val(prevClass.ariaValueMin);
         $("#class-end").val(prevClass.ariaValueMax);
-        $("#class-hours").text(prevClass.ariaCurrent).attr("aria-valuemax", prevClass.ariaCurrent);
+        $("#class-hours").text(
+            `${parseFloat(prevClass.ariaValueMax) - parseFloat(prevClass.ariaValueMin)} / ${prevClass.ariaCurrent}`
+        ).attr("aria-valuemax", prevClass.ariaCurrent);
 
         currentSched.faculty = prevClass.classList.contains("partial") ? null : "<%= id %>";
         currentSched.block = block.getAttribute("itemid");
