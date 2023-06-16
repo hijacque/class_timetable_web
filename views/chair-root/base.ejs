@@ -21,28 +21,30 @@
                     <button type="button" class="btn btn-secondary" data-mdb-dismiss="modal" id="confirm-alert">
                         OK
                     </button>
-                    <form action="/schedule/reset/<%= taskData.year + taskData.term %>" method="post"
-                        class="d-flex">
-                        <button type="submit" class="btn btn-primary me-3" data-mdb-dismiss="modal" id="accept-alert">
-                            yes
-                        </button>
-                        <button type="button" class="btn btn-secondary" data-mdb-dismiss="modal" id="reject-alert">
-                            no
-                        </button>
-                    </form>
+                    <% if (section == "schedules") { %>
+                        <form action="/schedule/reset/<%= taskData.currentTerm.year + taskData.currentTerm.term %>" method="post"
+                            class="d-flex">
+                            <button type="submit" class="btn btn-primary me-3" data-mdb-dismiss="modal" id="accept-alert">
+                                yes
+                            </button>
+                            <button type="button" class="btn btn-secondary" data-mdb-dismiss="modal" id="reject-alert">
+                                no
+                            </button>
+                        </form>
+                    <% } %>
                 </div>
             </div>
         </div>
     </div>
     <div class="nav-bar bg-light">
         <a role="button" class="task btn btn-light" id="schedules">
-            <i class="fas fa-sitemap fa-2x mt-1"></i><br>schedules</a>
+            <i class="fas fa-sitemap fa-2x mt-1"></i><br><small>plot schedule</small></a>
         <a role="button" class="task btn btn-light" id="faculty">
             <i class="fas fa-chalkboard-teacher fa-2x mt-1"></i><br>faculty</a>
         <a role="button" class="task btn btn-light" id="courses">
             <i class="fas fa-graduation-cap fa-2x mt-1"></i><br>courses</a>
         <a role="button" class="task btn btn-light" id="schedule">
-            <i class="fas fa-calendar-day fa-2x mt-1"></i><br>schedule</a>
+            <i class="fas fa-calendar-day fa-2x mt-1"></i><br><small>view schedule</small></a>
         <a role="button" class="task btn btn-light" id="preference">
             <i class="fas fa-clipboard-check fa-2x mt-1"></i><br>preference</a>
         <a role="button" class="task btn btn-light" id="consultation">

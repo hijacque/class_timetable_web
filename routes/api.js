@@ -1404,7 +1404,7 @@ router.post("/update-preferences/:prefID", async (req, res) => {
     const DB = req.app.locals.database;
 
     const [deadline] = await DB.executeQuery(
-        `SELECT deadline FROM Preferences WHERE pref_id = '${pref}' AND CURRENT_TIMESTAMP < pdeadline LIMIT 1`
+        `SELECT deadline FROM Preferences WHERE id = '${req.params.prefID}' AND CURRENT_TIMESTAMP < deadline LIMIT 1`
     );
 
     if (!deadline) {

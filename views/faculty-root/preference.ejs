@@ -135,7 +135,7 @@
 </div>
 <% if (current) { %>
 <script>
-    const expertises = <%- JSON.stringify(current.subjects || []) %>;
+    const expertises = [];
 
     const submitPreference = (schedules = []) => new Promise((resolve, reject) => $.post(
         "/api/preferences/<%= current.pref_id %>",
@@ -178,9 +178,11 @@
 
     });
 
-    if (expertises.length > 0) {
-        console.log(expertises);
-        subjects.get().forEach((sub) => expertises.includes(sub.textContent) ? $(sub).trigger("click") : null);
+    const prevSubjects = <%- JSON.stringify(current.subjects || []) %>;
+    if (prevSubjects.length > 0) {
+        subjects.get().forEach((sub) => {
+            if (prevSubjects.includes(sub.textContent)) $(sub).trigger("click")
+        });
     }
 
     function validPrefSchedules() {
