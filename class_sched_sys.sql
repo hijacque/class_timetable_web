@@ -194,9 +194,10 @@ CREATE TABLE `Preferences` (
   `term_id` varchar(8) DEFAULT NULL,
   `faculty_id` varchar(12) DEFAULT NULL,
   `assigned_load` int unsigned DEFAULT '0',
-  `status` enum('pending','submitted','unanswered','closed') DEFAULT 'pending',
+  `status` enum('pending','submitted') DEFAULT 'pending',
   `id` varchar(8) NOT NULL,
   `sched_status` enum('open','saved','posted') DEFAULT 'open',
+  `deadline` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `term_id` (`term_id`),
   KEY `faculty_id` (`faculty_id`),
@@ -300,7 +301,7 @@ CREATE TABLE `Schools` (
   `name` varchar(120) NOT NULL,
   `total_terms_yearly` int DEFAULT NULL,
   UNIQUE KEY `id` (`id`),
-  CONSTRAINT `schools_ibfk_1` FOREIGN KEY (`id`) REFERENCES `Users` (`id`) ON UPDATE CASCADE ON DELETE CASCADE
+  CONSTRAINT `schools_ibfk_1` FOREIGN KEY (`id`) REFERENCES `Users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -374,4 +375,4 @@ CREATE TABLE `Users` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2023-05-31 20:10:23
+-- Dump completed on 2023-06-16 11:44:34

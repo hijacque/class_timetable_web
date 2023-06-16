@@ -58,7 +58,7 @@
         const alertModal = new ThemedAlert(new mdb.Modal($("#alert-modal")), "alert-modal");
         <% if (serverAlert && Object.keys(serverAlert).length == 3) { %>
             <% const {mode, title, body} = serverAlert %>
-            alertModal.show(<%- JSON.stringify(mode) %>, "<%= title %>", "<%= body %>");
+            alertModal.show(<%- JSON.stringify(mode) %>, "<%- title %>", "<%- body %>");
         <% } %>
 
         $("div.nav-bar>a>i").addClass("fa-2x mt-1");
