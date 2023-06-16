@@ -800,8 +800,20 @@ router.post("/save_schedule/:term", saveFacultySchedule, async (req, res) => {
         );
         console.log(aboutProf);
         res.status(200).json(aboutProf);
+    } else if (req.incompleteScheds) {
+        res.cookie("serverMessage", {
+            mode: 2,
+            title: "Incomplete schedules not saved",
+            body: "Could not save schedule of the following faculty:<br>" +
+                `<ul><li>${req.incompleteScheds.join("</li><li>")}</li></ul>` +
+                `<br>Please completely plot their classes.`
+        }).status(200).end();
     } else {
-        res.status(500).end();
+        res.cookie("serverMessage", {
+            mode: 1,
+            title: "Saved all faculty schedules",
+            body: "You can't edit their schedules when in saved mode."
+        }).status(200).end();
     }
 });
 
