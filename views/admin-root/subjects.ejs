@@ -41,45 +41,57 @@
                 <button class="btn btn-success btn-rounded btn-top" data-cts-dismiss="table" data-cts-target="#subjects-table"
                     aria-hidden="true"><i class="fas fa-check-double fa-lg me-2"></i>save table</button>
             </div>
-            <table class="table table-bordered table-sm fw-bold my-4" id="subjects-table">
-                <thead class="text-center">
-                    <tr>
-                        <th table-cts-column="code text">Code</th>
-                        <th table-cts-column="title text">Title</th>
-                        <th table-cts-column="type dropdown [LEC,LAB,NULL,Cancel]" style="width: 90px;">Type</th>
-                        <th table-cts-column="units text" style="width: 90px;">Units</th>
-                        <th table-cts-column="req_hours text" style="width: 90px;">Required<br>Hours</th>
-                        <th table-cts-column="pref_rooms text">Specialized Rooms</th>
-                        <td table-cts-column="edit delete">Action</td>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-                <tfoot id="add-subj">
-                    <tr class="add-data">
-                        <td><input type="text" class="form-control add-td-input unique reuse"></td>
-                        <td><input type="text" class="form-control add-td-input reuse"></td>
-                        <td>
-                            <div class="dropdown">
-                                <button class="btn btn-secondary dropdown-toggle add-td-input optional" type="button"
-                                    data-mdb-toggle="dropdown" aria-expanded="false" title="Type">Type</button>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" role="button">LEC</a></li>
-                                    <li><a class="dropdown-item" role="button">LAB</a></li>
-                                    <li><hr class="dropdown-divider m-0"></li>
-                                    <li>
-                                        <a class="dropdown-item text-danger" role="button" data-cts-reset="dropdown">
-                                            Cancel
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </td>
-                        <td><input type="number" class="form-control add-td-input text-center"></td>
-                        <td><input type="number" class="form-control add-td-input reuse text-center"></td>
-                        <td><input type="text" class="form-control add-td-input optional reuse" placeholder="room 1,room 2,..."></td>
-                    </tr>
-                </tfoot>
-            </table>
+            <div>
+                <div style="width: fit-content; margin-bottom: 24px;">
+                    <form class="input-group" action="/api/import_subjects/<%- currentCollege.id %>" method="post"
+                        enctype="multipart/form-data">
+                        <input name="csvFile" type="file" class="form-control" id="inputGroupFile04"
+                            aria-describedby="inputGroupFileAddon04" aria-label="Upload" required>
+                        <input type="hidden" name="collegeName" value="<%- currentCollege.name %>">
+                        <input class="btn btn-outline-primary" type="submit" value="Import Subjects">
+                    </form>
+                </div>
+                
+                <table class="table table-bordered table-sm fw-bold my-4" id="subjects-table">
+                    <thead class="text-center">
+                        <tr>
+                            <th table-cts-column="code text">Code</th>
+                            <th table-cts-column="title text">Title</th>
+                            <th table-cts-column="type dropdown [LEC,LAB,NULL,Cancel]" style="width: 90px;">Type</th>
+                            <th table-cts-column="units text" style="width: 90px;">Units</th>
+                            <th table-cts-column="req_hours text" style="width: 90px;">Required<br>Hours</th>
+                            <th table-cts-column="pref_rooms text">Specialized Rooms</th>
+                            <td table-cts-column="edit delete">Action</td>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                    <tfoot id="add-subj">
+                        <tr class="add-data">
+                            <td><input type="text" class="form-control add-td-input unique reuse"></td>
+                            <td><input type="text" class="form-control add-td-input reuse"></td>
+                            <td>
+                                <div class="dropdown">
+                                    <button class="btn btn-secondary dropdown-toggle add-td-input optional" type="button"
+                                        data-mdb-toggle="dropdown" aria-expanded="false" title="Type">Type</button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" role="button">LEC</a></li>
+                                        <li><a class="dropdown-item" role="button">LAB</a></li>
+                                        <li><hr class="dropdown-divider m-0"></li>
+                                        <li>
+                                            <a class="dropdown-item text-danger" role="button" data-cts-reset="dropdown">
+                                                Cancel
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
+                            <td><input type="number" class="form-control add-td-input text-center"></td>
+                            <td><input type="number" class="form-control add-td-input reuse text-center"></td>
+                            <td><input type="text" class="form-control add-td-input optional reuse" placeholder="room 1/room 2/..."></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
         <% } else if (colleges.length > 0) { %>
             <h4 style="color: #8673b4;">Choose college to view subjects...</h4>
         <% } else { %>
@@ -115,11 +127,12 @@
         const colleges = $(".panel-menu > .menu-item").get();
         if (colleges.length > 0) {
             let openCollege = colleges.find(col => col.title == "<%= currentCollege.name %>");
+            console.log("<%- currentCollege.id %> - <%- currentCollege.name %>")
             $(openCollege).addClass("active");
-    
+
             // initialize responsive Subjects table
             subjectsTable.initData(getSubjects("<%= currentCollege.id %>"), true);
-            
+
             $(subjectsTable.addBtn).click(async (event) => {
                 let newSubject;
                 try {
@@ -127,7 +140,7 @@
                 } catch (error) {
                     return console.error(error);
                 }
-                
+
                 try {
                     await addSubject("<%= currentCollege.id %>", newSubject);
                 } catch (eResponse) {

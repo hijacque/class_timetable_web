@@ -40,7 +40,7 @@
                     <% for (const term of terms) { %>
                         <a type="button" class="list-group-item list-group-item-action menu-item"
                             <% if (term.id != currentTerm.id) { %>
-                                href="/chair/schedules/<%= term.year %><%= term.term %>" 
+                                href="/chair/schedules/<%= term.year %><%= term.term %>"
                             <% } %>
                             title="<%= term.year %><%= term.term %>">
                             <p class="text-truncate m-0">
@@ -137,6 +137,7 @@
                     <% } %>
                     <% if (currentTerm.deadline_time) { %>
                         <input type="time" id="form-deadline-time" name="date" class="form-control" required value="<%= currentTerm.deadline_time %>">
+
                     <% } else { %>
                         <input type="time" id="form-deadline-time" name="time" class="form-control" required>
                     <% } %>
@@ -187,7 +188,7 @@
                 rows.find("td:not(:first-child)").click(
                     (event) => openSchedule(id, event, facultyTable.data[$(event.currentTarget).closest("tr").index()].id)
                 );
-                rows.find("td:first-child >input[type=checkbox]").click(async (event) => { 
+                rows.find("td:first-child >input[type=checkbox]").click(async (event) => {
                     let row = $(event.currentTarget).closest("tr");
                     if (event.currentTarget.checked) {
                         const data = await saveSchedule(facultyTable.data[row.index()].id).catch((error) => {
@@ -285,7 +286,7 @@
 
     const saveSchedule = (facultyID) => new Promise((resolve, reject) => {
         $.post(
-            "/api/save_schedule/<%= currentTerm.year + currentTerm.term %>", {facultyID: facultyID}, 
+            "/api/save_schedule/<%= currentTerm.year + currentTerm.term %>", {facultyID: facultyID},
             (data) => resolve(data)
         ).fail((error) => reject(error.responseJSON))
     });
