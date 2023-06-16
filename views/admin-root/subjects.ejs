@@ -42,16 +42,16 @@
                     aria-hidden="true"><i class="fas fa-check-double fa-lg me-2"></i>save table</button>
             </div>
             <div>
-                <div class="mb-3 row">
-                    <div class="col-4">
-                      <form action="../api/import_subjects/<%- currentCollege.id %>" method="post" class="input-group input-group-sm" enctype="multipart/form-data">
-                          <input name="csvFile" type="file" class="form-control" id="inputGroupFile04" aria-describedby="inputGroupFileAddon04" aria-label="Upload" required>
-                          <input class="btn btn-primary"  type="submit" value="Import Subjects">
-                      </form>
-                    </div>
+                <div style="width: fit-content; margin-bottom: 24px;">
+                    <form class="input-group" action="/api/import_subjects/<%- currentCollege.id %>" method="post"
+                        enctype="multipart/form-data">
+                        <input name="csvFile" type="file" class="form-control" id="inputGroupFile04"
+                            aria-describedby="inputGroupFileAddon04" aria-label="Upload" required>
+                        <input type="hidden" name="collegeName" value="<%- currentCollege.name %>">
+                        <input class="btn btn-outline-primary" type="submit" value="Import Subjects">
+                    </form>
                 </div>
-
-
+                
                 <table class="table table-bordered table-sm fw-bold my-4" id="subjects-table">
                     <thead class="text-center">
                         <tr>
@@ -87,7 +87,7 @@
                             </td>
                             <td><input type="number" class="form-control add-td-input text-center"></td>
                             <td><input type="number" class="form-control add-td-input reuse text-center"></td>
-                            <td><input type="text" class="form-control add-td-input optional reuse" placeholder="room 1,room 2,..."></td>
+                            <td><input type="text" class="form-control add-td-input optional reuse" placeholder="room 1/room 2/..."></td>
                         </tr>
                     </tfoot>
                 </table>

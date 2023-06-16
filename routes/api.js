@@ -10,10 +10,10 @@ const { convertMinutesTime, toWeekDay } = require("./../lib/time-conversion");
 
 // Configure multer to handle file uploads
 const storage = multer.diskStorage({
-  destination: 'uploads/',
-  filename: (req, file, cb) => {
-    cb(null, file.originalname);
-  }
+    destination: 'uploads/',
+    filename: (req, file, cb) => {
+        cb(null, file.originalname);
+    }
 });
 const upload = multer({ storage });
 
@@ -1480,7 +1480,6 @@ router.post("/update_subject/:id", async (req, res) => {
 });
 
 router.post("/import_subjects/:id", upload.single('csvFile'), async (req, res) => {
-    console.log(req.params.id)
     const user = req.account;
     if (!user || user.type != "admin") {
         res.cookie("serverMessage", {
@@ -1492,29 +1491,94 @@ router.post("/import_subjects/:id", upload.single('csvFile'), async (req, res) =
         });
         return res.status(401).json({ redirect: "/logout" });
     }
+    
+    const DB = req.app.locals.database;
+    let collegeName;
 
-        var results = [];
-        fs.createReadStream(req.file.path)
+    try {
+        [{collegeName}] =  await DB.executeQuery(
+            `SELECT name AS collegeName FROM Colleges WHERE id = '${req.params.id}' LIMIT 1`
+        );
+    } catch (error) {
+        console.log(error);
+        res.cookie("serverMessage", {
+            mode: 0,
+            title: "Server Error",
+            body: "Unexpected issue was found, please try again later as we fix this."
+        });
+        return res.status(500).redirect("/admin/subjects");
+    }
+    
+    if (!collegeName) {
+        res.cookie("serverMessage", {
+            mode: 0,
+            title: "Invalid college",
+            body: "Could not import subjects becuase no college was found."
+        });
+        return res.status(404).redirect("/admin/subjects");
+    }
+    
+    let existingSubjs = await DB.executeQuery(
+        `SELECT s.code FROM Subjects s INNER JOIN Colleges col ON s.college_id = col.id ` +
+        `WHERE col.school_id = '${user.id}'`
+    );
+    existingSubjs = existingSubjs.map(subj => subj.code);
+
+    var results = [];
+    fs.createReadStream(req.file.path)
         .pipe(csv())
         .on('data', (data) => {
             results.push(data)
         })
-        .on('end', () => {
-            results.forEach(async row => {
-                const DB = req.app.locals.database;
-                const subjID = crypto.randomBytes(6).toString("base64url");
-                const { code, title, type, units, req_hours, pref_rooms } = row;
-                try {
-                    await DB.executeQuery(
-                        `INSERT INTO Subjects (id, college_id, code, title, type, units, req_hours, pref_rooms) ` +
-                        `VALUES ('${subjID}', '${req.params.id}', '${code}', '${title}', '${type}', '${units}', '${req_hours}', '${pref_rooms}')`
-                    );
-                } catch(error) {
-                    console.error(error);
+        .on('end', async () => {
+            let i;
+            for (i = 0; i < results.length; i++) {
+                const { code, title, type, units, req_hours, pref_rooms } = results[i];
+
+                if (!code || !title || !units || !req_hours) {
+                    res.cookie("serverMessage", {
+                        mode: 2,
+                        title: "Incomplete import",
+                        body: `Missing data in <b>row #${i+1}</b>. Please ensure code, title, units, and req_hours are not empty`
+                    });
+                    break;
+                } else if (existingSubjs.includes(code)) {
+                    res.cookie("serverMessage", {
+                        mode: 2,
+                        title: "Duplicate import",
+                        body: `Duplicate subject code was detected in <b>row #${i+1}</b>. Please ensure code is unique.`
+                    });
+                    break;
                 }
-            });
-        });
-    res.status(200).redirect("../../admin/subjects");
+
+                const subjID = crypto.randomBytes(6).toString("base64url");
+                results[i] = `('${subjID}', '${req.params.id}', '${code}', '${title}', ` +
+                    `${type ? 'NULL' : `'${type}'`}, ${units}, ${req_hours}, '${pref_rooms}')`;
+            }
+
+            if (i <= 0) return res.status(200).redirect("/admin/subjects/" + collegeName.split(" ").join("_"));;
+
+            try {
+                await DB.executeQuery(
+                    `INSERT INTO Subjects (id, college_id, code, title, type, units, req_hours, ` +
+                    `pref_rooms) VALUES ${results.slice(0, i+1).join(", ")};`
+                );
+            } catch (error) {
+                console.error(error);
+                res.cookie("serverMessage", {
+                    mode: 0,
+                    title: "Server Error",
+                    body: "Unexpected issue was found, please try again later as we fix this."
+                });
+                return res.status(500).redirect("/admin/subjects/" + collegeName.split(" ").join("_"));
+            }
+
+            res.status(200).redirect("/admin/subjects/" + collegeName.split(" ").join("_"));
+        }).on("error", () => res.res.cookie("serverMessage", {
+            mode: 0,
+            title: "Server Error",
+            body: "Unexpected issue was found, please try again later as we fix this."
+        }).status(500).redirect("/admin/subjects/" + collegeName.split(" ").join("_")));
 });
 
 router.get("/unavailable-rooms/:term", async (req, res) => {
