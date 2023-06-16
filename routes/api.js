@@ -1157,33 +1157,33 @@ router.route("/schedule/:termID")
                         `block_id = '${block}' AND day = ${c.day} AND start = ${c.start} AND end = ${c.end} LIMIT 1;`
                 }, "")
             );
-            // await DB.executeQuery(
-            //     // if faculty is changed
-            //     (
-            //         (!partial && oldSched.faculty != faculty) ? `UPDATE Preferences p INNER JOIN Terms t ON ` +
-            //             `p.term_id = t.id INNER JOIN Colleges col ON t.school_id = col.school_id INNER JOIN ` +
-            //             `Subjects s ON col.id = s.college_id SET p.assigned_load = (p.assigned_load - s.units) ` +
-            //             `WHERE p.term_id = '${termID}' AND s.id = '${subject}' AND p.faculty_id = '${oldSched.faculty}' ` +
-            //             `LIMIT 1; UPDATE Preferences p INNER JOIN Terms t ON p.term_id = t.id INNER JOIN ` +
-            //             `Colleges col ON t.school_id = col.school_id INNER JOIN Subjects s ON col.id = s.college_id ` +
-            //             `SET p.assigned_load = (p.assigned_load + s.units) WHERE p.term_id = '${termID}' AND ` +
-            //             `s.id = '${subject}' AND p.faculty_id = ${!faculty || faculty == "pass" ? "NULL" : `'${faculty}'`} ` +
-            //             `LIMIT 1; ` : ""
-            //     ) +
+            await DB.executeQuery(
+                // if faculty is changed
+                (
+                    (!partial && oldSched.faculty != faculty) ? `UPDATE Preferences p INNER JOIN Terms t ON ` +
+                        `p.term_id = t.id INNER JOIN Colleges col ON t.school_id = col.school_id INNER JOIN ` +
+                        `Subjects s ON col.id = s.college_id SET p.assigned_load = (p.assigned_load - s.units) ` +
+                        `WHERE p.term_id = '${termID}' AND s.id = '${subject}' AND p.faculty_id = '${oldSched.faculty}' ` +
+                        `LIMIT 1; UPDATE Preferences p INNER JOIN Terms t ON p.term_id = t.id INNER JOIN ` +
+                        `Colleges col ON t.school_id = col.school_id INNER JOIN Subjects s ON col.id = s.college_id ` +
+                        `SET p.assigned_load = (p.assigned_load + s.units) WHERE p.term_id = '${termID}' AND ` +
+                        `s.id = '${subject}' AND p.faculty_id = ${!faculty || faculty == "pass" ? "NULL" : `'${faculty}'`} ` +
+                        `LIMIT 1; ` : ""
+                ) +
 
-            //     `UPDATE Schedules SET day = ${day}, start = ${start}, end = ${end}, mode = ${mode}, ` +
-            //     `faculty_id = ${!faculty || faculty == "pass" ? "NULL" : `'${faculty}'`}, room_id = ${classroom ? `'${classroom.id}'` : "NULL"} ` +
-            //     `WHERE term_id = '${termID}' AND subj_id = '${subject}' AND block_id = '${block}' AND day = ${oldSched.day} AND ` +
-            //     `start = ${oldSched.start} AND end = ${oldSched.end} LIMIT 1;` +
-            //     partialClasses.reduce((query, c) => {
-            //         return query += (c.newStart && c.newEnd) ?
-            //             `UPDATE Schedules start = ${c.newStart}, end = ${c.newEnd} WHERE term_id = '${termID}' ` +
-            //             `AND subj_id = '${subject}' AND block_id = '${block}' AND day = ${c.day} AND ` +
-            //             `start = ${c.start} AND end = ${c.end} LIMIT 1;` :
-            //             `DELETE FROM Schedules WHERE term_id = '${termID}' AND subj_id = '${subject}' AND ` +
-            //             `block_id = '${block}' AND day = ${c.day} AND start = ${c.start} AND end = ${c.end} LIMIT 1;`
-            //     }, "")
-            // );
+                `UPDATE Schedules SET day = ${day}, start = ${start}, end = ${end}, mode = ${mode}, ` +
+                `faculty_id = ${!faculty || faculty == "pass" ? "NULL" : `'${faculty}'`}, room_id = ${classroom ? `'${classroom.id}'` : "NULL"} ` +
+                `WHERE term_id = '${termID}' AND subj_id = '${subject}' AND block_id = '${block}' AND day = ${oldSched.day} AND ` +
+                `start = ${oldSched.start} AND end = ${oldSched.end} LIMIT 1;` +
+                partialClasses.reduce((query, c) => {
+                    return query += (c.newStart && c.newEnd) ?
+                        `UPDATE Schedules start = ${c.newStart}, end = ${c.newEnd} WHERE term_id = '${termID}' ` +
+                        `AND subj_id = '${subject}' AND block_id = '${block}' AND day = ${c.day} AND ` +
+                        `start = ${c.start} AND end = ${c.end} LIMIT 1;` :
+                        `DELETE FROM Schedules WHERE term_id = '${termID}' AND subj_id = '${subject}' AND ` +
+                        `block_id = '${block}' AND day = ${c.day} AND start = ${c.start} AND end = ${c.end} LIMIT 1;`
+                }, "")
+            );
 
             return res.status(200).end();
         } else if (action == "delete") {
