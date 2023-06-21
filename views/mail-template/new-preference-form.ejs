@@ -1,0 +1,24 @@
+<html>
+    <head>
+        <style>
+            p, h4 {
+                text-align: justify;
+                text-indent: 50px;
+            }
+        </style>
+    </head>
+    <body>
+        <h4>Good day professors,</h4>
+
+        <p>
+            Your department chairperson has started creating your class schedules for the 
+            <%- semester %> semester of A.Y. <%= year %>-<%= year + 1 %>. We are asking that you submit your 
+            preferred subjects and time schedule for the upcoming semester through the 
+            <a href="<%= loginLink %>">Class Timetable System</a> website by logging in to your account. 
+            Feel free to update your preference so long as it is prior the set deadline.
+        </p>
+        <p>
+            Please be reminded that the preference form is only valid until <b><%= deadline %></b>.
+        </p>
+    </body>
+</html>

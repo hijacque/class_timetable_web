@@ -1,12 +1,15 @@
 const router = require("express").Router();
+
 const crypto = require("crypto");
 const fs = require("fs");
 const csv = require("csv-parser");
 const multer = require("multer");
+const ejs = require("ejs");
+
 const { verifySession } = require("./../lib/verification");
 const { createFaculty } = require("./../lib/account");
 const { saveFacultySchedule, unsaveFacultySchedule } = require("./../lib/schedule");
-const { convertMinutesTime, toWeekDay } = require("./../lib/time-conversion");
+const { convertMinutesTime, toWeekDay, toOrdinal, monthNames } = require("./../lib/time-conversion");
 
 // Configure multer to handle file uploads
 const storage = multer.diskStorage({
@@ -281,10 +284,12 @@ router.route("/faculty/:deptID?")
         query += " ORDER BY f.status, f.last_name, f.first_name, f.middle_name";
 
         await DB.executeQuery(query).then((data) => {
-            res.status(200).json({ faculty: data.map((fac) => {
-                let consult = consultHours.find((ch) => fac.id == ch.faculty);
-                return { ...fac, consultation: consult ? consult.hours.join("<br>") : "" };
-            }) });
+            res.status(200).json({
+                faculty: data.map((fac) => {
+                    let consult = consultHours.find((ch) => fac.id == ch.faculty);
+                    return { ...fac, consultation: consult ? consult.hours.join("<br>") : "" };
+                })
+            });
         });
 
     }).post(createFaculty, (req, res) => { // creates new faculty in
@@ -745,13 +750,25 @@ router.post("/terms", async (req, res) => { // creates new academic term to star
 
     const termID = crypto.randomBytes(6).toString("base64url");
     const faculty = await DB.executeQuery(
-        `SELECT f.id FROM Faculty f INNER JOIN Departments d ON f.dept_id = d.id INNER JOIN Colleges col ON ` +
-        `d.college_id = col.id WHERE col.school_id = '${schoolID}' ORDER by f.dept_id`
+        `SELECT f.id, u.email, CONCAT(f.first_name, ' ', f.middle_name, ' ', f.last_name) AS name FROM ` +
+        `Faculty f INNER JOIN Users u ON f.id = u.id INNER JOIN Departments d ON f.dept_id = d.id INNER JOIN ` +
+        `Colleges col ON d.college_id = col.id WHERE col.school_id = '${schoolID}' ORDER by f.dept_id`
     );
-    
+
+    console.table(faculty);
+
+    let deadline = new Date();
+    deadline.setDate(deadline.getDate() + 7);
+    deadline = {
+        date: `${deadline.getFullYear()}-${deadline.getMonth() + 1}-${deadline.getDate()}`,
+        time: `${deadline.getHours()}:${deadline.getMinutes()}`,
+        full: `${deadline.toLocaleTimeString().replace(/([\d]+:[\d]{2})(:[\d]{2})(.*)/, "$1$3")} of ` +
+        `${monthNames[deadline.getMonth() + 1]} ${deadline.getDate()}, ${deadline.getFullYear()}`
+    };
+
     for (let i = 0; i < faculty.length; i++) {
         const prefID = crypto.randomBytes(6).toString("base64url");
-        faculty[i] = `('${prefID}', '${termID}', '${faculty[i].id}', DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 7 DAY))`;
+        faculty[i].query = `('${prefID}', '${termID}', '${faculty[i].id}', '${deadline.date} ${deadline.time}')`
     }
 
     const courses = await DB.executeQuery(
@@ -769,7 +786,7 @@ router.post("/terms", async (req, res) => { // creates new academic term to star
     }
 
     let query = `INSERT INTO Terms VALUES ('${termID}', '${schoolID}', ${year}, '${term}', 1, current_timestamp); ` +
-        `INSERT INTO Preferences (id, term_id, faculty_id, deadline) VALUES ${faculty.join(",")};`;
+        `INSERT INTO Preferences (id, term_id, faculty_id, deadline) VALUES ${faculty.map(f => f.query).join(",")};`;
 
     if (blocks.length > 0) {
         query += `INSERT INTO Blocks (id, course_id, term_id, year) VALUES ${blocks.join(",")}; `;
@@ -778,10 +795,22 @@ router.post("/terms", async (req, res) => { // creates new academic term to star
         `SELECT b.term_id, cu.subj_id, b.id FROM Blocks b INNER JOIN Curricula cu ON b.course_id = cu.course_id ` +
         `AND b.year = cu.year WHERE b.term_id = '${termID}' AND cu.term = '${term}' AND cu.subj_id IS NOT NULL ` +
         `ORDER BY b.year, b.block_no`
-    
-        
+
     await DB.executeQuery(query);
     res.status(200).json({ termID: termID });
+    
+    const mailer = req.app.locals.mailer;
+    const content = await ejs.renderFile(
+        __dirname + "/../views/mail-template/new-preference-form.ejs",
+        { year: parseInt(year), semester: toOrdinal(term), loginLink: `http://${process.env.API_DOMAIN}/login`, deadline: deadline.full }
+    );
+    console.log(content);
+    let mailOptions = {
+        to: faculty.map(f => f.email),
+        subject: `New Preference Form (A.Y. ${year}-${term})`,
+        html: content
+    };
+    await mailer.sendEmail(mailOptions);
 });
 
 router.post("/save_schedule/:term", saveFacultySchedule, async (req, res) => {
@@ -893,7 +922,7 @@ router.route("/schedules/:termID")
         );
 
         console.log(assigned_load, teach_load, units);
-        if (assigned_load + units > teach_load) {
+        if (!partial && assigned_load + units > teach_load) {
             res.cookie("serverMessage", {
                 mode: 0,
                 title: "Overload faculty",
@@ -1154,7 +1183,7 @@ router.route("/schedule/:termID")
 
             req_hours = req_hours * 60 - (end - start);
             console.log(req_hours);
-            
+
             if (partialClasses.length > 0 && req_hours > 0) {
                 partialClasses = partialClasses.map((c) => {
                     if (req_hours <= 0) {
@@ -1408,11 +1437,13 @@ router.post("/update-preferences/:prefID", async (req, res) => {
     );
 
     if (!deadline) {
-        return res.status(409).json({ message: {
-            mode: 0,
-            title: "Late Submission",
-            body: "Could not update your changes on time, contact your chairperson if you need more time to answer."
-        } });
+        return res.status(409).json({
+            message: {
+                mode: 0,
+                title: "Late Submission",
+                body: "Could not update your changes on time, contact your chairperson if you need more time to answer."
+            }
+        });
     }
 
     let { subjects, schedules } = req.body;
@@ -1604,12 +1635,12 @@ router.post("/import_subjects/:id", upload.single('csvFile'), async (req, res) =
         });
         return res.status(401).json({ redirect: "/logout" });
     }
-    
+
     const DB = req.app.locals.database;
     let collegeName;
 
     try {
-        [{collegeName}] =  await DB.executeQuery(
+        [{ collegeName }] = await DB.executeQuery(
             `SELECT name AS collegeName FROM Colleges WHERE id = '${req.params.id}' LIMIT 1`
         );
     } catch (error) {
@@ -1621,7 +1652,7 @@ router.post("/import_subjects/:id", upload.single('csvFile'), async (req, res) =
         });
         return res.status(500).redirect("/admin/subjects");
     }
-    
+
     if (!collegeName) {
         res.cookie("serverMessage", {
             mode: 0,
@@ -1630,7 +1661,7 @@ router.post("/import_subjects/:id", upload.single('csvFile'), async (req, res) =
         });
         return res.status(404).redirect("/admin/subjects");
     }
-    
+
     let existingSubjs = await DB.executeQuery(
         `SELECT s.code FROM Subjects s INNER JOIN Colleges col ON s.college_id = col.id ` +
         `WHERE col.school_id = '${user.id}'`
@@ -1652,21 +1683,21 @@ router.post("/import_subjects/:id", upload.single('csvFile'), async (req, res) =
                     res.cookie("serverMessage", {
                         mode: 2,
                         title: "Incomplete import",
-                        body: `Missing data in <b>row #${i+1}</b>. Please ensure code, title, units, and req_hours are not empty`
+                        body: `Missing data in <b>row #${i + 1}</b>. Please ensure code, title, units, and req_hours are not empty`
                     });
                     break;
                 } else if (existingSubjs.includes(code)) {
                     res.cookie("serverMessage", {
                         mode: 2,
                         title: "Duplicate import",
-                        body: `Duplicate subject code was detected in <b>row #${i+1}</b>. Please ensure code is unique.`
+                        body: `Duplicate subject code was detected in <b>row #${i + 1}</b>. Please ensure code is unique.`
                     });
                     break;
                 }
 
                 const subjID = crypto.randomBytes(6).toString("base64url");
                 results[i] = `('${subjID}', '${req.params.id}', '${code}', '${title}', ` +
-                    `${type ? 'NULL' : `'${type}'`}, ${units}, ${req_hours}, '${pref_rooms}')`;
+                    `${(!type || type == '') ? 'NULL' : `'${type}'`}, ${units}, ${req_hours}, '${pref_rooms}')`;
             }
 
             if (i <= 0) return res.status(200).redirect("/admin/subjects/" + collegeName.split(" ").join("_"));;
@@ -1674,7 +1705,7 @@ router.post("/import_subjects/:id", upload.single('csvFile'), async (req, res) =
             try {
                 await DB.executeQuery(
                     `INSERT INTO Subjects (id, college_id, code, title, type, units, req_hours, ` +
-                    `pref_rooms) VALUES ${results.slice(0, i+1).join(", ")};`
+                    `pref_rooms) VALUES ${results.slice(0, i + 1).join(", ")};`
                 );
             } catch (error) {
                 console.error(error);
@@ -1743,22 +1774,54 @@ router.post("/pref-deadline/:term", async (req, res) => {
     }
 
     if (!req.body.deadline) {
-        return res.status(409).json({ message: {
-            mode: 0,
-            title: "Invalid parameters",
-            body: "Could not set deadline for preference forms without appropriate deadline."
-        } });
+        return res.status(409).json({
+            message: {
+                mode: 0,
+                title: "Invalid parameters",
+                body: "Could not set deadline for preference forms without appropriate deadline."
+            }
+        });
     }
 
-    await req.app.locals.database.executeQuery(
+    const DB = req.app.locals.database;
+    await DB.executeQuery(
         `UPDATE Preferences p INNER JOIN Faculty f ON p.faculty_id = f.id INNER JOIN Departments d ON ` +
-        `f.dept_id = d.id SET p.deadline = '${req.body.deadline}' WHERE d.chair_id = '${user.id}' AND p.term_id = '${req.params.term}'`
+        `f.dept_id = d.id SET p.deadline = '${req.body.deadline}' WHERE d.chair_id = '${user.id}' AND ` +
+        `p.term_id = '${req.params.term}'`
     );
 
     res.cookie("serverMessage", {
-        mode: 1, title: "Deadline set", 
+        mode: 1, title: "Deadline set",
         body: "Faculty under your department should finalize their preference on or before the deadline."
     }).status(200).end();
-})
+
+    const [[term], faculty] = await DB.executeQuery(
+        `SELECT year, term AS semester FROM Terms WHERE id = '${req.params.term}' LIMIT 1;` +
+
+        `SELECT u.email, d.name FROM Faculty f INNER JOIN Users u ON f.id = u.id INNER JOIN Departments d ON ` +
+        `f.dept_id = d.id WHERE d.chair_id = '${user.id}' ORDER BY u.email;`
+    );
+    let deadline = new Date(req.body.deadline);
+    deadline = `${deadline.toLocaleTimeString().replace(/([\d]+:[\d]{2})(:[\d]{2})(.*)/, "$1$3")} of ` +
+    `${monthNames[deadline.getMonth()]} ${deadline.getDate()}, ${deadline.getFullYear()}`;
+    
+    const mailer = req.app.locals.mailer;
+    const content = await ejs.renderFile(
+        __dirname + "/../views/mail-template/reopen-preference-form.ejs",
+        { 
+            year: parseInt(term.year), semester: toOrdinal(term.semester), 
+            loginLink: `http://${process.env.API_DOMAIN}/login`, deadline: deadline,
+            department: faculty[0].name
+        }
+    );
+    
+    let mailOptions = {
+        to: faculty.map(f => f.email),
+        subject: `Preference Form Deadline Extension (A.Y. ${term.year}-${term.semester})`,
+        html: content
+    };
+    
+    await mailer.sendEmail(mailOptions);
+});
 
 module.exports = router;

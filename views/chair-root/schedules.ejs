@@ -127,16 +127,18 @@
                     <% } %>
                 </ul>
             </nav>
-            <% if (current.id == 'faculty') { %>
+            <% if (current.id == 'faculty' && current.status != 'POSTED') { %>
                 <div id="pref-form-control">
                     <label class="table-title fw-bold me-3">Preference Form Deadline:</label>
                     <% if (currentTerm.deadline_date) { %>
-                        <input type="date" id="form-deadline-date" name="date" class="form-control" required value="<%= currentTerm.deadline_date %>">
+                        <input type="date" id="form-deadline-date" name="date" class="form-control" required 
+                            value="<%= currentTerm.deadline_date %>" aria-current="<%= currentTerm.deadline_date %>">
                     <% } else { %>
                         <input type="date" id="form-deadline-date" name="date" class="form-control" required>
                     <% } %>
                     <% if (currentTerm.deadline_time) { %>
-                        <input type="time" id="form-deadline-time" name="date" class="form-control" required value="<%= currentTerm.deadline_time %>">
+                        <input type="time" id="form-deadline-time" name="date" class="form-control" required 
+                            value="<%= currentTerm.deadline_time %>" aria-current="<%= currentTerm.deadline_time %>">
 
                     <% } else { %>
                         <input type="time" id="form-deadline-time" name="time" class="form-control" required>
@@ -168,11 +170,11 @@
             scheduleTable.attr("id", "faculty-schedule").append(
                 `<thead clas='text-center'><tr>` +
                     `<%- !currentTerm.isPosted ? '<th table-cts-column="sched_status_checkbox" style="width: 140px;">Save Schedule' : '' %>` +
-                    `<th table-cts-column="pref_status" rowspan="2" style="width: 130px;">Preference Status</th>` +
-                    `<th table-cts-column="name" rowspan="2">Name</th>` +
-                    `<th table-cts-column="faculty_status" rowspan="2" style="width: 130px;">Employment Status</th>` +
-                    `<th table-cts-column="teach_load number" rowspan="2" style="width: 110px;">Assigned Load</th>` +
-                `</tr><tr><td><input id="save-all" class="form-check-input" type="checkbox" /></td></tr></thead><tbody></tbody>`
+                    `<th table-cts-column="pref_status"<%- !currentTerm.isPosted ? ' rowspan="2"' : '' %> style="width: 130px;">Preference Status</th>` +
+                    `<th table-cts-column="name"<%- !currentTerm.isPosted ? ' rowspan="2"' : '' %>>Name</th>` +
+                    `<th table-cts-column="faculty_status"<%- !currentTerm.isPosted ? ' rowspan="2"' : '' %> style="width: 130px;">Employment Status</th>` +
+                    `<th table-cts-column="teach_load number"<%- !currentTerm.isPosted ? ' rowspan="2"' : '' %> style="width: 110px;">Assigned Load</th>` +
+                `</tr><%- !currentTerm.isPosted ? '<tr><td><input id="save-all" class="form-check-input" type="checkbox" /></td></tr>' : '' %></thead><tbody></tbody>`
             );
             const facultyTable = new DisplayTable("#faculty-schedule");
             facultyTable.initData(getSchedules(termID, id), true, () => {
